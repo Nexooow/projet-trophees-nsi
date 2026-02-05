@@ -1,7 +1,7 @@
 import heapq
 import networkx as nx
 import pygame
-from random import randint, choice
+from random import randint, choice, shuffle
 pygame.init()
 def xy_to_node(x,y,cols):
     return y*cols+x
@@ -59,8 +59,10 @@ def shortest_path(start,target,graph,grid_width,blocked_positions=()):
     except nx.NetworkXNoPath:
         return []
     return [node_to_xy(node,grid_width) for node in path][1:]
+terrains={"dirt":{"weight":1,"img":""},"mud":{"weight":2,"img":""},"water":{"weight":3,"img":""}"stone":{"weight":float("inf"),"img":""}}
 def weight_to_color(weight):
-    return {1:(50,180,50),2:(160,120,60),3:(50,100,180)}.get(weight,(100,100,100))
+    #return {1:(50,180,50),2:(160,120,60),3:(50,100,180),100:(128,128,128)}.get(weight,(100,100,100))
+    return terrains[weight]["weight"] if weight in terrains else ""
 def closest_enemy(unit,enemies,grid,units):
     blocked=[(u.x,u.y) for u in units if u is not unit]
     closest=None
@@ -82,7 +84,7 @@ class Grid:
         self.height=height
         self.tile=tile_size
         edges=[]
-        self.weights={(x,y):randint(1,3) for x in range(self.width) for y in range(self.height)}
+        self.weights={(x,y):choice([1,2,3,100]) for x in range(self.width) for y in range(self.height)}
         for y in range(height):
             for x in range(width):
                 i=xy_to_node(x,y,width)
@@ -123,17 +125,24 @@ class Unit:
         screen.blit(img, (self.x*50, self.y*50))
 screen = pygame.display.set_mode((1000, 700))
 clock = pygame.time.Clock()
+img_fourmi=pygame.image.load("")
 units=[
-    Unit(choice(range(20)), choice(range(10,14)), img_fourmi)
+    Unit(choice(range(20)), choice(range(10,14)), img_fourmi, "rouge")
+    for _ in range(randint(1, 5))
+]
+units+=[
+    Unit(choice(range(20)), choice(range(10,14)), img_fourmi, "noir")
     for _ in range(randint(1, 5))
 ]
 turn_index=0
+shuffle(units)
 active=units[turn_index]
 grid = Grid(20, 14)
 running=True
+grid.draw(screen)
 while running:
     screen.fill(0,0,0)
-    grid.draw(screen)
+    
     for u in units:
         u.draw(screen)
     for event in pygame.event.get():
