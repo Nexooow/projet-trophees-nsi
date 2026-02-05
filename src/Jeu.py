@@ -1,4 +1,5 @@
 import pygame
+import pygame_gui
 
 from base.anthill.Anthill import Anthill
 from base.TimeManager import TimeManager
@@ -13,6 +14,7 @@ class Jeu:
         self.time = TimeManager()
         
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.ui = pygame_gui.UIManager(self.screen.get_size(), enable_live_theme_updates=True)
         
     def is_running (self):
         return self.running
