@@ -1,22 +1,18 @@
 import pygame
 
-from Jeu import Jeu
+from core.GameManager import GameManager
 
 # pygame setup
 pygame.init()
-clock = pygame.time.Clock()
-running = True
 
-jeu = Jeu()
+game = GameManager()
 
-while jeu.is_running():
+while game.is_running():
 
-    jeu.update(pygame.event.get())
-
-    jeu.draw()
+    game.update(pygame.event.get())
+    game.draw()
     
     pygame.display.flip()
-
-    clock.tick(60)
+    game.clock.tick(60)
 
 pygame.quit()
