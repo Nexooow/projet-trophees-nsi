@@ -7,8 +7,11 @@ def xy_to_node(x,y,cols):
     return y*cols+x
 def node_to_xy(node,cols):
     return (node%cols,node//cols)
-def neighbors(x,y,width,height):
-    for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+def neighbors(x,y,width,height,diagonal=False):
+    dirs=[(1,0),(-1,0),(0,1),(0,-1)]
+    if diagonal:
+        dirs+=[(1,1),(-1,-1),(1,-1),(-1,1)]
+    for dx,dy in dirs :
         nx,ny=x+dx,y+dy
         if 0<=nx<width and 0<=ny<height:
             yield nx,ny
@@ -47,8 +50,11 @@ def reachable_tiles(x,y,points,grid):
             tile_cost=grid.weights[(nx_,ny_)]
             heapq.heappush(pq,(cost+tile_cost,nx_,ny_))
     return reachable
-def shortest_path(start,target,graph,grid_width,blocked_positions=()):
+
+def shortest_path(start,target,graph,grid_width,blocked_positions=(),diagonals=False,diagonal_edges=()):
     G=graph.copy()
+    if diagonals:
+        G.add_edges_from(diagonal_edges)
     for x,y in blocked_positions:
         try:
             G.remove_node(xy_to_node(x,y,grid_width))
@@ -59,7 +65,8 @@ def shortest_path(start,target,graph,grid_width,blocked_positions=()):
     except nx.NetworkXNoPath:
         return []
     return [node_to_xy(node,grid_width) for node in path][1:]
-terrains={"dirt":{"weight":1,"img":""},"mud":{"weight":2,"img":""},"water":{"weight":3,"img":""}"stone":{"weight":float("inf"),"img":""}}
+
+terrains={"dirt":{"weight":1,"img":""},"mud":{"weight":2,"img":""},"water":{"weight":3,"img":""},"stone":{"weight":float("inf"),"img":""}}
 def weight_to_color(weight):
     #return {1:(50,180,50),2:(160,120,60),3:(50,100,180),100:(128,128,128)}.get(weight,(100,100,100))
     return terrains[weight]["weight"] if weight in terrains else ""
@@ -72,7 +79,9 @@ def closest_enemy(unit,enemies,grid,units):
             unit.tile(),
             enemy.tile(),
             grid.graph,grid.width,
-            blocked
+            blocked,
+            diagonals=unit.diagonal,
+            diagonal_edges=grid.diagonal_edges
         )
         if path and len(path)<dist:
             dist=len(path)
@@ -91,6 +100,16 @@ class Grid:
                 for nx,ny in neighbors(x,y,width,height):
                     edges.append((i,xy_to_node(nx,ny,width)),{"weight":self.weights[(nx,ny)]})
         self.graph=nx.DiGraph(edges)
+        self.diagonal_edges = []
+        for y in range(height):
+            for x in range(width):
+                i = xy_to_node(x, y, width)
+                for dx, dy in ((1,1),(1,-1),(-1,1),(-1,-1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < width and 0 <= ny < height:
+                        j = xy_to_node(nx, ny, width)
+                        cost = self.weights[(nx, ny)] * 1.414
+                        self.diagonal_edges.append((i, j, {"weight": cost}))
     def draw(self,screen):
         for x in range(self.width):
             for y in range(self.height):
@@ -101,7 +120,7 @@ class Grid:
                 pygame.draw.rect(screen,(255,255,255),r,1)
 
 class Unit:
-    def __init__(self, x, y, image, team, points=5):
+    def __init__(self, x, y, image, team,points=5,diagonal=False):
         self.x = x
         self.y = y
         self.team=team
@@ -109,6 +128,7 @@ class Unit:
         self.points_max = points
         self.points = points
         self.orientation = False
+        self.diagonal=diagonal
 
     def tile(self):
         return self.x, self.y
@@ -152,18 +172,39 @@ while running:
     
     if active.points > 0:
         enemies = [u for u in units if u.team != active.team]
-        target = closest_enemy(active, enemies,grid,units)
-        blocked = [u.tile() for u in units if u is not active]
-        path = shortest_path(
-            active.tile(),
-            target.tile(),
-            grid.graph,
-            grid.width,
-            blocked
-        )
-        if path:
-            active.move_to(*path[0])
-            active.points -= 1
+        if active.team!="noir":
+            target = closest_enemy(active, enemies,grid,units)
+            blocked = [u.tile() for u in units if u is not active]
+            path = shortest_path(
+                active.tile(),
+                target.tile(),
+                grid.graph,
+                grid.width,
+                blocked,
+                diagonals=active.diagonal,
+                diagonal_edges=grid.diagonal_edges
+            )
+            if path:
+                active.move_to(*path[0])
+                active.points -= 1
+        if active.team=="noir":
+            if keys[pygame.K_LEFT] and active.x > 0:
+                active.move_to(active.x - 1, active.y)
+                active.points -= 1
+                active.orientation = True
+
+            elif keys[pygame.K_RIGHT] and active.x < grid.width - 1:
+                active.move_to(active.x + 1, active.y)
+                active.points -= 1
+                active.orientation = False
+
+            elif keys[pygame.K_UP] and active.y > 0:
+                active.move_to(active.x, active.y - 1)
+                active.points -= 1
+
+            elif keys[pygame.K_DOWN] and active.y < grid.height - 1:
+                active.move_to(active.x, active.y + 1)
+                active.points -= 1
     else:
         active.reset_turn()
         turn_index = (turn_index + 1) % len(units)
