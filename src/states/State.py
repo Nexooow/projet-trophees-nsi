@@ -1,6 +1,6 @@
 class State:
 
-    def __init__ (self, state_manager, name: str, flags: list[str]):
+    def __init__ (self, state_manager, name: str, flags: list):
         self.stateManager = state_manager
         self.game = state_manager.game
         self.name = name

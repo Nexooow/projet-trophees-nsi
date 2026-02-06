@@ -18,7 +18,7 @@ class TimeManager:
         """
         self.paused = boolean
         
-    def get_time (self) -> tuple[int, int]:
+    def get_time (self):
         """
         Renvoie le temps actuel sous la forme d'un tuple (heures, minutes).
         """
