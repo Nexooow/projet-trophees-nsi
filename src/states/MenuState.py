@@ -9,11 +9,7 @@ class MenuState (State):
         super().__init__(state_manager, "menu", ["pause"])
 
     def enable (self):
-        pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(0, 0, 100, 300),
-            text="Create a new game",
-            manager=self.game.ui,
-        )
+        self.ui.create_button("main_create_game", "Start a new game", (400, 400, 500, 500), action=lambda:print("cc"))
 
     def update (self, events):
         pass

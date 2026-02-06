@@ -4,6 +4,7 @@ import pygame_gui
 from .StateManager import StateManager
 from .TimeManager import TimeManager
 from .EventManager import EventManager
+from .UIManager import UIManager
 
 class GameManager:
 
@@ -17,12 +18,7 @@ class GameManager:
         self.width, self.height = self.screen.get_size()
         self.clock = pygame.time.Clock()
 
-        self.ui = pygame_gui.UIManager(
-            self.screen.get_size(),
-            enable_live_theme_updates=True,
-            # theme_path="config/ui_theme.json"
-        )
-
+        self.ui = UIManager(self)
         self.state = StateManager(self)
         self.time = TimeManager(self)
         self.events = EventManager(self)
@@ -43,10 +39,10 @@ class GameManager:
         for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
-            self.ui.process_events(event)
+        self.ui.process_events(events)
         self.ui.update(time_delta)
 
     def draw (self):
         self.screen.fill((255, 255, 255))
         self.state.draw()
-        self.ui.draw_ui(self.screen)
+        self.ui.draw()
