@@ -62,6 +62,7 @@ class Ant:
         if dist<self.speed:
             self.pos_x,self.pos_y=next_pixelx,next_pixely
             return
+        self.flip=True if dx>0 else False
         dir_x,dir_y=dx/dist,dy/dist
         self.pos_x+=dir_x*self.speed
         self.pos_y+=dir_y*self.speed

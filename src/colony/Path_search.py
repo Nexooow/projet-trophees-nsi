@@ -32,7 +32,6 @@ def calculate_h_value(row, col, dest):
 
 # Trace the path from source to destination
 def trace_path(cell_details, dest):
-    print("The Path is ")
     path = []
     row = dest[0]
     col = dest[1]
@@ -50,10 +49,6 @@ def trace_path(cell_details, dest):
     # Reverse the path to get the path from source to destination
     path.reverse()
     
-    # Print the path
-    for i in path:
-        print("->", i, end=" ")
-    print()
     return path
 
 # Implement the A* search algorithm
@@ -142,25 +137,7 @@ def a_star_search(grid, src, dest):
     # If the destination is not found after visiting all cells
     if not found_dest:
         print("Failed to find the destination cell")
-"""
-def analyze_square(surface,pixels):
-    count=0
-    for pixel in pixels:
-        if surface.get_at((pixel[0],pixel[1]))[:3]=="LERGBDEMARRONPOURLATERRE":
-            count+=1
-    return 0 if count>=(len(pixels)//2) else 1
-""""""
-def converting_to_grid(surface):
-    grid=[]
-    
-    width,height=surface.get_size
-    for y in range(0,height,8):
-        row=[]
-        for x in range(0,width,8):
-            row+=[analyze_square(surface,[(v,i) for i in range(y,y+8) for v in range(x,x+8)])]
-        grid+=[row]
-    return grid
-"""
+
 def analyze_square(surface,pixels,size=8):
     count=0
     wall=(0,0,0) # On mettra le rgb de marron/des murs
@@ -182,28 +159,3 @@ def converting_to_grid(surface):
         
         grid+=[row]
     return grid
-"""
-def main():
-    # Define the grid (1 for unblocked, 0 for blocked)
-    grid = [
-        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-        [1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
-        [0, 0, 1, 0, 1, 0, 0, 0, 0, 1],
-        [1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-        [1, 0, 1, 1, 1, 1, 0, 1, 0, 0],
-        [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 0, 0, 0, 1, 0, 0, 1]
-    ]
-
-    # Define the source and destination
-    src = [8, 0]
-    dest = [0, 0]
-
-    # Run the A* search algorithm
-    a_star_search(grid, src, dest)
-
-if __name__ == "__main__":
-    main()
-"""
