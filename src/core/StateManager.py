@@ -5,6 +5,7 @@ from states.ExpeditionState import ExpeditionState
 from states.MenuState import MenuState
 from states.State import State
 
+
 class StateManager:
     """
     Gère les différents états du jeu.
@@ -18,28 +19,28 @@ class StateManager:
             "colony": ColonyState(self),
             "expedition": ExpeditionState(self)
         }
-        self.current_state: str = "menu"
+        self.current_state: str = "colony"
 
         self.get_current_state().enable()
 
-    def is_current_state (self, state) -> bool:
+    def is_current_state(self, state) -> bool:
         return state == self.current_state
 
-    def get_current_state (self) -> State:
+    def get_current_state(self) -> State:
         return self.states_managers[self.current_state]
 
-    def set_state (self, state: str):
+    def set_state(self, state: str):
         old_state = self.get_current_state()
         if state in self.states_managers and state != old_state.name:
             old_state.disable()
             self.current_state = state
             self.get_current_state().enable()
 
-    def update (self, events):
+    def update(self, events):
         self.get_current_state().update(events)
 
-    def draw (self):
+    def draw(self):
         self.get_current_state().draw()
 
-    def is_flag_active (self, flag: str) -> bool:
+    def is_flag_active(self, flag: str) -> bool:
         return flag in self.get_current_state().flags
