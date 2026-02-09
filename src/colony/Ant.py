@@ -10,6 +10,7 @@ IMAGES={
 }
 class Ant:
     def __init__(self,id,power,level,xp,pos_x,pos_y,flip=False):
+        
         self.colony=None
         self.power=power
         self.level=level
@@ -53,6 +54,7 @@ class Ant:
             frames+=[temp]
         return frames
     def move(self,surface,destination):
+        
         grid_posx,grid_posy=pixel_to_grid(self.pos_x,self.pos_y)
         destination_grid=pixel_to_grid(destination[0],destination[1])
         next=a_star_search(converting_to_grid(surface),(grid_posx,grid_posy),destination_grid)[1]
