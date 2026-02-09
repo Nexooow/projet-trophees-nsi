@@ -7,7 +7,7 @@ IMAGES={
     "explorer":[pygame.image.load(''),[]]
 }
 class Ant:
-    def __init__(self,id,power,level,xp,pos_x,pos_yflip=False):
+    def __init__(self,id,power,level,xp,pos_x,pos_y,flip=False):
         self.colony=None
         self.power=power
         self.level=level
