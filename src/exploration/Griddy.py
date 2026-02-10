@@ -5,8 +5,28 @@ from random import randint, choice, shuffle,sample
 from itertools import product
 from Utilities import *
 from Unit import *
+from ExplorerGroup import *
+import math
+RESSOURCES_IMAGES={
+    "nom":pygame.image.load("")
+}
+RESSOURCES=("ressources")
 pygame.init()
-
+class HoveringResource:
+    def __init__(self,x,y,resource,tile_size=50):
+        self.x=x
+        self.y=y
+        self.resource=resource
+        self.tile_size=tile_size
+        self.start_time=pygame.time.get_ticks()
+        self.hover_height=10
+        self.hover_speed=0.005
+    def draw(self,screen):
+        elapsed_time=(pygame.time.get_ticks()-self.start_time)*self.hover_speed
+        offset=self.hover_height*math.sin(elapsed_time)
+        screen_x=self.x*self.tile_size
+        screen_y=self.y*self.tile_size+offset
+        screen.blit(RESSOURCES_IMAGES[self.resource],(screen_x,screen_y))
 class Grid:
     def __init__(self,width,height,tile_size=50):
         self.width=width
@@ -38,21 +58,26 @@ class Grid:
                 r=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
                 pygame.draw.rect(screen,col,r)
                 pygame.draw.rect(screen,(255,255,255),r,1)
-positions_of_ressources=sample(list(product(range(20),range(4))),randint(5))
-RESSOURCES=("ressources")
-ressources_dispos={
-    (x,y):
-    choice(
-        RESSOURCES
-    )
-    for x,y in positions_of_ressources
-}
+
 def Game(difficulty,colony):
+    positions_of_ressources=sample(list(product(range(20),range(4))),randint(5))
+    
+    ressources_dispos={
+        (x,y):
+        choice(
+            RESSOURCES
+        )
+        for x,y in positions_of_ressources
+    }
+    ressources_obj=[
+        HoveringResource(x,y,resource)
+        for (x,y),resource in ressources_dispos.items() 
+    ]
     screen = pygame.display.set_mode((1000, 700))
     clock = pygame.time.Clock()
     img_fourmi=pygame.image.load("")
     img_scarab=pygame.image.load("")
-    fourmis_nwar=colony.get_ants("soldier") #Faudra récup les fourmis de l'expedition
+    fourmis_nwar=colony.get_ants(ant_type="soldier") #Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
     friendlies=[Unit(choice(range(20)),choice(range(10,14)),img_fourmi,"noir",ant.power) for ant in fourmis_nwar]
     positions=list(product(range(20),range(4)))
     pos1=sample(positions,randint(1,6))
@@ -71,7 +96,8 @@ def Game(difficulty,colony):
     grid.draw(screen)
     while running:
         screen.fill(0,0,0)
-        
+        for ressource in ressources_obj:
+            ressource.draw(screen)
         for u in units:
             u.draw(screen)
         for event in pygame.event.get():
@@ -98,7 +124,8 @@ def Game(difficulty,colony):
                     active.points -= 1
             if active.team=="noir":
                 if (active.x,active.y) in ressources_dispos.keys():
-                    stock.add(ressources_dispos[(active.x,active.y)])
+                    colony.add_to_stock(ressources_dispos[(active.x,active.y)])
+                    ressources_dispos.pop((active.x,active.y))
                 if keys[pygame.K_LEFT] and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]) :
                     active.move_to(active.x - 1, active.y)
                     active.points -= 1
