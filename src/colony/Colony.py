@@ -11,6 +11,7 @@ class Colony:
             if room.name==name:
                 return room
         return None
+    
 class Worker(Ant):
     def __init__(self,xp,level,pos_x,pos_y,power=1):
         super().__init__("worker",power,xp,level,pos_x,pos_y)
