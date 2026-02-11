@@ -2,9 +2,10 @@ from random import randint
 import math
 from Griddy import *
 class Node:
-    def __init__(self, x, y, parent=None,depth=0,seed=None):
-        self.x = x
-        self.y = y
+    def __init__(self, node_id, parent=None,depth=0,seed=None):
+        #self.x = x
+        #self.y = y
+        self.node_id=node_id
         self.parent = parent
         self.depth=depth
         self.seed=seed
