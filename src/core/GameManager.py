@@ -40,7 +40,7 @@ class GameManager:
             if event.type == pygame.QUIT:
                 self.running = False
         self.ui.process_events(events)
-        self.ui.update(time_delta)
+        self.ui.update(events,time_delta)
 
     def draw (self):
         self.screen.fill((255, 255, 255))

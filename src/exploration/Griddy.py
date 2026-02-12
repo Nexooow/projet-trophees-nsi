@@ -8,7 +8,7 @@ from .Unit import *
 from .ExplorerGroup import *
 import math
 RESSOURCES_IMAGES={
-    "nom":pygame.image.load("")
+    "nom":pygame.image.load("./assets/fonts/ant.png")
 }
 RESSOURCES=("ressources")
 pygame.init()
@@ -150,4 +150,3 @@ def Game(difficulty,colony):
             active.reset_turn()
             turn_index = (turn_index + 1) % len(units)
             active = units[turn_index]
-Game()

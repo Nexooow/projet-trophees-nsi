@@ -2,11 +2,11 @@ import pygame
 from .Path_search import a_star_search,converting_to_grid
 import math
 IMAGES={
-    "worker":[pygame.image.load(''),[]],
-    "nurse":[pygame.image.load(""),[]],
-    "warrior":[pygame.image.load(""),[]],
-    "scientist":[pygame.image.load(""),[]],
-    "explorer":[pygame.image.load(''),[]]
+    "worker":[pygame.image.load('./assets/fonts/ant.png'),[2]],
+    "nurse":[pygame.image.load("./assets/fonts/ant.png"),[2]],
+    "warrior":[pygame.image.load("./assets/fonts/ant.png"),[2]],
+    "scientist":[pygame.image.load("./assets/fonts/ant.png"),[2]],
+    "explorer":[pygame.image.load('./assets/fonts/ant.png'),[2]]
 }
 class Ant:
     def __init__(self,id,power,level,xp,pos_x,pos_y,flip=False):

@@ -4,12 +4,10 @@ import math
 from exploration.ExpeditionMap import ExpeditionMap
 class ExpeditionState(State):
 
-    def __init__(self, state_manager, colony, difficulty=1):
+    def __init__(self, state_manager):
         super().__init__(state_manager, "expedition", ["pause"])
 
         # TODO: implémenter le système d'expédition
-        self.colony=colony
-        self.difficulty=difficulty
         self.expedition_map=ExpeditionMap(seed=12345)
         self.cam_x=600
         self.cam_y=400

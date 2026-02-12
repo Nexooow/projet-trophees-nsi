@@ -43,7 +43,7 @@ class Node:
             )
             self.children.append(child)
             child.is_discovered=True
-    def create_game(self,expedition_members):
+    def create_game(self,expedition_members=[]):
         return Game(self.difficulty,expedition_members)
     def draw(self,screen,node_radius=20):
         x,y=self.position
