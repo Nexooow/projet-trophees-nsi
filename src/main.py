@@ -2,16 +2,14 @@ import pygame
 
 from core.GameManager import GameManager
 
-# pygame setup
 pygame.init()
 
 game = GameManager()
 
 while game.is_running():
-
     game.update(pygame.event.get())
     game.draw()
-    
+
     pygame.display.flip()
     game.clock.tick(60)
 

@@ -1,6 +1,7 @@
 import typing
 
 from states.ColonyState import ColonyState
+from states.MapState import MapState
 from states.ExpeditionState import ExpeditionState
 from states.MenuState import MenuState
 from states.State import State
@@ -17,6 +18,7 @@ class StateManager:
         self.states_managers: dict[str, State] = {
             "menu": MenuState(self),
             "colony": ColonyState(self),
+            "map": MapState(self),
             "expedition": ExpeditionState(self)
         }
         self.current_state: str = "colony"
@@ -30,9 +32,13 @@ class StateManager:
         return self.states_managers[self.current_state]
 
     def set_state(self, state: str):
+        """
+        Change l'état actuel du jeu.
+        """
         old_state = self.get_current_state()
         if state in self.states_managers and state != old_state.name:
             old_state.disable()
+            self.game.ui.clear()
             self.current_state = state
             self.get_current_state().enable()
 
