@@ -7,3 +7,6 @@ game_name = "Anthill" # TODO: définir le nom
 colony_width = 2048
 colony_height = 1152
 colony_underground_start = colony_height * 0.15
+
+colony_brush_size = 20
+colony_brush_color = (255, 105, 97)

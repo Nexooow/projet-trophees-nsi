@@ -1,3 +1,4 @@
+import typing
 from utils.file import File
 
 class TaskManager:
@@ -8,10 +9,23 @@ class TaskManager:
 
     def __init__(self, colony):
         self.colony = colony
-        self.tasks = File()
+        self.assigned: dict[str, typing.Optional[str]] = {} 
+        self.tasks = {}
+        self.queue = File()
 
     def add_task(self, task: dict):
         """
         Ajoute une tâche à exécuter, qui sera ensuite prise en charge par les fourmis disponibles.
         """
+        assert "type" in task
+        assert "id" in task
+        self.tasks[task["id"]] = task
+        self.queue.enfiler(task["id"], priority=task["priority"] if "priority" in task else 0)
+        self.handle_tasks()
+    
+    def mark_as_finished (self, task_id):
+        del self.tasks[task_id]
+        self.handle_tasks()
+        
+    def handle_tasks (self):
         pass

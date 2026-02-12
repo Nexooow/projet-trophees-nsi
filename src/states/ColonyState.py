@@ -4,7 +4,7 @@ import pygame
 import pygame_gui
 
 from colony.TaskManager import TaskManager
-from config.settings import colony_height, colony_underground_start, colony_width
+from config.settings import colony_height, colony_underground_start, colony_width, colony_brush_size, colony_brush_color
 from utils.grid import Grid
 
 from .State import State
@@ -20,6 +20,8 @@ class ColonyState(State):
         )
         self.camera_x = 0
         self.camera_y = 0
+        
+        self.build_mode = False
 
         self.grid = Grid(colony_underground_start, self.world.get_size())
         self.rooms = []
@@ -29,9 +31,8 @@ class ColonyState(State):
 
         self.food = 0
         # self.science = 0
-
-        # Paramètres de la brush carrée
-        self.brush_size = 20  # Taille du carré de la brush
+        
+        self.selections = set()
 
     def draw_grid(self):
         """Dessine la grille en tenant compte des cellules 8x8 avec états et bitmaps"""
@@ -66,25 +67,32 @@ class ColonyState(State):
     def update(self, events):
         keys = pygame.key.get_pressed()
         screen_width, screen_height = self.game.screen.get_size()
+        
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_b:
+                    self.build_mode = not self.build_mode
+                elif event.key == pygame.K_c and self.build_mode:
+                    self.selections.clear()
+                elif event.key == pygame.K_KP_ENTER and self.build_mode:
+                    self.tasks.to_dig = list(self.selections)
+                
 
         # Calcul des limites de la caméra pour que le monde reste toujours visible
         min_camera_x = screen_width - colony_width
         min_camera_y = screen_height - colony_height
 
-        # Déplacement horizontal
+        # Déplacements
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.camera_x = max(min_camera_x, self.camera_x - 5)
         elif keys[pygame.K_LEFT] or keys[pygame.K_q]:
             self.camera_x = min(0, self.camera_x + 5)
-
-        # Déplacement vertical
         if keys[pygame.K_UP] or keys[pygame.K_z]:
             self.camera_y = min(0, self.camera_y + 5)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.camera_y = max(min_camera_y, self.camera_y - 5)
-
-        # Brush carrée pour supprimer les cellules avec clic droit
-        if pygame.mouse.get_pressed()[2]:  # Clic droit
+            
+        if self.build_mode and pygame.mouse.get_pressed()[2]:
             mouse_pos = pygame.mouse.get_pos()
             mouse_pos = (mouse_pos[0] - self.camera_x, mouse_pos[1] - self.camera_y)
             if (
@@ -92,12 +100,11 @@ class ColonyState(State):
                 and mouse_pos[0] < colony_width
                 and mouse_pos[1] >= 0
                 and mouse_pos[1] < colony_height
+                and mouse_pos[1] > colony_underground_start+colony_brush_size
             ):
-                brush_x = mouse_pos[0] - self.brush_size // 2
-                brush_y = mouse_pos[1] - self.brush_size // 2
-                self.grid.supprimer_cellules(
-                    brush_x, brush_y, self.brush_size, self.brush_size
-                )
+                brush_x = mouse_pos[0] - colony_brush_size // 2
+                brush_y = mouse_pos[1] - colony_brush_size // 2
+                self.selections.add((brush_x, brush_y))
 
     def draw(self):
         pygame.draw.rect(
@@ -116,28 +123,31 @@ class ColonyState(State):
             (0, colony_height * 0.15, colony_width, colony_height * 0.85),
         )
         self.draw_grid()
-        self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
+        # TODO: dessiner le bruit de perlin comme filtre semi-transparent au dessus de la grid
 
-        # Dessiner l'indicateur de la brush (carré semi-transparent)
+        # Dessiner l'indicateur de la brush
         mouse_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_pos[0] - self.camera_x, mouse_pos[1] - self.camera_y)
-
+            
+        if self.build_mode:
+            for (x, y) in self.selections:
+                pygame.draw.rect(self.world, colony_brush_color, (x, y, colony_brush_size, colony_brush_size))
+            
+        self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
+        
         if (
-            mouse_world_pos[0] >= 0
+            self.build_mode
+            and mouse_world_pos[0] >= 0
             and mouse_world_pos[0] < colony_width
             and mouse_world_pos[1] >= 0
             and mouse_world_pos[1] < colony_height
+            and mouse_world_pos[1] > colony_underground_start+colony_brush_size
         ):
-            brush_x = mouse_world_pos[0] - self.brush_size // 2
-            brush_y = mouse_world_pos[1] - self.brush_size // 2
+            brush_x = mouse_world_pos[0] - colony_brush_size // 2
+            brush_y = mouse_world_pos[1] - colony_brush_size // 2
 
-            # Dessiner le carré de la brush sur l'écran (pas sur le world)
+            # Dessiner le carré de la brush sur l'écran et non le monde
             screen_brush_x = brush_x + self.camera_x
             screen_brush_y = brush_y + self.camera_y
 
-            # Créer une surface semi-transparente pour la brush
-            brush_surface = pygame.Surface(
-                (self.brush_size, self.brush_size), pygame.SRCALPHA
-            )
-            brush_surface.fill((255, 0, 0, 80))
-            self.game.screen.blit(brush_surface, (screen_brush_x, screen_brush_y))
+            pygame.draw.rect(self.game.screen, colony_brush_color, (screen_brush_x, screen_brush_y, colony_brush_size, colony_brush_size))
