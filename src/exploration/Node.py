@@ -1,6 +1,6 @@
 from random import randint
 import math
-from Griddy import *
+from .Griddy import *
 class Node:
     def __init__(self, node_id, parent=None,depth=0,seed=None):
         #self.x = x

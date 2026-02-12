@@ -1,5 +1,5 @@
 import pygame
-from Path_search import a_star_search,converting_to_grid
+from .Path_search import a_star_search,converting_to_grid
 import math
 IMAGES={
     "worker":[pygame.image.load(''),[]],

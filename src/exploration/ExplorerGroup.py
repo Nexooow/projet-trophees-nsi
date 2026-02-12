@@ -1,4 +1,4 @@
-from src.colony.Ant import Ant
+from colony.Ant import Ant
 class ExplorerGroup(Ant):
     def __init__(self, name, position, world):
         super().__init__(name, position, world)

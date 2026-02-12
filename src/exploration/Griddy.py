@@ -3,9 +3,9 @@ import networkx as nx
 import pygame
 from random import randint, choice, shuffle,sample
 from itertools import product
-from Utilities import *
-from Unit import *
-from ExplorerGroup import *
+from .Utilities import *
+from .Unit import *
+from .ExplorerGroup import *
 import math
 RESSOURCES_IMAGES={
     "nom":pygame.image.load("")

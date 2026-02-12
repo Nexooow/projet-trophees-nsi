@@ -1,7 +1,7 @@
 from .State import State
 import pygame
 import math
-from src.exploration.ExpeditionMap import ExpeditionMap
+from exploration.ExpeditionMap import ExpeditionMap
 class ExpeditionState(State):
 
     def __init__(self, state_manager, colony, difficulty=1):

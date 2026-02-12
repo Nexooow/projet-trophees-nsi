@@ -18,7 +18,7 @@ class StateManager:
             "colony": ColonyState(self),
             "expedition": ExpeditionState(self)
         }
-        self.current_state: str = "menu"
+        self.current_state: str = "expedition"
 
         self.get_current_state().enable()
 

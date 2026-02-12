@@ -1,5 +1,5 @@
 import pygame
-from Node import Node
+from .Node import Node
 from random import randint
 class ExpeditionMap:
     def __init__(self,seed=None):
@@ -60,7 +60,7 @@ class ExpeditionMap:
         text=[
             f"Current Node: {self.current.node_id}",
             f"Difficulty:{self.current.difficulty}",
-            f"Status: {"Conquered" if self.current.is_cleared else "Enemy territory"}",
+            f"Status: {'Conquered' if self.current.is_cleared else 'Enemy territory'}",
             f"Donne acces a {len(self.current.children)} nodes"
             
         ]
