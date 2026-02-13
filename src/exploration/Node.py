@@ -20,7 +20,7 @@ class Node:
         self.num_children=self.child_count()
     def calculate_position(self):
         if self.parent is None:
-            return (0,0)
+            return (960,540)
         parent_x,parent_y=self.parent.position
         num_siblings=len(self.parent.children)
         angle=(num_siblings*120)%360

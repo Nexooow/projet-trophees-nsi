@@ -49,8 +49,8 @@ def shortest_path(start,target,graph,grid_width,blocked_positions=(),diagonals=F
 
 terrains={"dirt":{"weight":1,"img":""},"mud":{"weight":2,"img":""},"water":{"weight":3,"img":""},"stone":{"weight":float("inf"),"img":""}}
 def weight_to_color(weight):
-    #return {1:(50,180,50),2:(160,120,60),3:(50,100,180),100:(128,128,128)}.get(weight,(100,100,100))
-    return terrains[weight]["weight"] if weight in terrains else ""
+    return {1:(50,180,50),2:(160,120,60),3:(50,100,180),100:(128,128,128)}.get(weight,(100,100,100))
+    #return terrains[weight]["weight"] if weight in terrains else ""
 def closest_enemy(unit,enemies,grid,units):
     blocked=[(u.x,u.y) for u in units if u is not unit]
     closest=None

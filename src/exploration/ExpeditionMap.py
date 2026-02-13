@@ -37,6 +37,7 @@ class ExpeditionMap:
                 continue
             node_x,node_y=node.position
             distance=((x-node_x)**2+(y-node_y)**2)**0.5
+            
             if distance<=click_radius:
                 return node
         return None
@@ -46,13 +47,15 @@ class ExpeditionMap:
         if node.parent is None:
             return True
         return node.parent.is_cleared
-    def draw(self,screen):
+    def draw(self,screen,world,cam_x,cam_y):
         visible_nodes=self.get_visible_nodes()
+        
         for node in visible_nodes:
             node.draw_links(screen)
         for node in visible_nodes:
             node.draw(screen) #Deux boucles pour que les nodes soient au-dessus des connections
         self.draw_info(screen,visible_nodes)
+        screen.blit(world,(cam_x,cam_y))
     def draw_info(self,screen,nodes):
         font=pygame.font.Font(None,24)
         cur_x,cur_y=self.current.position

@@ -1,7 +1,7 @@
 import heapq
-import networkx as nx
+import networkx as netx
 import pygame
-from random import randint, choice, shuffle,sample
+from random import randint, choice, shuffle,sample,choices
 from itertools import product
 from .Utilities import *
 from .Unit import *
@@ -10,7 +10,7 @@ import math
 RESSOURCES_IMAGES={
     "nom":pygame.image.load("./assets/fonts/ant.png")
 }
-RESSOURCES=("ressources")
+RESSOURCES=["nom"]
 pygame.init()
 class HoveringResource:
     def __init__(self,x,y,resource,tile_size=50):
@@ -38,8 +38,8 @@ class Grid:
             for x in range(width):
                 i=xy_to_node(x,y,width)
                 for nx,ny in neighbors(x,y,width,height):
-                    edges.append((i,xy_to_node(nx,ny,width)),{"weight":self.weights[(nx,ny)]})
-        self.graph=nx.DiGraph(edges)
+                    edges.append((i,xy_to_node(nx,ny,width),{"weight":self.weights[(nx,ny)]}))
+        self.graph=netx.DiGraph(edges)
         self.diagonal_edges = []
         for y in range(height):
             for x in range(width):
@@ -60,7 +60,7 @@ class Grid:
                 pygame.draw.rect(screen,(255,255,255),r,1)
 
 def Game(difficulty,colony):
-    positions_of_ressources=sample(list(product(range(20),range(4))),randint(5))
+    positions_of_ressources=sample(list(product(range(20),range(4))),randint(1,5))
     
     ressources_dispos={
         (x,y):
@@ -75,19 +75,23 @@ def Game(difficulty,colony):
     ]
     screen = pygame.display.set_mode((1000, 700))
     clock = pygame.time.Clock()
-    img_fourmi=pygame.image.load("")
-    img_scarab=pygame.image.load("")
-    fourmis_nwar=colony.get_ants(ant_type="soldier") #Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
-    friendlies=[Unit(choice(range(20)),choice(range(10,14)),img_fourmi,"noir",ant.power) for ant in fourmis_nwar]
+    img_fourmi=pygame.image.load("./assets/fonts/ant.png")
+    img_scarab=pygame.image.load("./assets/fonts/ant.png")
+    fourmis_nwar=colony.get_ants(ant_type="soldier") if type(colony) is not list else [] #Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
+    
     positions=list(product(range(20),range(4)))
     pos1=sample(positions,randint(1,6))
     ally_pos=list(product(range(20),range(10,14)))
-    pos2=sample(positions,randint(1,len(friendlies)))
+    pos2=sample(positions,randint(0,len(fourmis_nwar)))
+    friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant in fourmis_nwar for x,y in pos2] if len(fourmis_nwar)>0 else []
     units=[
-        choice([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)
-        for x,y in positions
+        choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)
+        for x,y in pos1
     ]
-    units.append(friendlies)
+    
+    units+=friendlies
+    print(units)
+    print()
     turn_index=0
     shuffle(units)
     active=units[turn_index]
@@ -95,10 +99,11 @@ def Game(difficulty,colony):
     running=True
     grid.draw(screen)
     while running:
-        screen.fill(0,0,0)
+        screen.fill((0,0,0))
         for ressource in ressources_obj:
             ressource.draw(screen)
         for u in units:
+            print(u)
             u.draw(screen)
         for event in pygame.event.get():
             if event.type==pygame.QUIT:

@@ -12,7 +12,8 @@ class ExpeditionState(State):
         self.cam_x=600
         self.cam_y=400
         self.camera_zoom=1.0
-        self.screen=pygame.display.set_mode((1200,800))
+        self.screen=pygame.display.set_mode((1920,1080))
+        self.cam_world=pygame.Surface((1920,1080),pygame.SRCALPHA | pygame.HWSURFACE)              
         self.clock=pygame.time.Clock()
         self.state='map'
     def update(self,events):
@@ -25,12 +26,13 @@ class ExpeditionState(State):
             self.draw_map_state()
         elif self.state=="battle":
             self.draw_battle_state()
-    def map_state(self):
+    def map_state(self,events):
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 self.stateManager.game.running=False
             if event.type==pygame.MOUSEBUTTONDOWN:
                 clicked_node=self.expedition_map.get_node_at_pos(event.pos[0],event.pos[1])
+                
                 if clicked_node:
                     if self.expedition_map.node_is_accessible(clicked_node):
                         self.expedition_map.current=clicked_node
@@ -56,8 +58,7 @@ class ExpeditionState(State):
                     self.cam_x+=50
     def draw_map_state(self):
         self.screen.fill((20,20,30)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
-        pygame.draw.circle(self.screen, (255, 100, 100), (600, 400), 5)
-        self.expedition_map.draw(self.screen,self.cam_x,self.cam_y)
+        self.expedition_map.draw(self.screen,self.cam_world,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
         
     def battle_state(self,events):
@@ -70,5 +71,5 @@ class ExpeditionState(State):
             if event.type==pygame.KEYDOWN:
                 self.state="map"
     def draw_battle_state(self):
-        pass
+        self.screen.fill((0,0,0))
 
