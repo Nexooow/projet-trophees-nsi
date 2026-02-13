@@ -1,6 +1,13 @@
 import typing
 from utils.file import File
 
+assign_tasks = {
+    "dig": "worker",
+    "bring_food": "worker",
+    "build": "worker",
+    "fight": "soldier"
+}
+
 class TaskManager:
     """
     Classe qui gère les tâches de la colonie, comme la construction de nouvelles pièces, la recherche de nouvelles technologies, etc.
@@ -28,4 +35,8 @@ class TaskManager:
         self.handle_tasks()
         
     def handle_tasks (self):
-        pass
+        """
+        ...
+        """
+        task = self.tasks[self.queue.sommet()]
+        

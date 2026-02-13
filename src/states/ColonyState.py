@@ -1,11 +1,16 @@
 import math
-
 import pygame
 import pygame_gui
 
 from colony.TaskManager import TaskManager
 from config.settings import colony_height, colony_underground_start, colony_width, colony_brush_size, colony_brush_color
 from utils.grid import Grid
+from colony.Ant import Ant
+from colony.Room import Room
+
+from colony.ants.Worker import Worker
+
+from colony.rooms.Depot import Depot
 
 from .State import State
 
@@ -18,21 +23,39 @@ class ColonyState(State):
         self.world = pygame.Surface(
             (colony_width, colony_height), pygame.SRCALPHA | pygame.HWSURFACE
         )
-        self.camera_x = 0
+        self.camera_x = -100
         self.camera_y = 0
         
         self.build_mode = False
 
         self.grid = Grid(colony_underground_start, self.world.get_size())
-        self.rooms = []
+        grid_x_center = self.grid.width // 2
+        
+        self.rooms = [
+            Depot(self, {"x": grid_x_center, "y":0, "width": 13, "height": 7})
+        ]
 
-        self.ants = []
+        self.ants = [
+            Worker(self, {"power": 1})
+        ]
         # self.ennemies = []
 
         self.food = 0
         # self.science = 0
         
         self.selections = set()
+        
+    def get_room_coords (self, room_name):
+        """
+        Renvoie les coordonnées d'une pièce
+        """
+        return 0 # TODO
+    
+    def summon_ant (self):
+        ant = Ant(self, {
+            "power": 1,
+            
+        })
 
     def draw_grid(self):
         """Dessine la grille en tenant compte des cellules 8x8 avec états et bitmaps"""
@@ -105,6 +128,12 @@ class ColonyState(State):
                 brush_x = mouse_pos[0] - colony_brush_size // 2
                 brush_y = mouse_pos[1] - colony_brush_size // 2
                 self.selections.add((brush_x, brush_y))
+                
+        for ant in self.ants:
+            ant.update()
+            
+        for room in self.rooms:
+            room.update()
 
     def draw(self):
         pygame.draw.rect(
@@ -132,6 +161,12 @@ class ColonyState(State):
         if self.build_mode:
             for (x, y) in self.selections:
                 pygame.draw.rect(self.world, colony_brush_color, (x, y, colony_brush_size, colony_brush_size))
+        
+        for ant in self.ants:
+            ant.draw()
+        
+        for room in self.rooms:
+            room.draw()
             
         self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
         

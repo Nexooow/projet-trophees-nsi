@@ -101,6 +101,9 @@ class Grid:
         Met à jour une cellule en fonction d'un rectangle de suppression
         """
         cell = self.grid[cell_y][cell_x]
+        
+        if cell["state"] == "occupied":
+            return
 
         # Coordonnées pixel de la cellule
         cell_pixel_x, cell_pixel_y = self.cell_to_pixel(cell_x, cell_y)
