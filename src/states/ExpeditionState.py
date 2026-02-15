@@ -12,7 +12,7 @@ class ExpeditionState(State):
         self.cam_x=600
         self.cam_y=400
         self.camera_zoom=1.0
-        self.screen=pygame.display.set_mode((1000,700))
+        self.screen=self.game.screen
         self.cam_world=pygame.Surface((1000,700),pygame.SRCALPHA | pygame.HWSURFACE)              
         self.clock=pygame.time.Clock()
         self.state='map'
