@@ -14,9 +14,6 @@ class UIManager:
             theme_path="src/config/ui_theme.json"
         )
         
-        # TODO: helper ui pour créer des éléments d'interface plus facilement, par exemple un bouton qui prend en paramètre
-        #  une fonction à appeler lors du clic, ou un champ de texte avec une validation intégrée, etc.
-        
         self.elements: dict[str, dict] = {}
         self.enabled_elements: list = [] # liste des identifiants des éléments affichés à l'écran
         

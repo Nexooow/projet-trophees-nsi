@@ -5,7 +5,6 @@ from .StateManager import StateManager
 from .TimeManager import TimeManager
 from .EventManager import EventManager
 from .UIManager import UIManager
-from utils.saves import Save
 
 class GameManager:
 
@@ -18,6 +17,10 @@ class GameManager:
         )
         self.width, self.height = self.screen.get_size()
         self.clock = pygame.time.Clock()
+        
+        self.filters = {
+            "blur": 3
+        }
 
         self.ui = UIManager(self)
         self.state = StateManager(self)
@@ -41,9 +44,15 @@ class GameManager:
             if event.type == pygame.QUIT:
                 self.running = False
         self.ui.update(events, time_delta)
+        
+    def draw_effects (self):
+        """
+        Dessine les effets du jeu.
+        """
+        pass
 
     def draw (self):
         self.screen.fill((255, 255, 255))
         self.state.draw()
-        # TODO: dessiner les effets ici, fade-in, fade-out ...
+        self.draw_effects()
         self.ui.draw()

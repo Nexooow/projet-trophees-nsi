@@ -1,12 +1,17 @@
 import typing
+
 from utils.file import File
 
 assign_tasks = {
     "dig": "worker",
     "bring_food": "worker",
     "build": "worker",
-    "fight": "soldier"
+    "fight": "warrior",
+    "heal": "nurse",
+    "research": "scientist",
+    "explore": "explorer",
 }
+
 
 class TaskManager:
     """
@@ -16,27 +21,35 @@ class TaskManager:
 
     def __init__(self, colony):
         self.colony = colony
-        self.assigned: dict[str, typing.Optional[str]] = {} 
-        self.tasks = {}
-        self.queue = File()
+        self.assigned: dict[str, typing.Optional[str]] = {}
+        self.tasks = {
+            "worker": File(),
+            "nurse": File(),
+            "warrior": File(),
+            "scientist": File(),
+            "explorer": File(),
+        }
 
-    def add_task(self, task: dict):
+    def add_task(self, task: dict) -> bool:
         """
         Ajoute une tâche à exécuter, qui sera ensuite prise en charge par les fourmis disponibles.
+        Renvoie True si la tâche est éxécutée directement ou False si elle est ajoutée à la file d'attente.
         """
         assert "type" in task
         assert "id" in task
-        self.tasks[task["id"]] = task
-        self.queue.enfiler(task["id"], priority=task["priority"] if "priority" in task else 0)
+        ant_type = assign_tasks[task["type"]]
+        if ant_type is None:
+            return False
+        self.tasks[ant_type].enfiler(task)
         self.handle_tasks()
-    
-    def mark_as_finished (self, task_id):
+        return True
+
+    def mark_as_finished(self, task_id):
         del self.tasks[task_id]
         self.handle_tasks()
-        
-    def handle_tasks (self):
+
+    def handle_tasks(self):
         """
-        ...
+        Gère les tâches en fonction de la disponibilité des fourmis.
         """
-        task = self.tasks[self.queue.sommet()]
-        
+        pass
