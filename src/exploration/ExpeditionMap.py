@@ -47,15 +47,15 @@ class ExpeditionMap:
         if node.parent is None:
             return True
         return node.parent.is_cleared
-    def draw(self,screen,world,cam_x,cam_y):
+    def draw(self,screen,cam_x,cam_y):
         visible_nodes=self.get_visible_nodes()
         
         for node in visible_nodes:
-            node.draw_links(screen)
+            node.draw_links(screen,cam_x,cam_y)
         for node in visible_nodes:
-            node.draw(screen) #Deux boucles pour que les nodes soient au-dessus des connections
+            node.draw(screen,cam_x,cam_y) #Deux boucles pour que les nodes soient au-dessus des connections
         self.draw_info(screen,visible_nodes)
-        screen.blit(world,(cam_x,cam_y))
+        
     def draw_info(self,screen,nodes):
         font=pygame.font.Font(None,24)
         cur_x,cur_y=self.current.position

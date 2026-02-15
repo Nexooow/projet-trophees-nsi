@@ -45,8 +45,8 @@ class Node:
             child.is_discovered=True
     def create_game(self,expedition_members=[]):
         return Game(self.difficulty,expedition_members)
-    def draw(self,screen,node_radius=20):
-        x,y=self.position
+    def draw(self,screen,cam_x,cam_y,node_radius=20):
+        x,y=self.position[0]-cam_x,self.position[1]-cam_y
         if self.is_cleared:
             color=(0,255,0)
         elif self.is_discovered:
@@ -60,10 +60,10 @@ class Node:
         font = pygame.font.Font(None, 16)
         text = font.render(str(self.difficulty), True, (255, 255, 255))
         screen.blit(text, (int(x) - 8, int(y) - 8))
-    def draw_links(self,screen):
+    def draw_links(self,screen,cam_x,cam_y):
         if self.parent and self.is_visible and self.parent.is_visible:
-            parent_x,parent_y=self.parent.position
-            child_x,child_y=self.position
+            parent_x,parent_y=self.parent.position[0]-cam_x,self.parent.position[1]-cam_y
+            child_x,child_y=self.position[0]-cam_x,self.position[1]-cam_y
             color = (150, 150, 150) if self.is_discovered else (80, 80, 80)
             pygame.draw.line(
                 screen,

@@ -85,13 +85,13 @@ def Game(difficulty,colony):
     pos2=sample(positions,randint(0,len(fourmis_nwar)))
     friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant in fourmis_nwar for x,y in pos2] if len(fourmis_nwar)>0 else []
     units=[
-        choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)
+        choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)[0]
         for x,y in pos1
     ]
     
     units+=friendlies
     print(units)
-    print()
+
     turn_index=0
     shuffle(units)
     active=units[turn_index]
