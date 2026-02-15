@@ -3,6 +3,7 @@ Tests pour les classes / fonctions utilitaires.
 """
 
 from src.utils.grid import Grid
+from src.utils.file import File
 
 class TestUtils:
     
@@ -23,3 +24,29 @@ class TestUtils:
         
         path_impossible = grid.a_star((0, 4), (4, 0))
         assert path_impossible is None
+
+    def test_file_basic(self):
+        f = File()
+        assert f.est_vide()
+        f.enfiler("A")
+        assert not f.est_vide()
+        assert f.sommet() == "A"
+        assert f.defiler() == "A"
+        assert f.est_vide()
+
+    def test_file_priority(self):
+        f = File()
+        f.enfiler("A", priority=1)
+        f.enfiler("B", priority=3)
+        f.enfiler("C", priority=2)
+
+        assert f.defiler() == "B"
+        assert f.defiler() == "C"
+        assert f.defiler() == "A"
+        assert f.est_vide()
+
+    def test_file_init(self):
+        f = File(["A", "B"])
+        assert f.defiler() == "A"
+        assert f.defiler() == "B"
+        assert f.est_vide()
