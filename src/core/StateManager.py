@@ -20,6 +20,7 @@ class StateManager:
             "colony": ColonyState(self),
             "map": MapState(self),
             "expedition": ExpeditionState(self)
+            
         }
         self.current_state: str = "colony"
 
