@@ -5,10 +5,9 @@ import math
 class Grid:
     CELL_SIZE = 8  # Taille d'une cellule en pixels
 
-    def __init__(self, start_y, screen_size):
-        self.start_y = start_y
+    def __init__(self, screen_size):
         self.pixel_width = math.floor(screen_size[0])
-        self.pixel_height = math.floor(screen_size[1] - start_y)
+        self.pixel_height = math.floor(screen_size[1])
 
         # Dimensions de la grille en cellules (8x8 pixels par cellule)
         self.width = math.ceil(self.pixel_width / self.CELL_SIZE)
@@ -46,6 +45,13 @@ class Grid:
         if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
             self.grid[cell_y][cell_x]["state"] = state
             self.grid[cell_y][cell_x]["bitmap"] = bitmap
+            
+    def get_cell_center (self, x, y):
+        """
+        Retourne les coordonnées du centre d'une cellule
+        """
+        cell = self.pixel_to_cell(x, y)
+        return cell[0] * self.CELL_SIZE + (self.CELL_SIZE // 2), cell[1] * self.CELL_SIZE + (self.CELL_SIZE // 2)
 
     def pixel_to_cell(self, pixel_x, pixel_y):
         """Convertit des coordonnées pixel en coordonnées cellule"""
@@ -68,88 +74,6 @@ class Grid:
         bmp_y = pixel_y - cell_pixel_y
         return bmp_x, bmp_y
 
-    def supprimer_cellules(self, x, y, w, h):
-        """
-        Supprime les cellules dans un rectangle (x, y, w, h)
-        Met à jour les cellules qui sont en collision avec le rectangle
-        """
-        # ajuster y pour les coordonnées de la grille
-        y = y - self.start_y
-
-        # coordonnées du rectangle en pixels
-        rect_x1 = max(0, x)
-        rect_y1 = max(0, y)
-        rect_x2 = min(self.pixel_width, x + w)
-        rect_y2 = min(self.pixel_height, y + h)
-
-        # Convertir en coordonnées de cellules
-        cell_x1, cell_y1 = self.pixel_to_cell(rect_x1, rect_y1)
-        cell_x2, cell_y2 = self.pixel_to_cell(rect_x2 - 1, rect_y2 - 1)
-
-        # parcourir toutes les cellules touchées
-        for cell_y in range(cell_y1, cell_y2 + 1):
-            for cell_x in range(cell_x1, cell_x2 + 1):
-                if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
-                    self._update_cell_with_rect(
-                        cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
-                    )
-
-    def _update_cell_with_rect(
-        self, cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
-    ):
-        """
-        Met à jour une cellule en fonction d'un rectangle de suppression
-        """
-        cell = self.grid[cell_y][cell_x]
-        
-        if cell["state"] == "occupied":
-            return
-
-        # Coordonnées pixel de la cellule
-        cell_pixel_x, cell_pixel_y = self.cell_to_pixel(cell_x, cell_y)
-
-        # Intersection entre la cellule et le rectangle de suppression
-        inter_x1 = max(cell_pixel_x, rect_x1)
-        inter_y1 = max(cell_pixel_y, rect_y1)
-        inter_x2 = min(cell_pixel_x + self.CELL_SIZE, rect_x2)
-        inter_y2 = min(cell_pixel_y + self.CELL_SIZE, rect_y2)
-
-        # Si la cellule est entièrement dans le rectangle
-        if (
-            inter_x1 == cell_pixel_x
-            and inter_y1 == cell_pixel_y
-            and inter_x2 == cell_pixel_x + self.CELL_SIZE
-            and inter_y2 == cell_pixel_y + self.CELL_SIZE
-        ):
-            self.set_cell_state(cell_x, cell_y, "empty", None)
-            return
-
-        # Sinon, créer ou mettre à jour le bitmap
-        if cell["state"] == "full":
-            bitmap = [
-                [True for _ in range(self.CELL_SIZE)] for _ in range(self.CELL_SIZE)
-            ]
-        elif cell["state"] == "partial":
-            bitmap = cell["bitmap"]
-        else:  # empty
-            return
-        
-        # Marquer les pixels supprimés dans le bitmap
-        for py in range(math.floor(inter_y1), math.floor(inter_y2)):
-            for px in range(math.floor(inter_x1), math.floor(inter_x2)):
-                bmp_x = px - cell_pixel_x
-                bmp_y = py - cell_pixel_y
-                if 0 <= bmp_x < self.CELL_SIZE and 0 <= bmp_y < self.CELL_SIZE:
-                    bitmap[bmp_y][bmp_x] = False
-
-        # Vérifier si la cellule est maintenant vide ou partielle
-        is_filled = any(any(row) for row in bitmap)
-
-        if not is_filled:
-            self.set_cell_state(cell_x, cell_y, "empty", None)
-        else:
-            self.set_cell_state(cell_x, cell_y, "partial", bitmap)
-
     def is_cell_passable(self, cell_x, cell_y):
         """
         Vérifie si une cellule est "passable" pour le pathfinding
@@ -157,7 +81,7 @@ class Grid:
         cell = self.get_cell(cell_x, cell_y)
         if cell is None:
             return False
-        return cell["state"] == "empty"
+        return cell["state"] == "empty" or cell["state"] == "occupied_walkable"
 
     def get_neighbors(self, cell_x, cell_y):
         """
@@ -216,13 +140,10 @@ class Grid:
 
         # Dictionnaire des scores g (coût depuis le départ)
         g_score = {start: 0.0}
-
         # Dictionnaire des scores f (g + distance)
         f_score = {start: self.heuristic(start, goal)}
-
         # Dictionnaire pour reconstruire le chemin
         came_from = {}
-
         # Ensemble des positions déjà visitées
         visites = set()
 
@@ -250,7 +171,6 @@ class Grid:
                     continue
 
                 # Calculer le coût pour atteindre ce voisin
-                # Coût de 1.0 pour les mouvements orthogonaux, ~1.414 pour les diagonales
                 dx = abs(neighbor[0] - current[0])
                 dy = abs(neighbor[1] - current[1])
                 move_cost = math.sqrt(dx * dx + dy * dy)
