@@ -1,5 +1,5 @@
 import pygame
-import pygame_gui
+# import pygame_gui
 
 from .StateManager import StateManager
 from .TimeManager import TimeManager
@@ -13,10 +13,14 @@ class GameManager:
 
         self.screen = pygame.display.set_mode(
             (0, 0),
-            pygame.FULLSCREEN | pygame.SRCALPHA | pygame.HWSURFACE, # plusieurs flags; plein écran, support de la transparence, accélération matérielle
+            pygame.FULLSCREEN | pygame.SRCALPHA | pygame.HWSURFACE, # plein écran, support de la transparence, accélération matérielle
         )
         self.width, self.height = self.screen.get_size()
         self.clock = pygame.time.Clock()
+        
+        self.filters = {
+            "blur": 3
+        }
 
         self.ui = UIManager(self)
         self.state = StateManager(self)
@@ -34,15 +38,21 @@ class GameManager:
         Met à jour le jeu et délègue les événements.
         """
         time_delta = self.clock.tick(60) / 1000.0
-        self.time.update()
+        self.time.add_frame()
         self.state.update(events)
         for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
-        self.ui.process_events(events)
-        self.ui.update(events,time_delta)
+        self.ui.update(events, time_delta)
+        
+    def draw_effects (self):
+        """
+        Dessine les effets du jeu.
+        """
+        pass
 
     def draw (self):
         self.screen.fill((255, 255, 255))
         self.state.draw()
+        self.draw_effects()
         self.ui.draw()
