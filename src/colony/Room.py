@@ -1,32 +1,32 @@
 import pygame
-ROOMS={
-    "name":[pygame.image.load("image_link"),pygame.image.load("being_built")]
-}
-class Room:
-    def __init__(self, name, pos_x,pos_y):
+
+from config.settings import colony_underground_start
+
+
+class Room(pygame.sprite.Sprite):
+    def __init__(self, colony, name: str, config: dict):
+        super().__init__()
+        self.colony = colony
         self.name = name
-        self.ants = []
-        self.pos_x=pos_x
-        self.pos_y=pos_y
-        self.being_built=False
-        self.construction_time=3600
-        self.building_time=0
-    def add_ant(self, ant):
-        self.ants.append(ant)
-    def remove_ant(self, ant):
-        if ant in self.ants:
-            self.ants.remove(ant)
-    def get_ants(self):
-        return self.ants
+
+        self.x = config["x"] * 8
+        self.y = config["y"] * 8 + colony_underground_start
+        self.width = config["width"] * 8
+        self.height = config["height"] * 8
+
+        for x in range(config["x"], config["x"] + config["width"]):
+            for y in range(config["y"], config["y"] + config["height"]):
+                if f"{x},{y}" in config["walkable"]:
+                    self.colony.grid.set_cell_state(x, y, "occupied_walkable")
+                else:
+                    self.colony.grid.set_cell_state(x, y, "occupied")
+
+        self.image = pygame.Surface((self.width, self.height))
+        self.rect = self.image.get_rect()
+        pygame.draw.rect(self.image, (255, 0, 0), self.rect)
+
     def update(self):
-        if self.being_built:
-            self.building_time+=1
-    def draw(self, surface):
-        if self.building_time>=self.construction_time:
-            self.building_time=0
-            self.being_built=False
-            
-        if not self.being_built:
-            surface.blit(ROOMS[self.name][0],(self.pos_x,self.pos_y))
-        else:
-            surface.blit(ROOMS[self.name][1],(self.pos_x,self.pos_y))
+        pass
+
+    def draw(self):
+        self.colony.world.blit(self.image, (self.x, self.y))

@@ -10,13 +10,7 @@ class TimeManager:
         """
         Renvoie si le temps est actuellement en pause ou non.
         """
-        return self.paused
-        
-    def set_pause (self, boolean=True):
-        """
-        Met en pause ou reprend le temps.
-        """
-        self.paused = boolean
+        return self.paused or self.game.state.is_flag_active("pause")
         
     def get_time (self):
         """
@@ -36,7 +30,7 @@ class TimeManager:
         """
         return 8 < self.get_time()[0] < 20
 
-    def update (self):
+    def add_frame (self):
         """
         Met à jour le temps.
         """
