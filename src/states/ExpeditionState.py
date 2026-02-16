@@ -79,6 +79,10 @@ class ExpeditionState(State):
                         self.screen.blit(text,text_rect)
         keys=pygame.key.get_pressed()
         speed=10
+        if keys[pygame.K_z]:
+            self.camera_zoom=min(self.camera_zoom+0.1,2.0)
+        if keys[pygame.K_w]:
+            self.camera_zoom=min(self.camera_zoom-0.1,2.0)
         if keys[pygame.K_UP]:
             self.cam_y-=speed
         if keys[pygame.K_DOWN]:
@@ -89,7 +93,7 @@ class ExpeditionState(State):
             self.cam_x+=speed
     def draw_map_state(self):
         
-        self.screen.fill((20,20,30)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
+        self.screen.fill((100,100,150)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
         self.expedition_map.draw(self.screen,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
         

@@ -82,8 +82,13 @@ def Game(difficulty,colony):
     positions=list(product(range(20),range(4)))
     pos1=sample(positions,randint(1,6))
     ally_pos=list(product(range(20),range(10,14)))
-    pos2=sample(positions,randint(0,len(fourmis_nwar)))
+    fourmis_nwar.append(Ant("warrior",1,1,1,0,0)) # Pour des tests
+    
+    pos2=sample(ally_pos,randint(1,len(fourmis_nwar)))
+    print(len(fourmis_nwar),fourmis_nwar)
+    print(pos2)
     friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant in fourmis_nwar for x,y in pos2] if len(fourmis_nwar)>0 else []
+    print(len(fourmis_nwar))
     units=[
         choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)[0]
         for x,y in pos1
@@ -91,42 +96,50 @@ def Game(difficulty,colony):
     
     units+=friendlies
     print(units)
+    print(friendlies)
 
     turn_index=0
     shuffle(units)
     active=units[turn_index]
     grid = Grid(20, 14)
     running=True
-    grid.draw(screen)
+    
+    for u in units:
+            print(u.x,u.y,neighbors(u.x,u.y,20,14))
     while running:
         screen.fill((0,0,0))
+        grid.draw(screen)
         for ressource in ressources_obj:
             ressource.draw(screen)
         for u in units:
-            print(u)
             u.draw(screen)
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 running=False
+                pygame.quit()
+                return
         keys=pygame.key.get_pressed()
         
         if active.points > 0:
             enemies = [u for u in units if u.team != active.team]
             if active.team!="noir":
+                
                 target = closest_enemy(active, enemies,grid,units)
-                blocked = [u.tile() for u in units if u is not active]
-                path = shortest_path(
-                    active.tile(),
-                    target.tile(),
-                    grid.graph,
-                    grid.width,
-                    blocked,
-                    diagonals=active.diagonal,
-                    diagonal_edges=grid.diagonal_edges
-                )
-                if path:
-                    active.move_to(*path[0])
-                    active.points -= 1
+                
+                if target is not None:
+                    blocked = [u.tile() for u in units if (u is not active) or (u  not in enemies)]
+                    path = shortest_path(
+                        active.tile(),
+                        target.tile(),
+                        grid.graph,
+                        grid.width,
+                        blocked,
+                        diagonals=active.diagonal,
+                        diagonal_edges=grid.diagonal_edges
+                    )
+                    if path:
+                        active.move_to(*path[0])
+                        active.points -= 1
             if active.team=="noir":
                 if (active.x,active.y) in ressources_dispos.keys():
                     colony.add_to_stock(ressources_dispos[(active.x,active.y)])
@@ -155,3 +168,4 @@ def Game(difficulty,colony):
             active.reset_turn()
             turn_index = (turn_index + 1) % len(units)
             active = units[turn_index]
+        pygame.display.flip()
