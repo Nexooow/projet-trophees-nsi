@@ -36,23 +36,27 @@ def shortest_path(start,target,graph,grid_width,blocked_positions=(),diagonals=F
     G=graph.copy()
     if diagonals:
         G.add_edges_from(diagonal_edges)
+    print(G.nodes)
+    print(blocked_positions)
     for x,y in blocked_positions:
         try:
-            G.remove_node(xy_to_node(x,y,grid_width))
+            G.remove_node((x,y))
         except nx.NetworkXError:
             pass
     try:
-        path=nx.shortest_path(G,xy_to_node(*start,grid_width),xy_to_node(*target,grid_width),weight="weight")
+        print(G.nodes)
+        print(G)
+        path=nx.shortest_path(G,(start[0],start[1]),(target[0],target[1]),weight="weight")
     except nx.NetworkXNoPath:
         return []
-    return [node_to_xy(node,grid_width) for node in path][1:]
+    return path[1:]
 
 terrains={"dirt":{"weight":1,"img":""},"mud":{"weight":2,"img":""},"water":{"weight":3,"img":""},"stone":{"weight":float("inf"),"img":""}}
 def weight_to_color(weight):
-    return {1:(50,180,50),2:(160,120,60),3:(50,100,180),100:(128,128,128)}.get(weight,(100,100,100))
+    return {1:(50,180,50),2:(160,120,60),3:(50,100,180),4:(128,128,128)}.get(weight,(100,100,100))
     #return terrains[weight]["weight"] if weight in terrains else ""
 def closest_enemy(unit,enemies,grid,units):
-    blocked=[(u.x,u.y) for u in units if u is not unit]
+    blocked=[(u.x,u.y) for u in units if u is not unit and u not in enemies]
     closest=None
     dist=float("inf")
     for enemy in enemies:

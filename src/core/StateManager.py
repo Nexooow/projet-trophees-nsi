@@ -22,7 +22,7 @@ class StateManager:
             "expedition": ExpeditionState(self)
             
         }
-        self.current_state: str = "colony"
+        self.current_state: str = "expedition"
 
         self.get_current_state().enable()
 

@@ -7,6 +7,7 @@ from .Utilities import *
 from .Unit import *
 from .ExplorerGroup import *
 import math
+from .AntPuppet import AntPuppet
 RESSOURCES_IMAGES={
     "nom":pygame.image.load("./assets/fonts/ant.png")
 }
@@ -36,18 +37,18 @@ class Grid:
         self.weights={(x,y):choice([1,2,3,100]) for x in range(self.width) for y in range(self.height)}
         for y in range(height):
             for x in range(width):
-                i=xy_to_node(x,y,width)
+                i=x,y
                 for nx,ny in neighbors(x,y,width,height):
-                    edges.append((i,xy_to_node(nx,ny,width),{"weight":self.weights[(nx,ny)]}))
+                    edges.append((i,(nx,ny),{"weight":self.weights[(nx,ny)]}))
         self.graph=netx.DiGraph(edges)
         self.diagonal_edges = []
         for y in range(height):
             for x in range(width):
-                i = xy_to_node(x, y, width)
+                i = x,y
                 for dx, dy in ((1,1),(1,-1),(-1,1),(-1,-1)):
                     nx, ny = x + dx, y + dy
                     if 0 <= nx < width and 0 <= ny < height:
-                        j = xy_to_node(nx, ny, width)
+                        j = nx,ny
                         cost = self.weights[(nx, ny)] * 1.414
                         self.diagonal_edges.append((i, j, {"weight": cost}))
     def draw(self,screen):
@@ -82,30 +83,25 @@ def Game(difficulty,colony):
     positions=list(product(range(20),range(4)))
     pos1=sample(positions,randint(1,6))
     ally_pos=list(product(range(20),range(10,14)))
-    fourmis_nwar.append(Ant("warrior",1,1,1,0,0)) # Pour des tests
+    fourmis_nwar.append(AntPuppet(1)) # Pour des tests
     
     pos2=sample(ally_pos,randint(1,len(fourmis_nwar)))
-    print(len(fourmis_nwar),fourmis_nwar)
-    print(pos2)
+    
     friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant in fourmis_nwar for x,y in pos2] if len(fourmis_nwar)>0 else []
-    print(len(fourmis_nwar))
+
     units=[
         choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)[0]
         for x,y in pos1
     ]
     
     units+=friendlies
-    print(units)
-    print(friendlies)
-
+   
     turn_index=0
     shuffle(units)
     active=units[turn_index]
     grid = Grid(20, 14)
     running=True
     
-    for u in units:
-            print(u.x,u.y,neighbors(u.x,u.y,20,14))
     while running:
         screen.fill((0,0,0))
         grid.draw(screen)
@@ -118,54 +114,56 @@ def Game(difficulty,colony):
                 running=False
                 pygame.quit()
                 return
-        keys=pygame.key.get_pressed()
-        
-        if active.points > 0:
-            enemies = [u for u in units if u.team != active.team]
-            if active.team!="noir":
+            print(active.team,active.points,active.tile())
+            
+            if active.points > 0:
+                enemies = [u for u in units if u.team != active.team]
+                if active.team!="noir":
+                    
+                    target = closest_enemy(active, enemies,grid,units)
+                    print(target)
+                    if target is not None:
+                        blocked = [u.tile() for u in units if (u is not active) and (u  not in enemies)]
+                        path = shortest_path(
+                            active.tile(),
+                            target.tile(),
+                            grid.graph,
+                            grid.width,
+                            blocked,
+                            diagonals=active.diagonal,
+                            diagonal_edges=grid.diagonal_edges
+                        )
+                        if path:
+                            active.move_to(*path[0])
+                            active.points -= 1
                 
-                target = closest_enemy(active, enemies,grid,units)
-                
-                if target is not None:
-                    blocked = [u.tile() for u in units if (u is not active) or (u  not in enemies)]
-                    path = shortest_path(
-                        active.tile(),
-                        target.tile(),
-                        grid.graph,
-                        grid.width,
-                        blocked,
-                        diagonals=active.diagonal,
-                        diagonal_edges=grid.diagonal_edges
-                    )
-                    if path:
-                        active.move_to(*path[0])
-                        active.points -= 1
-            if active.team=="noir":
-                if (active.x,active.y) in ressources_dispos.keys():
-                    colony.add_to_stock(ressources_dispos[(active.x,active.y)])
-                    ressources_dispos.pop((active.x,active.y))
-                if keys[pygame.K_LEFT] and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]) :
-                    active.move_to(active.x - 1, active.y)
-                    active.points -= 1
-                    active.orientation = True
+                if active.team=="noir":
+                    if event.type==pygame.KEYDOWN:
+                        if (active.x,active.y) in ressources_dispos.keys():
+                            colony.add_to_stock(ressources_dispos[(active.x,active.y)])
+                            ressources_dispos.pop((active.x,active.y))
+                        if event.key==pygame.K_LEFT and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]) and :
+                            active.move_to(active.x - 1, active.y)
+                            active.points -= 1
+                            active.orientation = True
 
-                elif keys[pygame.K_RIGHT] and active.x < grid.width - 1 and all([(active.x+1,active.y)!=(u.x,u.y) for u in friendlies]):
-                    active.move_to(active.x + 1, active.y)
-                    active.points -= 1
-                    active.orientation = False
+                        elif event.key==pygame.K_RIGHT and active.x < grid.width - 1 and all([(active.x+1,active.y)!=(u.x,u.y) for u in friendlies]):
+                            active.move_to(active.x + 1, active.y)
+                            active.points -= 1
+                            active.orientation = False
 
-                elif keys[pygame.K_UP] and active.y > 0 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
-                    active.move_to(active.x, active.y - 1)
-                    active.points -= 1
+                        elif event.key==pygame.K_UP and active.y > 0 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
+                            active.move_to(active.x, active.y - 1)
+                            active.points -= 1
 
-                elif keys[pygame.K_DOWN] and active.y < grid.height - 1 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
-                    active.move_to(active.x, active.y + 1)
-                    active.points -= 1
-            for enemy in enemies:
-                if (enemy.x,enemy.y)==(active.x,active.y):
-                    units.remove(enemy)
-        else:
-            active.reset_turn()
-            turn_index = (turn_index + 1) % len(units)
-            active = units[turn_index]
+                        elif event.key==pygame.K_DOWN and active.y < grid.height - 1 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
+                            active.move_to(active.x, active.y + 1)
+                            active.points -= 1
+                for enemy in enemies:
+                    if (enemy.x,enemy.y)==(active.x,active.y):
+                        units.remove(enemy)
+            else:
+                active.reset_turn()
+                turn_index = (turn_index + 1) % len(units)
+                active = units[turn_index]
         pygame.display.flip()
