@@ -24,6 +24,7 @@ from utils.grid import Grid
 
 from .State import State
 
+leaf_image = pygame.transform.scale(pygame.image.load("./assets/icons/leaf.png"), (16, 16))
 
 class ColonyState(State):
     def __init__(self, state_manager):
@@ -95,7 +96,17 @@ class ColonyState(State):
         """
         Dessine l'interface utilisateur
         """
-        pass
+        info_width = 376
+        info_height = 130
+        info_x = self.game.width-(info_width+8)
+        color = "#542323"
+        
+        pygame.draw.rect(self.game.screen, color, (info_x, 8, info_width, info_height))
+        pygame.draw.rect(self.game.screen, (255, 0, 255), (info_x+2, 8+2, 100, info_height-4))
+        
+        pygame.draw.rect(self.game.screen, color, (info_x+info_width/2, 8+info_height+4, info_width/2, 16+8))
+        self.game.screen.blit(leaf_image, (info_x+info_width/2+4, 8+info_height+8))
+        
         
     def generate_grid (self):
         """
@@ -142,6 +153,9 @@ class ColonyState(State):
                                 )
                                 
     def draw(self):
+        """
+        TODO
+        """
         pygame.draw.rect(
             self.world, "#7dbefa", (0, 0, colony_width, colony_height * 0.12)
         )
@@ -165,3 +179,4 @@ class ColonyState(State):
             room.draw()
 
         self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
+        self.draw_ui()

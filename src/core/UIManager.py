@@ -11,7 +11,6 @@ class UIManager:
         self._ui = pygame_gui.UIManager(
             self.screen.get_size(),
             enable_live_theme_updates=True,
-            theme_path="src/config/ui_theme.json"
         )
         
         self.elements: dict[str, dict] = {}
@@ -98,7 +97,11 @@ class UIManager:
         """
         self.create_element(
             identifiant,
-            pygame_gui.elements.UILabel(relative_rect=rect, text=text, manager=self._ui)
+            pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect, text=text,
+                manager=self._ui,
+                object_id=identifiant
+            )
         )
 
     def create_button(
@@ -112,7 +115,12 @@ class UIManager:
         """
         self.create_element(
             identifiant,
-            pygame_gui.elements.UIButton(relative_rect=pygame.Rect(rect), text=text, manager=self._ui),
+            pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
+                text=text,
+                manager=self._ui,
+                object_id=identifiant
+            ),
             action=action
         )
 
@@ -127,9 +135,10 @@ class UIManager:
         Crée un champ de saisie de texte
         """
         element = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect(rect),
+            relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
             manager=self._ui,
-            placeholder_text=placeholder
+            placeholder_text=placeholder,
+            object_id=identifiant
         )
         if initial_text:
             element.set_text(initial_text)
@@ -148,8 +157,9 @@ class UIManager:
             identifiant,
             pygame_gui.elements.UITextBox(
                 html_text=html_text,
-                relative_rect=pygame.Rect(rect),
-                manager=self._ui
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
+                manager=self._ui,
+                object_id=identifiant
             )
         )
 
@@ -168,8 +178,9 @@ class UIManager:
             pygame_gui.elements.UIDropDownMenu(
                 options_list=options,
                 starting_option=starting_option or options[0],
-                relative_rect=pygame.Rect(rect),
-                manager=self._ui
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
+                manager=self._ui,
+                object_id=identifiant
             )
         )
 
@@ -187,10 +198,11 @@ class UIManager:
         self.create_element(
             identifiant,
             pygame_gui.elements.UIHorizontalSlider(
-                relative_rect=pygame.Rect(rect),
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
                 start_value=start_value,
                 value_range=value_range,
-                manager=self._ui
+                manager=self._ui,
+                object_id=identifiant
             ),
             action=action
         )
@@ -207,9 +219,10 @@ class UIManager:
         self.create_element(
             identifiant,
             pygame_gui.elements.UIPanel(
-                relative_rect=pygame.Rect(rect),
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
                 starting_height=starting_layer_height,
-                manager=self._ui
+                manager=self._ui,
+                object_id=identifiant
             )
         )
 
@@ -225,9 +238,10 @@ class UIManager:
         self.create_element(
             identifiant,
             pygame_gui.elements.UIImage(
-                relative_rect=pygame.Rect(rect),
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
                 image_surface=image_surface,
-                manager=self._ui
+                manager=self._ui,
+                object_id=identifiant
             )
         )
 
@@ -244,10 +258,11 @@ class UIManager:
         self.create_element(
             identifiant,
             pygame_gui.elements.UISelectionList(
-                relative_rect=pygame.Rect(rect),
+                relative_rect=pygame.Rect(rect) if isinstance(rect, tuple) else rect,
                 item_list=item_list,
                 manager=self._ui,
-                allow_multi_select=allow_multi_select
+                allow_multi_select=allow_multi_select,
+                object_id=identifiant
             )
         )
 

@@ -72,3 +72,9 @@ class BuildMode:
                 colony_brush_color,
                 (brush_x, brush_y, colony_brush_size, colony_brush_size),
             )
+            
+    def dig_selection (self):
+        """
+        Ajoute aux tâches les zones à creuser.
+        """
+        pass
