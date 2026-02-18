@@ -139,26 +139,31 @@ def Game(difficulty,colony):
                 
                 if active.team=="noir":
                     if event.type==pygame.KEYDOWN:
+                        tiles=reachable_tiles(active.x,active.y,active.points,grid)
                         if (active.x,active.y) in ressources_dispos.keys():
                             colony.add_to_stock(ressources_dispos[(active.x,active.y)])
                             ressources_dispos.pop((active.x,active.y))
-                        if event.key==pygame.K_LEFT and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]) and :
+                        if event.key==pygame.K_LEFT and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies])   and (active.x-1,active.y) in tiles :
+                            active.points -= grid.weights[(active.x-1,active.y)]
                             active.move_to(active.x - 1, active.y)
-                            active.points -= 1
+                            
                             active.orientation = True
 
-                        elif event.key==pygame.K_RIGHT and active.x < grid.width - 1 and all([(active.x+1,active.y)!=(u.x,u.y) for u in friendlies]):
+                        elif event.key==pygame.K_RIGHT and active.x < grid.width - 1 and all([(active.x+1,active.y)!=(u.x,u.y) for u in friendlies]) and (active.x+1,active.y) in tiles:
+                            active.points -= grid.weights[(active.x+1,active.y)]
                             active.move_to(active.x + 1, active.y)
-                            active.points -= 1
+                            
                             active.orientation = False
 
-                        elif event.key==pygame.K_UP and active.y > 0 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
+                        elif event.key==pygame.K_UP and active.y > 0 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]) and (active.x,active.y-1) in tiles:
+                            active.points -= grid.weights[(active.x,active.y-1)]
                             active.move_to(active.x, active.y - 1)
-                            active.points -= 1
+                            
 
-                        elif event.key==pygame.K_DOWN and active.y < grid.height - 1 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]):
+                        elif event.key==pygame.K_DOWN and active.y < grid.height - 1 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]) and (active.x,active.y+1) in tiles:
+                            active.points -= grid.weights[(active.x,active.y+1)]
                             active.move_to(active.x, active.y + 1)
-                            active.points -= 1
+                           
                 for enemy in enemies:
                     if (enemy.x,enemy.y)==(active.x,active.y):
                         units.remove(enemy)
