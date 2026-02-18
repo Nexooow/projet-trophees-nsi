@@ -142,7 +142,7 @@ def Game(difficulty,colony):
                         if (active.x,active.y) in ressources_dispos.keys():
                             colony.add_to_stock(ressources_dispos[(active.x,active.y)])
                             ressources_dispos.pop((active.x,active.y))
-                        if event.key==pygame.K_LEFT and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]) and :
+                        if event.key==pygame.K_LEFT and active.x > 0 and all([(active.x-1,active.y)!=(u.x,u.y) for u in friendlies]):
                             active.move_to(active.x - 1, active.y)
                             active.points -= 1
                             active.orientation = True

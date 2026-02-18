@@ -20,9 +20,8 @@ class StateManager:
             "colony": ColonyState(self),
             "map": MapState(self),
             "expedition": ExpeditionState(self)
-            
         }
-        self.current_state: str = "expedition"
+        self.current_state: str = "menu"
 
         self.get_current_state().enable()
 

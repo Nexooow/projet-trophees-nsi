@@ -1,30 +1,23 @@
-import math
-
-import numpy as np
 import pygame
-from pygame.typing import ColorLike
-import pygame_gui
 
-from colony.Ant import Ant
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
-from colony.Room import Room
 from colony.rooms.Depot import Depot
 from colony.TaskManager import TaskManager
-from config.settings import (
-    colony_brush_color,
-    colony_brush_size,
+from constants import (
+    UIColors,
     colony_height,
     colony_underground_start,
     colony_width,
-    dark_dirt_color,
     dirt_color,
 )
-from utils.grid import Grid
+from lib.grid import Grid
+from lib.ui import Label, ProgressBar
 
 from .State import State
 
-leaf_image = pygame.transform.scale(pygame.image.load("./assets/icons/leaf.png"), (16, 16))
+_leaf_image = pygame.image.load("./assets/icons/leaf.png")
+
 
 class ColonyState(State):
     def __init__(self, state_manager):
@@ -39,10 +32,12 @@ class ColonyState(State):
 
         self.build_mode = BuildMode(self)
 
-        self.grid_surface = pygame.Surface((colony_width, colony_height-colony_underground_start), pygame.SRCALPHA)
+        self.grid_surface = pygame.Surface(
+            (colony_width, colony_height - colony_underground_start), pygame.SRCALPHA
+        )
         self.grid = Grid(self.grid_surface.get_size())
         grid_x_center = self.grid.width // 2
-        
+
         self.rooms = [
             Depot(self, {"x": grid_x_center, "y": 0, "width": 13, "height": 7})
         ]
@@ -50,10 +45,65 @@ class ColonyState(State):
         self.ants = [Worker(self, {"power": 1}, (100, 100))]
         # self.ennemies = []
 
-        self.food = 0
+        self.food = 100000
         # self.science = 0
-        
+
         self.generate_grid()
+
+    def enable(self):
+        w, h = self.game.width, self.game.height
+
+        info_w = 376
+        info_h = 130
+        info_x = w - (info_w + 8)
+        info_y = 8
+
+        self.ui.panel(
+            "colony_info_panel",
+            (info_x, info_y, info_w, info_h),
+        ).set_z_index(10)
+
+        small_w = info_w // 2
+        small_h = 32+12
+        small_x = info_x + info_w - small_w
+        small_y = info_y + info_h + 8
+
+        self.ui.panel(
+            "colony_food_panel",
+            (small_x, small_y, small_w, small_h),
+        ).set_z_index(10)
+
+        icon_y = small_y + (small_h - 32) // 2
+        self.ui.image(
+            "colony_food_icon",
+            _leaf_image,
+            (small_x + 8, icon_y, 32, 32),
+        ).set_z_index(11)
+
+        self.ui.label(
+            "colony_food_count",
+            f"{self.food}",
+            (small_x + 8 + 32 + 4, small_y, small_w - 8 - 32 - 4 - 8, small_h),
+        ).set_font("assets/fonts/monogram.ttf", 32).set_text_color(
+            UIColors.TEXT
+        ).set_align("right", "center").set_z_index(11)
+
+        self.ui.panel(
+            "colony_preview_panel",
+            (info_x + 2, info_y + 2, 100, info_h - 4),
+        ).set_bg_color((255, 0, 255)).set_border(None).set_z_index(11)
+
+        self.ui.label(
+            "colony_build_mode_hint",
+            "",
+            (8, h - 40, 300, 32),
+        ).set_font("assets/fonts/monogram.ttf", 22).set_text_color(
+            UIColors.TEXT_DISABLED
+        ).set_align("left", "center").set_z_index(10)
+
+    def disable(self):
+        """Supprime les éléments UI de la colonie."""
+        self.ui.clear()
 
     def get_room_coords(self, room_name):
         """
@@ -69,6 +119,7 @@ class ColonyState(State):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_b:
                     self.build_mode.switch()
+                    self.update_build_mode_hint()
 
         if self.build_mode.enabled:
             self.build_mode.update(events)
@@ -91,30 +142,32 @@ class ColonyState(State):
             ant.update()
         for room in self.rooms:
             room.update()
-            
-    def draw_ui (self):
-        """
-        Dessine l'interface utilisateur
-        """
-        info_width = 376
-        info_height = 130
-        info_x = self.game.width-(info_width+8)
-        color = "#542323"
-        
-        pygame.draw.rect(self.game.screen, color, (info_x, 8, info_width, info_height))
-        pygame.draw.rect(self.game.screen, (255, 0, 255), (info_x+2, 8+2, 100, info_height-4))
-        
-        pygame.draw.rect(self.game.screen, color, (info_x+info_width/2, 8+info_height+4, info_width/2, 16+8))
-        self.game.screen.blit(leaf_image, (info_x+info_width/2+4, 8+info_height+8))
-        
-        
-    def generate_grid (self):
+
+        self.sync_ui()
+
+    def sync_ui(self):
+        """Met à jour les valeurs dynamiques des éléments UI."""
+        food_label = self.ui.get("colony_food_count")
+        if isinstance(food_label, Label):
+            food_label.set_text(f"{self.food}")
+
+    def update_build_mode_hint(self):
+        """Affiche ou efface l'indicateur de mode construction."""
+        hint = self.ui.get("colony_build_mode_hint")
+        if isinstance(hint, Label):
+            if self.build_mode.enabled:
+                hint.set_text("[B] Mode construction actif")
+                hint.set_text_color(UIColors.BORDER)
+            else:
+                hint.set_text("")
+
+    def generate_grid(self):
         """
         Dessine la grille de la colonie sur une surface dédiée, pour éviter de surcharger la fonction draw.
         Avant, on dessinait la grille à chaque appel de draw, de plus, on observe maintenant un passage de 50fps à 60fps.
         """
         self.grid_surface.fill((255, 255, 255))
-        
+
         pygame.draw.rect(
             self.grid_surface,
             (66, 31, 17),
@@ -151,7 +204,7 @@ class ColonyState(State):
                                     dirt_color,
                                     (pixel_x + bmp_x, pixel_y + bmp_y, 1, 1),
                                 )
-                                
+
     def draw(self):
         """
         TODO
@@ -179,4 +232,3 @@ class ColonyState(State):
             room.draw()
 
         self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
-        self.draw_ui()
