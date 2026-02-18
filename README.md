@@ -18,10 +18,15 @@ python3 src/main.py
 
 ## Crédits
 
+### Palette de couleurs (assets)
+
+TwilioQuest 76, par Kerrie Lake:
+- https://lospec.com/palette-list/twilioquest-76
+
 ### Polices d'écriture
 
-monogram par Vinícius Menézio (@vmenezio) (https://datagoblin.itch.io/):
+monogram, par Vinícius Menézio (@vmenezio) (https://datagoblin.itch.io/):
 - https://datagoblin.itch.io/monogram
 
-m5x7 par Daniel Linssen (https://managore.itch.io/):
+m5x7, par Daniel Linssen (https://managore.itch.io/):
 - https://managore.itch.io/m5x7
