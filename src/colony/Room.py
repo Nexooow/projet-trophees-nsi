@@ -1,6 +1,6 @@
 import pygame
 
-from config.settings import colony_underground_start
+from constants import colony_underground_start
 
 
 class Room(pygame.sprite.Sprite):

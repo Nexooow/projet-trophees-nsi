@@ -1,6 +1,6 @@
 import typing
 
-from utils.file import File
+from lib.file import File
 
 assign_tasks = {
     "dig": "worker",

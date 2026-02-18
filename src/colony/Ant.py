@@ -1,6 +1,6 @@
 import pygame
 
-from utils.file import File
+from lib.file import File
 
 IMAGES = {
     "worker": [pygame.image.load("./assets/ant.png"), [2]],

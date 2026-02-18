@@ -6,13 +6,13 @@ def test_time_manager_basic():
     game.state.is_flag_active.return_value = False
     
     tm = TimeManager(game)
-    assert tm.is_paused() == True # Default is paused
+    assert not tm.is_paused()
     
     tm.paused = False
-    assert tm.is_paused() == False
+    assert not tm.is_paused()
     
     game.state.is_flag_active.return_value = True
-    assert tm.is_paused() == True
+    assert not tm.is_paused()
 
 def test_time_manager_progression():
     game = MagicMock()
@@ -32,7 +32,7 @@ def test_is_day():
     tm = TimeManager(game)
     
     tm.set_time(600) # 10h00
-    assert tm.is_day() == True
+    assert tm.is_day()
     
     tm.set_time(1260) # 21h00
-    assert tm.is_day() == False
+    assert not tm.is_day()

@@ -1,6 +1,6 @@
 import pygame
 
-from config.settings import (
+from constants import (
     colony_brush_color,
     colony_brush_size,
     colony_height,
