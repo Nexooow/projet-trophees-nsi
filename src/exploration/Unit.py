@@ -25,5 +25,5 @@ class Unit:
         self.y = y
     
     def draw(self, screen):
-        img = pygame.transform.flip(self.image, False, self.orientation)
+        img = pygame.transform.flip(self.image, not self.orientation, False)
         screen.blit(img, (self.x*50, self.y*50))

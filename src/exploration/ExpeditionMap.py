@@ -24,6 +24,7 @@ class ExpeditionMap:
         traverse(self.root_node)
         return visible
     def clear(self,node):
+        print(node.is_cleared)
         if node.is_cleared:
             return
         node.is_cleared=True

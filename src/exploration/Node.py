@@ -37,14 +37,14 @@ class Node:
         for i in range(self.num_children):
             child=Node(
                 node_id=f'{self.node_id}_child_{i}',
-                parent_node=self,
+                parent=self,
                 depth=self.depth+1,
                 seed=self.seed+i*1000
             )
             self.children.append(child)
             child.is_discovered=True
     def create_game(self,expedition_members=[]):
-        return Game(self.difficulty,expedition_members)
+        return Game()
     def draw(self,screen,cam_x,cam_y,node_radius=20):
         x,y=self.position[0]-cam_x,self.position[1]-cam_y
         if self.is_cleared:
