@@ -100,13 +100,12 @@ class Element:
         Enregistre un callback pour un événement donné.
         Événements supportés : "click", "hover_enter", "hover_leave".
         """
-        match event:
-            case "click":
-                self.on_click = callback
-            case "hover_enter":
-                self.on_hover_enter = callback
-            case "hover_leave":
-                self.on_hover_leave = callback
+        if event == "click":
+            self.on_click = callback
+        elif event == "hover_enter":
+            self.on_hover_enter = callback
+        elif event == "hover_leave":
+            self.on_hover_leave = callback
         return self
 
     def add_child(self, child: "Element") -> "Element":

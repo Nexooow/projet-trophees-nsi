@@ -91,21 +91,18 @@ class Label(Element):
         px, py = self.padding
 
         # Alignement horizontal
-        match self.align:
-            case "center":
-                x = abs_rect.x + (abs_rect.width - tw) // 2
-            case "right":
-                x = abs_rect.right - tw - px
-            case _:
-                x = abs_rect.x + px  # left
-
-        # Alignement vertical
-        match self.valign:
-            case "center":
-                y = abs_rect.y + (abs_rect.height - th) // 2
-            case "bottom":
-                y = abs_rect.bottom - th - py
-            case _:
-                y = abs_rect.y + py  # top
-
+        if self.align == "center":
+            x = abs_rect.x + (abs_rect.width - tw) // 2
+        elif self.align == "right":
+            x = abs_rect.right - tw - px
+        else:
+            x = abs_rect.x + px
+            
+        if self.valign == "center":
+            y = abs_rect.y + (abs_rect.height - th) // 2
+        elif self.valign == "bottom":
+            y = abs_rect.bottom - th - py
+        else:
+            y = abs_rect.y + py
+            
         screen.blit(text_surf, (x, y))
