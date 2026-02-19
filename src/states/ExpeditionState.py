@@ -73,6 +73,7 @@ class ExpeditionState(State):
             current_node=self.expedition_map.current
             grid=current_node.create_game()
             grid.game(current_node.difficulty,colony=[])
+            print(grid.battle_won)
             if grid.battle_won:
                 self.state="map"
                 self.expedition_map.clear(current_node)
