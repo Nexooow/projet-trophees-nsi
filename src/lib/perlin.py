@@ -141,3 +141,17 @@ class Perlin:
             value = max(0.0, min(1.0, value))
 
         return value
+
+    def noise_map(
+        self,
+        width: int,
+        height: int,
+        cell_size: float = 1.0,
+    ) -> List[List[float]]:
+        """
+        Génère une carte de bruit 2D de dimensions width * height.
+        """
+        return [
+            [self.noise(x * cell_size, y * cell_size) for x in range(width)]
+            for y in range(height)
+        ]
