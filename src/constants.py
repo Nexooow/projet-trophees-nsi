@@ -2,10 +2,10 @@
 Fichier contenant la configuration et les constantes globales du jeu.
 """
 
-game_name = "Rise of the Anthill" # TODO: définir le nom
+game_name = "Rise of the Anthill"  # TODO: définir le nom
 
 dirt_color = (168, 88, 72)
-dark_dirt_color = "#542323"
+dark_dirt_color = (168+5, 88+5, 72+5)
 
 colony_width = 2048
 colony_height = 1152
@@ -13,6 +13,7 @@ colony_underground_start = 172
 
 colony_brush_size = 20
 colony_brush_color = "#b12935"
+
 
 class UIColors:
     BG = (92, 64, 51)  # #5C4033

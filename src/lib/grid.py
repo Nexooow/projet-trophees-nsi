@@ -1,12 +1,11 @@
 import heapq
 import math
 
-from constants import colony_underground_start
-
 class Grid:
     CELL_SIZE = 8  # Taille d'une cellule en pixels
 
-    def __init__(self, screen_size):
+    def __init__(self, screen_size, start_y):
+        self.start_y = start_y
         self.pixel_width = math.floor(screen_size[0])
         self.pixel_height = math.floor(screen_size[1])
 
@@ -82,8 +81,7 @@ class Grid:
         cell = self.get_cell(cell_x, cell_y)
         if cell is None:
             return False
-        #return cell["state"] == "empty" or cell["state"] == "occupied_walkable"
-        return True
+        return cell["state"] == "empty" or cell["state"] == "occupied_walkable"
 
     def get_neighbors(self, cell_x, cell_y):
         """
@@ -119,8 +117,8 @@ class Grid:
         return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
     
     def get_path (self, start, goal):
-        start_cell = self.pixel_to_cell(start[0], start[1]-colony_underground_start)
-        goal_cell = self.pixel_to_cell(goal[0], goal[1]-colony_underground_start)
+        start_cell = self.pixel_to_cell(start[0], start[1]-self.start_y)
+        goal_cell = self.pixel_to_cell(goal[0], goal[1]-self.start_y)
         return self.a_star(start_cell, goal_cell)
 
     def a_star(self, start, goal):

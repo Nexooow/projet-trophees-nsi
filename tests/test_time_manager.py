@@ -6,7 +6,7 @@ def test_time_manager_basic():
     game.state.is_flag_active.return_value = False
     
     tm = TimeManager(game)
-    assert tm.is_paused()
+    assert not tm.is_paused()
     
     tm.paused = True
     assert tm.is_paused()

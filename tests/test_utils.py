@@ -8,7 +8,7 @@ from src.lib.file import File
 class TestUtils:
     
     def test_grid(self):
-        grid = Grid((40, 40))
+        grid = Grid((40, 40), 0)
         assert grid.width == 5
         assert grid.height == 5
         assert len(grid.grid) == 5 and len(grid.grid[0]) == 5

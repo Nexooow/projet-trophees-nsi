@@ -3,22 +3,25 @@ import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
 from colony.rooms.Depot import Depot
-from colony.rooms.Queen import Queen
 from colony.rooms.Nursery import Nursery
+from colony.rooms.Queen import Queen
 from colony.TaskManager import TaskManager
 from constants import (
     UIColors,
     colony_height,
     colony_underground_start,
     colony_width,
+    dark_dirt_color,
     dirt_color,
 )
 from lib.grid import Grid
+from lib.perlin import Perlin
 from lib.ui import Label, ProgressBar
+from lib.utils import import_asset
 
 from .State import State
 
-_leaf_image = pygame.image.load("./assets/icons/leaf.png")
+_leaf_image = import_asset("icons", "leaf.png")
 
 
 class ColonyState(State):
@@ -37,19 +40,26 @@ class ColonyState(State):
         self.grid_surface = pygame.Surface(
             (colony_width, colony_height - colony_underground_start), pygame.SRCALPHA
         )
-        self.grid = Grid(self.grid_surface.get_size())
+        self.grid = Grid(self.grid_surface.get_size(), colony_underground_start)
         grid_x_center = self.grid.width // 2
+
+        self.perlin = Perlin(
+            seed=42,
+            scale=60,
+            octaves=1,
+            persistence=0.5,
+            lacunarity=1.5,
+            threshold=0.47,
+            threshold_values=(0.0, 1.0),
+        )
 
         self.rooms = [
             Depot(self, {"x": grid_x_center, "y": 0, "width": 13, "height": 8}),
-            Queen(self, {"x": grid_x_center+42, "y": 71, "width": 17, "height": 17}),
-            Nursery(self, {"x": grid_x_center-30, "y": 87, "width": 15, "height": 7})
+            Queen(self, {"x": grid_x_center + 42, "y": 71, "width": 17, "height": 17}),
+            Nursery(self, {"x": grid_x_center - 30, "y": 87, "width": 15, "height": 7}),
         ]
 
-        self.ants = [
-            Worker(self, {"power": 1}, self.get_room_coords("depot"))
-            for k in range(100)
-        ]
+        self.ants = []
         # self.ennemies = []
 
         self.food = 200
@@ -69,20 +79,22 @@ class ColonyState(State):
             "colony_info_panel",
             (info_x, info_y, info_w, info_h),
         ).set_z_index(10)
-        
+
         self.ui.panel(
             "colony_time_preview_panel",
             (info_x + 2, info_y + 2, 100, info_h - 4),
         ).set_bg_color((255, 0, 255)).set_border(None).set_z_index(11)
-        
+
         self.ui.label(
             "colony_time",
             self.game.time.format(),
-            (info_x + 104, info_y+4, info_w - 108, 42)
-        ).set_font("assets/fonts/monogram.ttf", 32).set_text_color(UIColors.TEXT).set_align("center", "center").set_z_index(11)
+            (info_x + 104, info_y + 4, info_w - 108, 42),
+        ).set_font("assets/fonts/monogram.ttf", 32).set_text_color(
+            UIColors.TEXT
+        ).set_align("center", "center").set_z_index(11)
 
         small_w = info_w // 2
-        small_h = 32+12
+        small_h = 32 + 12
         small_x = info_x + info_w - small_w
         small_y = info_y + info_h + 8
 
@@ -97,12 +109,12 @@ class ColonyState(State):
             _leaf_image,
             (small_x + 8, icon_y, 32, 32),
         ).set_z_index(11)
-        
+
         self.ui.label(
             "colony_food_count",
             f"{self.food}",
-            (small_x + 8 + 32 + 4, small_y-2, small_w - 8 - 32 - 4 - 8, small_h),
-        ).set_font("assets/fonts/monogram.ttf", 32+6).set_text_color(
+            (small_x + 8 + 32 + 4, small_y - 2, small_w - 8 - 32 - 4 - 8, small_h),
+        ).set_font("assets/fonts/monogram.ttf", 32 + 6).set_text_color(
             UIColors.TEXT
         ).set_align("right", "center").set_z_index(11)
 
@@ -113,20 +125,12 @@ class ColonyState(State):
         ).set_font("assets/fonts/monogram.ttf", 22).set_text_color(
             UIColors.TEXT_DISABLED
         ).set_align("left", "center").set_z_index(10)
-        
-        # TEST DEPLACEMENT FOURMIS
-        
-        for ant in self.ants:
-            i = self.ants.index(ant)
-            path = self.grid.get_path((ant.pos.x, ant.pos.y), self.get_room_coords("queen" if i % 2 == 0 else "nursery"))
-            print(path)
-            ant.set_path(path)
 
     def disable(self):
         """Supprime les éléments UI de la colonie."""
         self.ui.clear()
 
-    def get_room (self, room_name):
+    def get_room(self, room_name):
         """
         Renvoie les coordonnées d'une pièce
         """
@@ -134,10 +138,12 @@ class ColonyState(State):
             if room.name == room_name:
                 return room
         return None
-    
-    def get_room_coords (self, room_name):
+
+    def get_room_coords(self, room_name):
         room = self.get_room(room_name)
-        return (room.x, room.y)
+        if room:
+            return (room.x, room.y)
+        return None
 
     def update(self, events):
         keys = pygame.key.get_pressed()
@@ -196,7 +202,7 @@ class ColonyState(State):
     def generate_grid(self):
         """
         Dessine la grille de la colonie sur une surface dédiée, pour éviter de surcharger la fonction draw.
-        Avant, on dessinait la grille à chaque appel de draw, de plus, on observe maintenant un passage de 50fps à 60fps.
+        Le bruit de Perlin est intégré ici pour varier la couleur des cellules de terre entre dirt_color et dark_dirt_color.
         """
         self.grid_surface.fill((255, 255, 255))
 
@@ -211,17 +217,25 @@ class ColonyState(State):
             ),
         )
 
+        # Génère la noise map une fois pour toute la grille (résolution cellule)
+        noise_map = self.perlin.noise_map(self.grid.width, self.grid.height)
+
         for cell_x, cell_y, cell in self.grid:
             state = cell["state"]
 
             # Coordonnées pixel de la cellule
             pixel_x, pixel_y = self.grid.cell_to_pixel(cell_x, cell_y)
 
+            # Choisir la couleur de terre selon le bruit de Perlin (0.0 → claire, 1.0 → foncée)
+            cell_color = (
+                dark_dirt_color if noise_map[cell_y][cell_x] > 0.5 else dirt_color
+            )
+
             if state == "full":
                 # Dessiner la cellule entière
                 pygame.draw.rect(
                     self.grid_surface,
-                    dirt_color,
+                    cell_color,
                     (pixel_x, pixel_y, self.grid.CELL_SIZE, self.grid.CELL_SIZE),
                 )
             elif state == "partial":
@@ -233,7 +247,7 @@ class ColonyState(State):
                             if bitmap[bmp_y][bmp_x]:
                                 pygame.draw.rect(
                                     self.grid_surface,
-                                    dirt_color,
+                                    cell_color,
                                     (pixel_x + bmp_x, pixel_y + bmp_y, 1, 1),
                                 )
 
@@ -253,7 +267,6 @@ class ColonyState(State):
         )
 
         self.world.blit(self.grid_surface, (0, colony_underground_start))
-        # TODO: dessiner le bruit de perlin comme filtre semi-transparent au dessus de la grid
 
         if self.build_mode.enabled:
             self.build_mode.draw()

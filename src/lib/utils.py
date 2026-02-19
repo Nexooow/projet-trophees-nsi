@@ -1,6 +1,6 @@
 import pygame
 from typing import Optional, Any
-
+import os
 
 def normalize_rect(rect) -> pygame.Rect:
     """Convertit n'importe quelle valeur rect-compatible en pygame.Rect."""
@@ -19,3 +19,7 @@ def parse_color(color) -> Optional[Any]:
     if isinstance(color, str):
         return tuple(pygame.Color(color))
     return color
+    
+def import_asset(type, name):
+    path = os.sep.join(["assets", type, name])
+    return pygame.image.load(path)
