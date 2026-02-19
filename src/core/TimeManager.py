@@ -2,7 +2,8 @@ class TimeManager:
     
     def __init__ (self, game):
         self.game = game
-        self.paused = True
+        self.paused =  False
+        self.day = 1
         self.time = 0
         self.sub_frame_count = 0
     
@@ -17,6 +18,10 @@ class TimeManager:
         Renvoie le temps actuel sous la forme d'un tuple (heures, minutes).
         """
         return divmod(self.time, 60)
+    
+    def format (self):
+        t = self.get_time()
+        return f"{t[0]:02d}:{t[1]:02d} | Jour {self.day}"
 
     def set_time (self, time: int):
         """
@@ -39,4 +44,7 @@ class TimeManager:
             if self.sub_frame_count >= 60:
                 self.time += 1
                 self.sub_frame_count = 0
-        
+            h, _ = self.get_time()
+            if h >= 24:
+                self.time = 0
+                self.day += 1

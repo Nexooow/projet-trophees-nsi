@@ -3,6 +3,8 @@ import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
 from colony.rooms.Depot import Depot
+from colony.rooms.Queen import Queen
+from colony.rooms.Nursery import Nursery
 from colony.TaskManager import TaskManager
 from constants import (
     UIColors,
@@ -39,13 +41,18 @@ class ColonyState(State):
         grid_x_center = self.grid.width // 2
 
         self.rooms = [
-            Depot(self, {"x": grid_x_center, "y": 0, "width": 13, "height": 7})
+            Depot(self, {"x": grid_x_center, "y": 0, "width": 13, "height": 8}),
+            Queen(self, {"x": grid_x_center+42, "y": 71, "width": 17, "height": 17}),
+            Nursery(self, {"x": grid_x_center-30, "y": 87, "width": 15, "height": 7})
         ]
 
-        self.ants = [Worker(self, {"power": 1}, (100, 100))]
+        self.ants = [
+            Worker(self, {"power": 1}, self.get_room_coords("depot"))
+            for k in range(100)
+        ]
         # self.ennemies = []
 
-        self.food = 100000
+        self.food = 200
         # self.science = 0
 
         self.generate_grid()
@@ -62,6 +69,17 @@ class ColonyState(State):
             "colony_info_panel",
             (info_x, info_y, info_w, info_h),
         ).set_z_index(10)
+        
+        self.ui.panel(
+            "colony_time_preview_panel",
+            (info_x + 2, info_y + 2, 100, info_h - 4),
+        ).set_bg_color((255, 0, 255)).set_border(None).set_z_index(11)
+        
+        self.ui.label(
+            "colony_time",
+            self.game.time.format(),
+            (info_x + 104, info_y+4, info_w - 108, 42)
+        ).set_font("assets/fonts/monogram.ttf", 32).set_text_color(UIColors.TEXT).set_align("center", "center").set_z_index(11)
 
         small_w = info_w // 2
         small_h = 32+12
@@ -79,19 +97,14 @@ class ColonyState(State):
             _leaf_image,
             (small_x + 8, icon_y, 32, 32),
         ).set_z_index(11)
-
+        
         self.ui.label(
             "colony_food_count",
             f"{self.food}",
-            (small_x + 8 + 32 + 4, small_y, small_w - 8 - 32 - 4 - 8, small_h),
-        ).set_font("assets/fonts/monogram.ttf", 32).set_text_color(
+            (small_x + 8 + 32 + 4, small_y-2, small_w - 8 - 32 - 4 - 8, small_h),
+        ).set_font("assets/fonts/monogram.ttf", 32+6).set_text_color(
             UIColors.TEXT
         ).set_align("right", "center").set_z_index(11)
-
-        self.ui.panel(
-            "colony_preview_panel",
-            (info_x + 2, info_y + 2, 100, info_h - 4),
-        ).set_bg_color((255, 0, 255)).set_border(None).set_z_index(11)
 
         self.ui.label(
             "colony_build_mode_hint",
@@ -100,16 +113,31 @@ class ColonyState(State):
         ).set_font("assets/fonts/monogram.ttf", 22).set_text_color(
             UIColors.TEXT_DISABLED
         ).set_align("left", "center").set_z_index(10)
+        
+        # TEST DEPLACEMENT FOURMIS
+        
+        for ant in self.ants:
+            i = self.ants.index(ant)
+            path = self.grid.get_path((ant.pos.x, ant.pos.y), self.get_room_coords("queen" if i % 2 == 0 else "nursery"))
+            print(path)
+            ant.set_path(path)
 
     def disable(self):
         """Supprime les éléments UI de la colonie."""
         self.ui.clear()
 
-    def get_room_coords(self, room_name):
+    def get_room (self, room_name):
         """
         Renvoie les coordonnées d'une pièce
         """
-        return 0  # TODO
+        for room in self.rooms:
+            if room.name == room_name:
+                return room
+        return None
+    
+    def get_room_coords (self, room_name):
+        room = self.get_room(room_name)
+        return (room.x, room.y)
 
     def update(self, events):
         keys = pygame.key.get_pressed()
@@ -150,6 +178,10 @@ class ColonyState(State):
         food_label = self.ui.get("colony_food_count")
         if isinstance(food_label, Label):
             food_label.set_text(f"{self.food}")
+        time_label = self.ui.get("colony_time")
+        if isinstance(time_label, Label):
+            print("maj")
+            time_label.set_text(self.game.time.format())
 
     def update_build_mode_hint(self):
         """Affiche ou efface l'indicateur de mode construction."""

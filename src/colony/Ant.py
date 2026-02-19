@@ -2,6 +2,8 @@ import pygame
 
 from lib.file import File
 
+from constants import colony_underground_start
+
 IMAGES = {
     "worker": [pygame.image.load("./assets/ant.png"), [2]],
     "nurse": [pygame.image.load("./assets/ant.png"), [2]],
@@ -75,7 +77,7 @@ class Ant(pygame.sprite.Sprite):
             # Ajouter le décalage pour atteindre le centre de la cellule
             self.target_pos = pygame.Vector2(
                 pixel_x + self.colony.grid.CELL_SIZE / 2,
-                pixel_y + self.colony.grid.CELL_SIZE / 2 + self.colony.grid.start_y,
+                pixel_y + self.colony.grid.CELL_SIZE / 2 + colony_underground_start,
             )
 
         # Si pas de cellule cible, la fourmi est immobile
