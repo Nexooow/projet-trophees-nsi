@@ -73,6 +73,91 @@ class Grid:
         bmp_x = pixel_x - cell_pixel_x
         bmp_y = pixel_y - cell_pixel_y
         return bmp_x, bmp_y
+    
+    def supprimer_cellules(self, x, y, size):
+        """
+        Retourne les cellules en collision avec le carré (x,y) de côté size
+        Supprime les cellules dans un carré (x, y, size)
+        Met à jour les cellules qui sont en collision avec le rectangle
+        """
+        y-=self.start_y
+        x2 = x + size
+        y2 = y + size
+
+        grid_x1 = math.floor(max(0, x // self.CELL_SIZE))
+        grid_y1 = math.floor(max(0, y // self.CELL_SIZE))
+        grid_x2 = math.floor(min(self.width - 1, x2 // self.CELL_SIZE))
+        grid_y2 = math.floor(min(self.height - 1, y2 // self.CELL_SIZE))
+
+        # coordonnées du rectangle en pixels
+        rect_x1 = max(0, x)
+        rect_y1 = max(0, y)
+        rect_x2 = min(self.pixel_width, x + size)
+        rect_y2 = min(self.pixel_height, y + size)
+
+        # Convertir en coordonnées de cellules
+        cell_x1, cell_y1 = self.pixel_to_cell(rect_x1, rect_y1)
+        cell_x2, cell_y2 = self.pixel_to_cell(rect_x2 - 1, rect_y2 - 1)
+
+        # parcourir toutes les cellules touchées
+        for cell_y in range(cell_y1, cell_y2 + 1):
+            for cell_x in range(cell_x1, cell_x2 + 1):
+                if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
+                    self.update_cell_with_rect(
+                        cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
+                    )
+                    
+    def update_cell_with_rect(
+        self, cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
+    ):
+        """
+        Met à jour une cellule en fonction d'un rectangle de suppression
+        """
+        cell = self.grid[cell_y][cell_x]
+
+        # Coordonnées pixel de la cellule
+        cell_pixel_x, cell_pixel_y = self.cell_to_pixel(cell_x, cell_y)
+
+        # intersection entre la cellule et le rectangle de suppression
+        inter_x1 = max(cell_pixel_x, rect_x1)
+        inter_y1 = max(cell_pixel_y, rect_y1)
+        inter_x2 = min(cell_pixel_x + self.CELL_SIZE, rect_x2)
+        inter_y2 = min(cell_pixel_y + self.CELL_SIZE, rect_y2)
+
+        # Si la cellule est entièrement dans le rectangle
+        if (
+            inter_x1 == cell_pixel_x
+            and inter_y1 == cell_pixel_y
+            and inter_x2 == cell_pixel_x + self.CELL_SIZE
+            and inter_y2 == cell_pixel_y + self.CELL_SIZE
+        ):
+            self.set_cell_state(cell_x, cell_y, "empty", None)
+            return
+
+        # Sinon, créer ou mettre à jour le bitmap
+        if cell["state"] == "full":
+            bitmap = [
+                [True for _ in range(self.CELL_SIZE)] for _ in range(self.CELL_SIZE)
+            ]
+        elif cell["state"] == "partial":
+            bitmap = cell["bitmap"]
+        else: 
+            return
+        
+        # Marquer les pixels supprimés dans le bitmap
+        for py in range(math.floor(inter_y1), math.floor(inter_y2)):
+            for px in range(math.floor(inter_x1), math.floor(inter_x2)):
+                bmp_x = px - cell_pixel_x
+                bmp_y = py - cell_pixel_y
+                if 0 <= bmp_x < self.CELL_SIZE and 0 <= bmp_y < self.CELL_SIZE:
+                    bitmap[bmp_y][bmp_x] = False
+
+        # Vérifier si la cellule est maintenant vide ou partielle
+        is_filled = any(any(row) for row in bitmap)
+        if not is_filled:
+            self.set_cell_state(cell_x, cell_y, "empty", None)
+        else:
+            self.set_cell_state(cell_x, cell_y, "partial", bitmap)
 
     def is_cell_passable(self, cell_x, cell_y):
         """

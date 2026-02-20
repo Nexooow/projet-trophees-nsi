@@ -25,6 +25,14 @@ class Room(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         pygame.draw.rect(self.image, (255, 0, 0), self.rect)
 
+    def get_pos (self):
+        return (self.x, self.y)
+    
+    def get_center (self):
+        x = self.x+self.width//2
+        y = self.y+self.height//2
+        return (x, y)
+
     def update(self):
         pass
 

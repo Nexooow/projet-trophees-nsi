@@ -13,6 +13,7 @@ from constants import (
     colony_width,
     dark_dirt_color,
     dirt_color,
+    colony_brush_size
 )
 from lib.grid import Grid
 from lib.perlin import Perlin
@@ -65,6 +66,7 @@ class ColonyState(State):
         self.food = 200
         # self.science = 0
 
+        self.init_default_paths()
         self.generate_grid()
 
     def enable(self):
@@ -139,10 +141,12 @@ class ColonyState(State):
                 return room
         return None
 
-    def get_room_coords(self, room_name):
+    def get_room_coords(self, room_name, center=False):
         room = self.get_room(room_name)
         if room:
-            return (room.x, room.y)
+            if center:
+                return room.get_center()
+            return room.get_pos()
         return None
 
     def update(self, events):
@@ -186,7 +190,6 @@ class ColonyState(State):
             food_label.set_text(f"{self.food}")
         time_label = self.ui.get("colony_time")
         if isinstance(time_label, Label):
-            print("maj")
             time_label.set_text(self.game.time.format())
 
     def update_build_mode_hint(self):
@@ -199,6 +202,30 @@ class ColonyState(State):
             else:
                 hint.set_text("")
 
+    def init_default_paths (self):
+        for room_paths in [("depot", "queen"), ("nursery", "queen")]:
+            print(room_paths)
+            (src, trgt) = room_paths
+            a = self.get_room_coords(src, center=True)
+            b = self.get_room_coords(trgt, center=True)
+
+            mid_x = (a[0] + b[0]) // 2
+            mid_y = (a[1] + b[1]) // 2
+            offset = 60
+            control = (mid_x + offset, mid_y + offset) 
+
+            steps = 100
+            for i in range(steps + 1):
+                t = i / steps
+                x = (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * control[0] + t ** 2 * b[0]
+                y = (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * control[1] + t ** 2 * b[1]
+
+                x = int(x) - colony_brush_size // 2
+                y = int(y) - colony_brush_size // 2
+
+                self.build_mode.selections.add((x, y))
+                self.grid.supprimer_cellules(x, y, colony_brush_size)
+
     def generate_grid(self):
         """
         Dessine la grille de la colonie sur une surface dédiée, pour éviter de surcharger la fonction draw.
@@ -208,7 +235,7 @@ class ColonyState(State):
 
         pygame.draw.rect(
             self.grid_surface,
-            (66, 31, 17),
+            "#845750",
             (
                 0,
                 0,

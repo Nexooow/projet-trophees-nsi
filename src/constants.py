@@ -4,8 +4,8 @@ Fichier contenant la configuration et les constantes globales du jeu.
 
 game_name = "Rise of the Anthill"  # TODO: définir le nom
 
-dirt_color = (168, 88, 72)
-dark_dirt_color = (168+5, 88+5, 72+5)
+dirt_color =  "#542323"
+dark_dirt_color = "#3f2323"
 
 colony_width = 2048
 colony_height = 1152
