@@ -125,8 +125,8 @@ class Game:
                 if active.points > 0 and (len(friendlies)>0 and len([u for u in units if u.team=="rouge"])>0) and active.static_state:
                     enemies = [u for u in units if u.team != active.team]
                     if active.team!="noir":
-                        if not active.static_state:
-                            
+                  
+                        
                         target = closest_enemy(active, enemies,grid,units)
                         print(target)
                         if target is not None:
@@ -144,7 +144,7 @@ class Game:
                             if path:
                                 active.points-=grid.weights[(active.x,active.y+1)]
                                 active.move_to(*path[0])
-                                
+                            
                     
                     if active.team=="noir":
                         if event.type==pygame.KEYDOWN:

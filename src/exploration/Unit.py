@@ -23,7 +23,7 @@ class Unit:
         self.time=pygame.time.get_ticks()
         self.destination=None
         self.speed=0.1
-        self.target_screen_x,self.target_screen_y=0,0
+        self.target_screen_x,self.target_screen_y=None,None
     def load_frames(self):
         frames = []
         spritesheet, animation_steps = self.image,[2]
@@ -61,8 +61,11 @@ class Unit:
     def draw(self, screen):
         self.update()
         img = pygame.transform.flip(self.image, not self.orientation, False)
-        screen.blit(img, (self.x*50, self.y*50))
+        screen.blit(img, (self.screen_x, self.screen_y))
     def is_static(self):
+        if self.destination is None:
+            self.static_state=True
+            return
         if abs(self.screen_x-self.target_screen_x)<0.1 and abs(self.screen_y-self.target_screen_y)<0.1:
             self.screen_x = self.target_screen_x
             self.screen_y = self.target_screen_y
