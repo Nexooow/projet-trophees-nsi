@@ -8,11 +8,13 @@ from .Unit import *
 from .ExplorerGroup import *
 import math
 from .AntPuppet import AntPuppet
+from lib.perlin import Perlin
 RESSOURCES_IMAGES={
     "nom":pygame.image.load("./assets/fonts/ant.png")
 }
 RESSOURCES=["nom"]
 pygame.init()
+
 class HoveringResource:
     def __init__(self,x,y,resource,tile_size=50):
         self.x=x
@@ -34,7 +36,21 @@ class Grid:
         self.height=height
         self.tile=tile_size
         edges=[]
-        self.weights={(x,y):choice([1,2,3,4 ]) for x in range(self.width) for y in range(self.height)}
+        perlin = Perlin(
+                seed=42,
+                scale=20,
+                octaves=4,
+                steps=4,
+                normalize=True
+                )
+        noise_map=perlin.noise_map(self.width,self.height)
+        #self.weights={(x,y):choice([1,2,3,4 ]) for x in range(self.width) for y in range(self.height)}
+        self.weights={}
+        for y in range(self.height):
+            for x in range(self.width):
+                value=noise_map[y][x]
+                weight=int(value*3)+1
+                self.weights[(x,y)]=weight
         for y in range(height):
             for x in range(width):
                 i=x,y
