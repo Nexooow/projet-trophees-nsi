@@ -30,6 +30,24 @@ class HoveringResource:
         screen_x=self.x*self.tile_size
         screen_y=self.y*self.tile_size+offset
         screen.blit(RESSOURCES_IMAGES[self.resource],(screen_x,screen_y))
+
+class Bomb:
+    def __init__(self,x,y):
+        self.x=x
+        self.y=y
+    def get_pos(self):
+        return (self.x,self.y)
+    def explode(self,units):
+        for u in units:
+            if abs(u.x-self.x)<=1 and abs(u.y-self.y)<=1:
+                u.points=0
+    #TODO:implementer systeme de destruction sur plusieurs tiles, soit par tile prédéterminée, soit par troupe (typa kamikaze)
+GRID_W=20
+GRID_H=14
+TILE_SIZE=50
+SIDEBAR_WIDTH=250
+GRID_WIDTH=1000
+HEIGHT=700
 class Grid:
     def __init__(self,width,height,tile_size=50):
         self.width=width
@@ -75,9 +93,35 @@ class Grid:
                 r=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
                 pygame.draw.rect(screen,col,r)
                 pygame.draw.rect(screen,(255,255,255),r,1)
+class Sidebar:
+    def __init__(self,width,height):
+        self.width=width
+        self.height=height
+    def draw(self,screen,units,active,colony):
+        screen.fill((30, 30, 30))
+        font = pygame.font.SysFont(None, 28)
+        friendlies = len([u for u in units if u.team == "noir"])
+        enemies = len([u for u in units if u.team == "rouge"])
+        lines = [
+            f"Active Team: {active.team}",
+            f"Action Points: {active.points}",
+            "",
+            f"Friendlies: {friendlies}",
+            f"Enemies: {enemies}",
+            "",
+            "Resources:"
+        #TODO: Montrer les ressources que l'expédition a récup / celles qu'il y a au total
+        ]
+        y = 20
+        for line in lines:
+            text = font.render(line, True, (255,255,255))
+            screen.blit(text, (20, y))
+            y += 35
 class Game:
     def __init__(self):
         self.battle_won=None
+        self.sidebar=Sidebar(SIDEBAR_WIDTH,HEIGHT)
+            
     def game(self,difficulty,colony):
         positions_of_ressources=sample(list(product(range(20),range(4))),randint(1,5))
         
@@ -92,7 +136,11 @@ class Game:
             HoveringResource(x,y,resource)
             for (x,y),resource in ressources_dispos.items() 
         ]
-        screen = pygame.display.set_mode((1000, 700))
+        
+        
+        screen = pygame.display.set_mode((SIDEBAR_WIDTH+GRID_WIDTH, HEIGHT))
+        game_surface = pygame.Surface((GRID_WIDTH, HEIGHT))
+        ui_surface = pygame.Surface((SIDEBAR_WIDTH, HEIGHT))
         clock = pygame.time.Clock()
         img_fourmi=pygame.image.load("./assets/fonts/ant.png")
         img_scarab=pygame.image.load("./assets/fonts/ant.png")
@@ -122,15 +170,23 @@ class Game:
         running=True
         
         while running:
-            screen.fill((0,0,0))
-            grid.draw(screen)
+            game_surface.fill((0,0,0))
+            ui_surface.fill((30,30,30))
+            grid.draw(game_surface)
+            #screen.fill((0,0,0))
+            #grid.draw(screen)
             for ressource in ressources_obj:
-                ressource.draw(screen)
+                ressource.draw(game_surface)
             friendlies=[u for u in units if u.team=='noir']
             
             for u in units:
                 u.is_static()
-                u.draw(screen)
+                u.draw(game_surface)
+            
+            self.sidebar.draw(ui_surface,units,active,colony)
+            screen.blit(game_surface,(0,0))
+            screen.blit(ui_surface,(GRID_WIDTH,0))
+            
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
                     running=False
