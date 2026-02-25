@@ -65,6 +65,7 @@ class Unit:
         img = pygame.transform.flip(self.image, not self.orientation, False)
         
         self.mask=pygame.mask.from_surface(self.image)
+        self.rect.topleft=(self.screen_x,self.screen_y)
         screen.blit(img, (self.screen_x, self.screen_y))
     def is_static(self):
         if self.destination is None:

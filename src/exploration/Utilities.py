@@ -14,6 +14,7 @@ def neighbors(x,y,width,height,diagonal=False):
         if 0<=nx<width and 0<=ny<height:
             yield nx,ny
 def reachable_tiles(x,y,points,grid):
+    
     reachable={}
     pq=[(0,x,y)]
 
@@ -32,7 +33,21 @@ def reachable_tiles(x,y,points,grid):
             tile_cost=grid.weights[(nx_,ny_)]
             heapq.heappush(pq,(cost+tile_cost,nx_,ny_))
     return reachable
-
+def reachable_tiles_nx(unit,grid,units):
+    G=grid.graph.copy()
+    if unit.diagonal:
+        G.add_edges_from(grid.diagonal_edges)
+    blocked = [u.tile() for u in units if (u.team==unit.team) and (u is not unit)]
+    for pos in blocked:
+        if G.has_node(pos):
+            G.remove_node(pos)
+    lengths=nx.single_source_dijkstra_path_length(
+        G,
+        unit.tile(),
+        cutoff=unit.points,
+        weight="weight"
+    )
+    return lengths
 def shortest_path(start,target,graph,grid_width,blocked_positions=(),diagonals=False,diagonal_edges=()):
     G=graph.copy()
     if diagonals:

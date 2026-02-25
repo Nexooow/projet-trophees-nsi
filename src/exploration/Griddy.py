@@ -93,9 +93,9 @@ class Grid:
                 r=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
                 pygame.draw.rect(screen,col,r)
                 pygame.draw.rect(screen,(255,255,255),r,1)
-    def draw_reachable_tiles(self,unit,screen,color=(255,255,0)):
-        tiles=reachable_tiles(unit.x,unit.y,unit.points,self)
-        for x,y in tiles:
+    def draw_reachable_tiles(self,unit,screen,units,color=(255,255,0)):
+        tiles=reachable_tiles_nx(unit,self,units)
+        for (x,y) in tiles.keys():
             tile=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
             pygame.draw.rect(screen,color,tile,2)
 class Sidebar:
@@ -158,7 +158,7 @@ class Game:
         fourmis_nwar.append(AntPuppet(1))
         pos2=sample(ally_pos,randint(1,len(fourmis_nwar)))
         
-        friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant in fourmis_nwar for x,y in pos2] if len(fourmis_nwar)>0 else []
+        friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant,(x,y) in zip(fourmis_nwar,pos2)] if len(fourmis_nwar)>0 else []
         """
         units=[
             choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)[0]
@@ -183,15 +183,15 @@ class Game:
             for ressource in ressources_obj:
                 ressource.draw(game_surface)
             friendlies=[u for u in units if u.team=='noir']
-            grid.draw_reachable_tiles(active,game_surface)
+            grid.draw_reachable_tiles(active,game_surface,units)
             mouse=pygame.mouse.get_pos()
             for u in units:
                 u.is_static()
                 u.draw(game_surface)
-                #TODO:Check overlap to display the possible
+                #TODO:Check overlap to display the possible movements
                 if mouse_over(u):
                     if u is not active:
-                        grid.draw_reachable_tiles(u,game_surface,color=(255,0,0))
+                        grid.draw_reachable_tiles(u,game_surface,units,color=(255,0,0))
             
             self.sidebar.draw(ui_surface,units,active,colony)
             screen.blit(game_surface,(0,0))
@@ -224,13 +224,18 @@ class Game:
                             )
                             print(path)
                             if path:
-                                active.points-=grid.weights[(active.x,active.y+1)]
-                                active.move_to(*path[0])
+                                if active.points >= grid.weights[path[0]]:
+                                    active.points-=grid.weights[path[0]]
+                                    
+                                    active.move_to(*path[0])
+                                else:
+                                    active.points=0
+                    
                             
                     
                     if active.team=="noir":
                         if event.type==pygame.KEYDOWN:
-                            tiles=reachable_tiles(active.x,active.y,active.points,grid)
+                            tiles=reachable_tiles_nx(active,grid,units)
                             if (active.x,active.y) in ressources_dispos.keys():
                                 colony.add_to_stock(ressources_dispos[(active.x,active.y)])
                                 ressources_dispos.pop((active.x,active.y))
@@ -252,7 +257,7 @@ class Game:
                                 active.move_to(active.x, active.y - 1)
                                 
 
-                            elif event.key==pygame.K_DOWN and active.y < grid.height - 1 and all([(active.x,active.y-1)!=(u.x,u.y) for u in friendlies]) and (active.x,active.y+1) in tiles:
+                            elif event.key==pygame.K_DOWN and active.y < grid.height - 1 and all([(active.x,active.y+1)!=(u.x,u.y) for u in friendlies]) and (active.x,active.y+1) in tiles:
                                 active.points -= grid.weights[(active.x,active.y+1)]
                                 active.move_to(active.x, active.y + 1)
                             elif event.key==pygame.K_SPACE:
@@ -272,8 +277,9 @@ class Game:
                     if len([u for u in units if u.team=="rouge"])<1:
                         self.battle_won=True
                         running=False
-                
-                else:
+                if len(reachable_tiles_nx(active,grid,units))<=0:
+                    active.points=0
+                elif active.points<=0:
                     active.reset_turn()
                     turn_index = (turn_index + 1) % len(units)
                     active = units[turn_index]
