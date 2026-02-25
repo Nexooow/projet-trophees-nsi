@@ -93,6 +93,11 @@ class Grid:
                 r=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
                 pygame.draw.rect(screen,col,r)
                 pygame.draw.rect(screen,(255,255,255),r,1)
+    def draw_reachable_tiles(self,unit,screen,color=(255,255,0)):
+        tiles=reachable_tiles(unit.x,unit.y,unit.points,self)
+        for x,y in tiles:
+            tile=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
+            pygame.draw.rect(screen,color,tile,2)
 class Sidebar:
     def __init__(self,width,height):
         self.width=width
@@ -123,7 +128,7 @@ class Game:
         self.sidebar=Sidebar(SIDEBAR_WIDTH,HEIGHT)
             
     def game(self,difficulty,colony):
-        positions_of_ressources=sample(list(product(range(20),range(4))),randint(1,5))
+        positions_of_ressources=sample(list(product(range(GRID_W),range(int(GRID_H*4/14)))),randint(1,5))
         
         ressources_dispos={
             (x,y):
@@ -146,9 +151,9 @@ class Game:
         img_scarab=pygame.image.load("./assets/fonts/ant.png")
         fourmis_nwar=colony.get_ants(ant_type="soldier") if type(colony) is not list else [] #Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
         
-        positions=list(product(range(20),range(4)))
+        positions=list(product(range(GRID_W),range(int(GRID_H*4/14))))
         pos1=sample(positions,randint(1,6))
-        ally_pos=list(product(range(20),range(10,14)))
+        ally_pos=list(product(range(GRID_W),range(int(GRID_H*10/14),int(GRID_H))))
         fourmis_nwar.append(AntPuppet(1)) # Pour des tests
         fourmis_nwar.append(AntPuppet(1))
         pos2=sample(ally_pos,randint(1,len(fourmis_nwar)))
@@ -166,7 +171,7 @@ class Game:
         turn_index=0
         shuffle(units)
         active=units[turn_index]
-        grid = Grid(20, 14)
+        grid = Grid(GRID_W, GRID_H)
         running=True
         
         while running:
@@ -178,10 +183,15 @@ class Game:
             for ressource in ressources_obj:
                 ressource.draw(game_surface)
             friendlies=[u for u in units if u.team=='noir']
-            
+            grid.draw_reachable_tiles(active,game_surface)
+            mouse=pygame.mouse.get_pos()
             for u in units:
                 u.is_static()
                 u.draw(game_surface)
+                #TODO:Check overlap to display the possible
+                if mouse_over(u):
+                    if u is not active:
+                        grid.draw_reachable_tiles(u,game_surface,color=(255,0,0))
             
             self.sidebar.draw(ui_surface,units,active,colony)
             screen.blit(game_surface,(0,0))

@@ -18,12 +18,14 @@ class Unit:
         self.frame_index=0
         self.frames=self.load_frames()
         self.image=self.frames[0][self.frame_index]
+        self.rect=self.image.get_rect()
         self.static=self.frames[0][1]
         self.static_state=True
         self.time=pygame.time.get_ticks()
         self.destination=None
         self.speed=0.1
         self.target_screen_x,self.target_screen_y=None,None
+        self.mask=pygame.mask.from_surface(self.image)
     def load_frames(self):
         frames = []
         spritesheet, animation_steps = self.image,[2]
@@ -61,6 +63,8 @@ class Unit:
     def draw(self, screen):
         self.update()
         img = pygame.transform.flip(self.image, not self.orientation, False)
+        
+        self.mask=pygame.mask.from_surface(self.image)
         screen.blit(img, (self.screen_x, self.screen_y))
     def is_static(self):
         if self.destination is None:

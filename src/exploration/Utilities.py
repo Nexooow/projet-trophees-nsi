@@ -1,5 +1,6 @@
 import heapq
 import networkx as nx
+import pygame
 def xy_to_node(x,y,cols):
     return y*cols+x
 def node_to_xy(node,cols):
@@ -72,3 +73,8 @@ def closest_enemy(unit,enemies,grid,units):
             dist=len(path)
             closest=enemy
     return closest
+def mouse_over(unit):
+    mouse=pygame.mouse.get_pos()
+    if not unit.rect.collidepoint(mouse):
+        return False
+    return unit.mask.get_at((mouse[0]-unit.rect.x,mouse[1]-unit.rect.y))
