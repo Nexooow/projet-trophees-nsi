@@ -9,5 +9,5 @@ class Nursery(Room):
             {**data, "walkable": []},
         )
 
-    def update_events(self, events):
+    def update_self(self, events):
         pass
