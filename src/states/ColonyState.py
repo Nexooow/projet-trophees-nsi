@@ -257,7 +257,7 @@ class ColonyState(State):
         for ant in self.ants:
             ant.update()
         for room in self.rooms:
-            room.update()
+            room.update(events)
 
         self.render_dirty_cells()
         self.sync_ui()
