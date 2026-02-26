@@ -19,6 +19,7 @@ class ExpeditionState(State):
         self.selected_node=None
         self.menu_rects={}
         self.auto=False
+        self.waiting_for_battle_result=False
     def update(self,events):
         if self.state=="map":
             self.map_state(events)
@@ -74,21 +75,7 @@ class ExpeditionState(State):
         pygame.display.flip()
         
     def battle_state(self,events):
-        for event in events:
-            if event.type==pygame.QUIT:
-                self.stateManager.game.running=False
-            
-            current_node=self.expedition_map.current
-            grid=current_node.create_game()
-            grid.game(current_node.difficulty,colony=[],auto_resolve=self.auto)
-            print(grid.battle_won)
-            if grid.battle_won:
-                self.state="map"
-                self.expedition_map.clear(current_node)
-            if not grid.battle_won:
-                self.state="map"
-            if event.type==pygame.KEYDOWN:
-                self.state="map"
+        pass
     def draw_battle_state(self):
         self.screen.fill((0,0,0))
     def draw_node_menu(self):
@@ -112,17 +99,25 @@ class ExpeditionState(State):
             "manual":manual_rect,
             "auto":auto_rect
         }
-    def node_menu_state(self,events):
+    def node_menu_state(self, events):
         for event in events:
-            if event.type==pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.menu_rects["manual"].collidepoint(event.pos):
-                    self.auto=False
-                    self.state="battle"
+                    self.auto = False
+                    self.start_battle()
                 elif self.menu_rects["auto"].collidepoint(event.pos):
-                    self.auto=True
-                    self.state="battle"
+                    self.auto = True
+                    self.start_battle()
                 else:
-                    self.state="map"
-                    self.selected_node=None
+                    self.state = "map"
+                    self.selected_node = None
+    def start_battle(self):
+        current_node=self.selected_node
+        self.state="battle"
+        grid=current_node.create_game()
+        grid.game(current_node.difficulty,colony=[],auto_resolve=self.auto)
+        if grid.battle_won:
+            self.expedition_map.clear(current_node)
+        self.state = "map"
+        self.selected_node = None
     
-
