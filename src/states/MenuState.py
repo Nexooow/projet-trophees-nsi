@@ -1,6 +1,6 @@
 import pygame
 
-from constants import UIColors
+from constants import UIColors, GAME_NAME
 
 from .State import State
 
@@ -14,7 +14,7 @@ class MenuState(State):
 
         self.ui.label(
             "menu_title",
-            "NOM JEU",
+            GAME_NAME,
             (0, h // 6, w, 80),
         ).set_font("assets/fonts/m5x7.ttf", 96).set_text_color(UIColors.TEXT).set_align(
             "center", "center"
@@ -24,7 +24,7 @@ class MenuState(State):
             "menu_subtitle",
             "Sous titre ici",
             (0, h // 6 + 90, w, 36),
-        ).set_font("assets/fonts/monogram.ttf", 28).set_text_color(
+        ).set_font("assets/fonts/m5x7.ttf", 28).set_text_color(
             (180, 160, 130)
         ).set_align("center", "center")
 
@@ -33,7 +33,7 @@ class MenuState(State):
         spacing = btn_h + 16
 
         panel_padding = 32
-        panel_h = spacing * 3 + panel_padding * 2 - 16
+        panel_h = spacing * 3 + panel_padding * 4 - 16
         panel_y = h // 2 - 20
 
         self.ui.panel(
@@ -57,11 +57,17 @@ class MenuState(State):
             "Continuer",
             (btn_x, panel_y + spacing, btn_w, btn_h),
         ).on("click", self.on_continue).set_z_index(1)
+        
+        self.ui.button(
+            "btn_settings",
+            "Paramètres",
+            (btn_x, panel_y + spacing * 2, btn_w, btn_h),
+        ).on("click", self.on_settings).set_z_index(1)
 
         self.ui.button(
             "btn_quit",
             "Quitter",
-            (btn_x, panel_y + spacing * 2, btn_w, btn_h),
+            (btn_x, panel_y + spacing * 3, btn_w, btn_h),
         ).set_colors(
             normal=(110, 40, 40),
             hover=(150, 55, 55),
@@ -70,11 +76,11 @@ class MenuState(State):
 
         self.ui.label(
             "menu_version",
-            "Trophees NSI  -  2026",
+            "Trophees nsi | 2026",
             (0, h - 36, w, 28),
-        ).set_font("assets/fonts/monogram.ttf", 20).set_text_color(
-            (100, 85, 70)
-        ).set_align("center", "center")
+        ).set_font("assets/fonts/m5x7.ttf", 20).set_text_color((100, 85, 70)).set_align(
+            "center", "center"
+        )
 
     def disable(self):
         self.ui.clear()
@@ -101,6 +107,10 @@ class MenuState(State):
     def on_continue(self):
         # TODO: charger une sauvegarde existante
         self.game.state.set_state("colony")
+        
+    def on_settings(self):
+        # TODO: ouvrir le menu des paramètres
+        pass
 
     def on_quit(self):
         self.game.running = False

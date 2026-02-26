@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Any, Optional
 import pygame
 
 from constants import UIColors
+from lib.utils import parse_color
 
 from .element import Element
-from lib.utils import parse_color
 
 if TYPE_CHECKING:
     from .manager import UIManager
@@ -18,7 +18,7 @@ class Label(Element):
     Un simple label texte.
     """
 
-    DEFAULT_FONT_PATH: Optional[str] = "assets/fonts/monogram.ttf"
+    DEFAULT_FONT_PATH: Optional[str] = "assets/fonts/m5x7.ttf"
     DEFAULT_FONT_SIZE: int = 20
 
     def __init__(self, ui: "UIManager", id: str, text: str = "", rect=(0, 0, 0, 0)):
@@ -45,6 +45,11 @@ class Label(Element):
         self.font_path = path
         self.font_size = size
         self.font_cache = None  # invalider le cache
+        return self
+        
+    def set_font_size(self, size: int) -> "Label":
+        self.font_size = size
+        self.font_cache = None
         return self
 
     def set_align(self, align: str, valign: str = "center") -> "Label":
@@ -87,22 +92,22 @@ class Label(Element):
     def blit_aligned(
         self, screen: pygame.Surface, text_surf: pygame.Surface, abs_rect: pygame.Rect
     ):
-        tw, th = text_surf.get_size()
+        text_width, text_height = text_surf.get_size()
         px, py = self.padding
 
         # Alignement horizontal
         if self.align == "center":
-            x = abs_rect.x + (abs_rect.width - tw) // 2
+            x = abs_rect.x + (abs_rect.width - text_width) // 2
         elif self.align == "right":
-            x = abs_rect.right - tw - px
+            x = abs_rect.right - text_width - px
         else:
             x = abs_rect.x + px
-            
+
         if self.valign == "center":
-            y = abs_rect.y + (abs_rect.height - th) // 2
+            y = abs_rect.y + (abs_rect.height - text_height) // 2
         elif self.valign == "bottom":
-            y = abs_rect.bottom - th - py
+            y = abs_rect.bottom - text_height - py
         else:
             y = abs_rect.y + py
-            
+
         screen.blit(text_surf, (x, y))

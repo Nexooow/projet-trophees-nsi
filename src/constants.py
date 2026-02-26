@@ -1,19 +1,23 @@
 """
 Fichier contenant la configuration et les constantes globales du jeu.
 """
+import os
 
-game_name = "Rise of the Anthill"  # TODO: définir le nom
+GAME_NAME = "Rise of the Anthill"
+SAVES_PATH = os.path.join(os.path.dirname(__file__), "../", "data", "saves")
 
-dirt_color =  "#542323"
-dark_dirt_color = "#3f2323"
+COLONY_WIDTH = 2867
+COLONY_HEIGHT = 1612
+COLONY_GRASS_START = 360
+COLONY_UNDERGROUND_START = COLONY_GRASS_START+40
 
-colony_width = 2048
-colony_height = 1152
-colony_underground_start = 172
+COLONY_BRUSH_SIZE = 20
 
-colony_brush_size = 20
-colony_brush_color = "#b12935"
-
+COLONY_BRUSH_COLOR = "#b12935"
+GALERY_COLOR = "#9c4e3e"
+DARK_GALERY_COLOR = "#6e3228"
+DIRT_COLOR = "#b86858"
+DARK_DIRT_COLOR = "#783828"
 
 class UIColors:
     BG = (92, 64, 51)  # #5C4033
@@ -36,81 +40,31 @@ class UIColors:
     BTN_BG_ACTIVE = (160, 104, 77)  # #A0684D
 
     SHADOW = (26, 18, 13)  # #1A120D
+    
+    GREEN = (50, 168, 82)
+    DARK_GREEN = (20, 103, 86)
+    
+# colony tasks
 
+TASK_ANT_TYPE: dict[str, str] = {
+    "dig": "worker",
+    "bring_food": "worker",
+    "build": "worker",
+    "fight": "warrior",
+    "heal": "nurse",
+    "research": "scientist",
+    "explore": "explorer",
+    "feed_queen": "worker",
+}
 
-#ffffff
-#eaeae8
-#cecac9
-#abafb9
-#a18897
-#756276
-#5d4660
-#4c3250
-#432641
-#28192f
-#fb7575
-#fb3b64
-#c83157
-#8e375c
-#4f2351
-#351544
-#f74a53
-#f22f46
-#bc1642
-#fcc539
-#f87b1b
-#f8401b
-#bd2709
-#7c122b
-#ffe08b
-#fac05a
-#eb8f48
-#d17441
-#c75239
-#b12935
-#fdbd8f
-#f0886b
-#d36853
-#ae454a
-#8c3132
-#542323
-#a85848
-#83404c
-#67314b
-#3f2323
-#d49577
-#9f705a
-#845750
-#633b3f
-#7bd7a9
-#52b281
-#148568
-#146756
-#22474c
-#102f34
-#ebff8b
-#b3e363
-#4cbd56
-#2f8735
-#0b5931
-#97bf6e
-#899f66
-#61855a
-#4c6051
-#73dff2
-#2abbd0
-#315dcd
-#472a9c
-#a0d8d7
-#7dbefa
-#668faf
-#585d81
-#45365d
-#f6bafe
-#d59ff4
-#b070eb
-#7c3ce1
-#dbcfb1
-#a9a48d
-#7b8382
-#5f5f6e
+TASK_DEFAULT_PRIORITY: dict[str, int] = {
+    "dig": 1,
+    "bring_food": 2,
+    "build": 1,
+    "fight": 5,
+    "heal": 4,
+    "research": 1,
+    "explore": 1,
+}
+
+PRICE_PER_DIRTPIXEL = 2

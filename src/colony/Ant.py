@@ -1,8 +1,12 @@
+import math
+import typing
 import pygame
+import uuid
 
+from constants import COLONY_UNDERGROUND_START
 from lib.file import File
 
-from constants import colony_underground_start
+from colony.TaskManager import Task
 
 IMAGES = {
     "worker": [pygame.image.load("./assets/ant.png"), [2]],
@@ -25,7 +29,7 @@ class Ant(pygame.sprite.Sprite):
 
         super().__init__()
         self.colony = colony
-        self.id = id(self)
+        self.id = uuid.uuid4()
         self.type = type
         self.data = data
 
@@ -50,11 +54,17 @@ class Ant(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
         self.direction = pygame.Vector2(0, 0)
 
+        # Tâche actuellement assignée par le TaskManager (id ou None)
+        self.current_task_id: typing.Optional[uuid.UUID] = None
+
         # Système de déplacement
         self.speed = 2.0  # Vitesse en pixels par frame
         self.path = File()
         self.next_cell = None
         self.target_pos = None
+        
+    def is_available (self):
+        return self.current_task_id is None
 
     def get_current_cell(self):
         """Retourne la cellule actuelle de la fourmi"""
@@ -77,7 +87,7 @@ class Ant(pygame.sprite.Sprite):
             # Ajouter le décalage pour atteindre le centre de la cellule
             self.target_pos = pygame.Vector2(
                 pixel_x + self.colony.grid.CELL_SIZE / 2,
-                pixel_y + self.colony.grid.CELL_SIZE / 2 + colony_underground_start,
+                pixel_y + self.colony.grid.CELL_SIZE / 2 + COLONY_UNDERGROUND_START,
             )
 
         # Si pas de cellule cible, la fourmi est immobile
@@ -85,7 +95,6 @@ class Ant(pygame.sprite.Sprite):
             self.direction = pygame.Vector2(0, 0)
             return
 
-        # === DÉPLACEMENT VERS LA CIBLE ===
         if self.target_pos is not None:
             # Calculer le vecteur vers la position cible
             direction_to_target = self.target_pos - self.pos
@@ -105,7 +114,10 @@ class Ant(pygame.sprite.Sprite):
                 self.pos += self.direction * self.speed
 
                 # Mettre à jour la direction du sprite
-                self.flip = self.direction.x < 0  # Vx < 0 => vers la gauche
+                if self.direction.x < 0:
+                    self.flip = True
+                elif self.direction.x != 0:
+                    self.flip = False
 
         if self.rect is not None:
             self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -149,6 +161,13 @@ class Ant(pygame.sprite.Sprite):
                 temp += [temp_img]
             frames += [temp]
         return frames
+        
+    def execute_task (self, task: "Task"):
+        raise NotImplementedError("Les sous-classes de Ant doivent implémenter la méthode execute_task")
+    
+    def add_task (self, task: "Task"):
+        self.current_task_id = task.id
+        self.execute_task(task)
 
     def set_path(self, path):
         """Définit un nouveau chemin pour la fourmi"""

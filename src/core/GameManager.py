@@ -1,4 +1,5 @@
 import pygame
+import typing
 
 from .EventManager import EventManager
 
@@ -6,6 +7,7 @@ from .EventManager import EventManager
 from .StateManager import StateManager
 from .TimeManager import TimeManager
 from lib.ui import UIManager
+from lib.sidebar import Sidebar
 
 class GameManager:
     def __init__(self):
@@ -20,10 +22,15 @@ class GameManager:
         self.width, self.height = self.screen.get_size()
         self.clock = pygame.time.Clock()
         
+        self.game_id: typing.Optional[str] = None
+        
         self.ui = UIManager(self)
         self.state = StateManager(self)
         self.time = TimeManager(self)
         # self.events = EventManager(self)
+
+    def is_game_started(self) -> bool:
+        return self.game_id is not None
 
     def is_running(self) -> bool:
         """
@@ -46,3 +53,12 @@ class GameManager:
         self.screen.fill((255, 255, 255))
         self.state.draw()
         self.ui.draw()
+
+    def sauvegarder (self):
+        pass # TODO: sauvegarder les données du jeu dans un dictionnaire
+
+    def restaurer (self, data: dict):
+        pass # TODO: restaurer les données du jeu à partir du dictionnaire data
+        
+    def trigger_game_over(self, reason: str):
+        pass # TODO: gérer la fin du jeu

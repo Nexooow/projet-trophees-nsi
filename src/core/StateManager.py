@@ -21,14 +21,15 @@ class StateManager:
             "map": MapState(self),
             "expedition": ExpeditionState(self)
         }
-        self.current_state: str = "expedition"
+        self.last_state = None
+        self.current_state: str = "menu"
 
         self.get_current_state().enable()
 
-    def is_current_state(self, state) -> bool:
-        return state == self.current_state
-
     def get_current_state(self) -> State:
+        """
+        Retourne l'état actuel du jeu.
+        """
         return self.states_managers[self.current_state]
 
     def set_state(self, state: str):
@@ -39,9 +40,10 @@ class StateManager:
         if state in self.states_managers and state != old_state.name:
             old_state.disable()
             self.game.ui.clear()
+            self.last_state = old_state.name
             self.current_state = state
             self.get_current_state().enable()
-
+ 
     def update(self, events):
         self.get_current_state().update(events)
 

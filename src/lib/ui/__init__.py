@@ -2,8 +2,9 @@
 Module qui exporte tout les éléments de l'interface utilisateur
 """
 
-from .button import Button
 from constants import UIColors
+
+from .button import Button
 from .element import Element
 from .image import Image
 from .label import Label
