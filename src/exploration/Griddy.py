@@ -1,7 +1,7 @@
 import heapq
 import networkx as netx
 import pygame
-from random import randint, choice, shuffle,sample,choices
+from random import randint, choice, shuffle,sample,choices,random
 from itertools import product
 from .Utilities import *
 from .Unit import *
@@ -38,12 +38,14 @@ class Bomb:
     def get_pos(self):
         return (self.x,self.y)
     def explode(self,units):
+        dead=[]
         for u in units:
             if abs(u.x-self.x)<=1 and abs(u.y-self.y)<=1:
-                u.points=0
+                dead.append(u)
+        return dead
     #TODO:implementer systeme de destruction sur plusieurs tiles, soit par tile prédéterminée, soit par troupe (typa kamikaze)
-GRID_W=20
-GRID_H=14
+#GRID_W=20
+#GRID_H=14
 TILE_SIZE=50
 SIDEBAR_WIDTH=250
 GRID_WIDTH=1000
@@ -85,13 +87,17 @@ class Grid:
                         j = nx,ny
                         cost = self.weights[(nx, ny)] * 1.414
                         self.diagonal_edges.append((i, j, {"weight": cost}))
-    def draw(self,screen):
+    def draw(self,screen,bomb_tiles=None):
         for x in range(self.width):
             for y in range(self.height):
-                w=self.weights[(x,y)]
-                col=weight_to_color(w)
+                
                 r=pygame.Rect(x*self.tile,y*self.tile,self.tile,self.tile)
-                pygame.draw.rect(screen,col,r)
+                if bomb_tiles and (x,y) in bomb_tiles:
+                    pygame.draw.rect(screen,(200,50,50),r)
+                else:
+                    w=self.weights[(x,y)]
+                    col=weight_to_color(w)
+                    pygame.draw.rect(screen,col,r)
                 pygame.draw.rect(screen,(255,255,255),r,1)
     def draw_reachable_tiles(self,unit,screen,units,color=(255,255,0)):
         tiles=reachable_tiles_nx(unit,self,units)
@@ -127,7 +133,13 @@ class Game:
         self.battle_won=None
         self.sidebar=Sidebar(SIDEBAR_WIDTH,HEIGHT)
             
-    def game(self,difficulty,colony):
+    def game(self,difficulty,colony,auto_resolve=False):
+        base_w=20
+        base_h=14
+        GRID_W=base_w+difficulty*2
+        GRID_H=base_h+difficulty
+        GRID_WIDTH=GRID_W*TILE_SIZE
+        HEIGHT=GRID_H*TILE_SIZE
         positions_of_ressources=sample(list(product(range(GRID_W),range(int(GRID_H*4/14)))),randint(1,5))
         
         ressources_dispos={
@@ -141,8 +153,12 @@ class Game:
             HoveringResource(x,y,resource)
             for (x,y),resource in ressources_dispos.items() 
         ]
-        
-        
+        bomb_rate = min(0.25, 0.02 * (1.4 ** difficulty))
+        bomb_tiles=set()
+        for x in range(GRID_W):
+            for y in range(GRID_H):
+                if random()<bomb_rate:
+                    bomb_tiles.add((x,y))
         screen = pygame.display.set_mode((SIDEBAR_WIDTH+GRID_WIDTH, HEIGHT))
         game_surface = pygame.Surface((GRID_WIDTH, HEIGHT))
         ui_surface = pygame.Surface((SIDEBAR_WIDTH, HEIGHT))
@@ -150,22 +166,31 @@ class Game:
         img_fourmi=pygame.image.load("./assets/fonts/ant.png")
         img_scarab=pygame.image.load("./assets/fonts/ant.png")
         fourmis_nwar=colony.get_ants(ant_type="soldier") if type(colony) is not list else [] #Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
-        
+        nb_enemies=2+difficulty*2
         positions=list(product(range(GRID_W),range(int(GRID_H*4/14))))
-        pos1=sample(positions,randint(1,6))
+        pos1=sample(positions,min(nb_enemies,len(positions)))
         ally_pos=list(product(range(GRID_W),range(int(GRID_H*10/14),int(GRID_H))))
         fourmis_nwar.append(AntPuppet(1)) # Pour des tests
         fourmis_nwar.append(AntPuppet(1))
         pos2=sample(ally_pos,randint(1,len(fourmis_nwar)))
-        
+        protected_tiles=set(pos1+pos2+list(ressources_dispos.keys()))
+        bomb_tiles={
+            tile
+            for tile in bomb_tiles
+            if tile not in protected_tiles
+        }
         friendlies=[Unit(x,y,img_fourmi,"noir",ant.power) for ant,(x,y) in zip(fourmis_nwar,pos2)] if len(fourmis_nwar)>0 else []
-        """
+        
         units=[
-            choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],weights=(4,1),k=1)[0]
+            choices([Unit(x, y, img_fourmi, "rouge",power=difficulty),
+                     Unit(x,y,img_scarab,"rouge",power=difficulty,points=3,diagonal=True)],
+                     weights=(4,1),
+                     k=1
+                     )[0]
             for x,y in pos1
         ]
-        """
-        units=[Unit(0,0,img_fourmi,"rouge",power=difficulty)]
+        
+        #units=[Unit(0,0,img_fourmi,"rouge",power=difficulty)]
         units+=friendlies
     
         turn_index=0
@@ -177,7 +202,7 @@ class Game:
         while running:
             game_surface.fill((0,0,0))
             ui_surface.fill((30,30,30))
-            grid.draw(game_surface)
+            grid.draw(game_surface,bomb_tiles)
             #screen.fill((0,0,0))
             #grid.draw(screen)
             for ressource in ressources_obj:
@@ -206,7 +231,7 @@ class Game:
                 
                 if active.points > 0 and (len(friendlies)>0 and len([u for u in units if u.team=="rouge"])>0) and active.static_state:
                     enemies = [u for u in units if u.team != active.team]
-                    if active.team!="noir":
+                    if active.team!="noir" or auto_resolve:
                   
                         
                         target = closest_enemy(active, enemies,grid,units)
@@ -233,7 +258,7 @@ class Game:
                     
                             
                     
-                    if active.team=="noir":
+                    if active.team=="noir" and not auto_resolve:
                         if event.type==pygame.KEYDOWN:
                             tiles=reachable_tiles_nx(active,grid,units)
                             if (active.x,active.y) in ressources_dispos.keys():
@@ -264,7 +289,14 @@ class Game:
                                 active.points=0
 
                     print(active)
-                    active.is_static()   
+                    active.is_static()
+                    if (active.x,active.y) in bomb_tiles:
+                        bomb=Bomb(active.x,active.y)
+                        dead_units=bomb.explode(units)
+                        for u in dead_units:
+                            if u in units:
+                                units.remove(u)
+                        bomb_tiles.remove((active.x,active.y))
                     for enemy in enemies:
                         if (enemy.x,enemy.y)==(active.x,active.y):
                             units.remove(enemy)

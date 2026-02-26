@@ -16,14 +16,22 @@ class ExpeditionState(State):
         self.cam_world=pygame.Surface((1000,700),pygame.SRCALPHA | pygame.HWSURFACE)              
         self.clock=pygame.time.Clock()
         self.state='map'
+        self.selected_node=None
+        self.menu_rects={}
+        self.auto=False
     def update(self,events):
         if self.state=="map":
             self.map_state(events)
+        elif self.state=="node_menu":
+            self.node_menu_state(events)
         elif self.state=="battle":
             self.battle_state(events)
     def draw(self):
         if self.state=="map":
             self.draw_map_state()
+        elif self.state=="node_menu":
+            self.draw_map_state()
+            self.draw_node_menu()
         elif self.state=="battle":
             self.draw_battle_state()
     def map_state(self,events):
@@ -37,8 +45,8 @@ class ExpeditionState(State):
                 
                 if clicked_node:
                     if self.expedition_map.node_is_accessible(clicked_node):
-                        self.expedition_map.current=clicked_node
-                        self.state="battle"
+                        self.selected_node=clicked_node
+                        self.state="node_menu"
                     else:
                         font=pygame.font.Font(None,24)
                         text=font.render("Preceding node must be cleared first",True,(255,255,255))
@@ -72,7 +80,7 @@ class ExpeditionState(State):
             
             current_node=self.expedition_map.current
             grid=current_node.create_game()
-            grid.game(current_node.difficulty,colony=[])
+            grid.game(current_node.difficulty,colony=[],auto_resolve=self.auto)
             print(grid.battle_won)
             if grid.battle_won:
                 self.state="map"
@@ -83,4 +91,38 @@ class ExpeditionState(State):
                 self.state="map"
     def draw_battle_state(self):
         self.screen.fill((0,0,0))
+    def draw_node_menu(self):
+        node=self.selected_node
+        if not node:
+            return
+        menu_x=node.position[0]-self.cam_x+20
+        menu_y=node.position[1]-self.cam_y+20
+        width,height=180,100
+        menu_rect=pygame.Rect(menu_x,menu_y,width,height)
+        pygame.draw.rect(self.screen,(40,40,40),menu_rect)
+        pygame.draw.rect(self.screen,(255,255,255),menu_rect,2)
+        font=pygame.font.Font(None,24)
+        manual_rect=pygame.Rect(menu_x+10,menu_y+20,160,30)
+        auto_rect=pygame.Rect(menu_x+10,menu_y+60,160,30)
+        pygame.draw.rect(self.screen, (70,70,70), manual_rect)
+        pygame.draw.rect(self.screen, (70,70,70), auto_rect)
+        self.screen.blit(font.render("Manual Battle", True, (255,255,255)), (manual_rect.x+10, manual_rect.y+5))
+        self.screen.blit(font.render("Auto Resolve", True, (255,255,255)), (auto_rect.x+10, auto_rect.y+5))
+        self.menu_rects={
+            "manual":manual_rect,
+            "auto":auto_rect
+        }
+    def node_menu_state(self,events):
+        for event in events:
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                if self.menu_rects["manual"].collidepoint(event.pos):
+                    self.auto=False
+                    self.state="battle"
+                elif self.menu_rects["auto"].collidepoint(event.pos):
+                    self.auto=True
+                    self.state="battle"
+                else:
+                    self.state="map"
+                    self.selected_node=None
+    
 
