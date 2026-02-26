@@ -46,7 +46,7 @@ class UIColors:
     
 # colony tasks
 
-TASK_ANT_TYPE: dict[str, str] = {
+TASK_ANT_TYPE: dict = {
     "dig": "worker",
     "bring_food": "worker",
     "build": "worker",
@@ -57,7 +57,7 @@ TASK_ANT_TYPE: dict[str, str] = {
     "feed_queen": "worker",
 }
 
-TASK_DEFAULT_PRIORITY: dict[str, int] = {
+TASK_DEFAULT_PRIORITY: dict = {
     "dig": 1,
     "bring_food": 2,
     "build": 1,
