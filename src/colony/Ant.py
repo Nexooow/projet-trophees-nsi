@@ -7,13 +7,14 @@ from constants import COLONY_UNDERGROUND_START
 from lib.file import File
 
 from colony.TaskManager import Task
+from lib.utils import import_asset
 
 IMAGES = {
-    "worker": [pygame.image.load("./assets/ant.png"), [2]],
-    "nurse": [pygame.image.load("./assets/ant.png"), [2]],
-    "warrior": [pygame.image.load("./assets/ant.png"), [2]],
-    "scientist": [pygame.image.load("./assets/ant.png"), [2]],
-    "explorer": [pygame.image.load("./assets/ant.png"), [2]],
+    "worker": [import_asset("ant.png"), [2]],
+    "nurse": [import_asset("ant.png"), [2]],
+    "warrior": [import_asset("ant.png"), [2]],
+    "scientist": [import_asset("ant.png"), [2]],
+    "explorer": [import_asset("ant.png"), [2]],
 }
 
 
