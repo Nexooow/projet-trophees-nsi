@@ -174,8 +174,8 @@ class Game:
         game_surface = pygame.Surface((GRID_WIDTH, HEIGHT))
         ui_surface = pygame.Surface((SIDEBAR_WIDTH, HEIGHT))
         clock = pygame.time.Clock()
-        img_fourmi = pygame.image.load("./assets/fonts/ant.png")
-        img_scarab = pygame.image.load("./assets/fonts/ant.png")
+        img_fourmi = import_asset("ant.png")
+        img_scarab = import_asset("ant.png")
         fourmis_nwar = (
             colony.get_ants(ant_type="soldier") if type(colony) is not list else []
         )  # Récup les fourmis de l'expedition (colony c pas une classe colony mais une classe ExplorerGroup)
