@@ -20,6 +20,6 @@ def parse_color(color) -> Optional[Any]:
         return tuple(pygame.Color(color))
     return color
     
-def import_asset(type, name):
-    path = os.sep.join(["assets", type, name])
+def import_asset(*args):
+    path = os.sep.join(["data", "assets"] + list(args))
     return pygame.image.load(path)
