@@ -15,7 +15,7 @@ class BattleController:
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return "quit"
+                
             if active.team == "noir" and not self.model.auto_resolve:
                 if event.type == pygame.KEYDOWN:
                     tiles = reachable_tiles_nx(active, grid, units)
@@ -35,11 +35,13 @@ class BattleController:
             dy = 1
 
         target = (active.x + dx, active.y + dy)
-        if target in tiles and all((target != (f.x, f.y) for f in friendlies)):
+        if 0 <= target[0] < grid.width and 0 <= target[1] < grid.height and target in tiles and all((target != (f.x, f.y) for f in friendlies)):
             active.points -= grid.weights[target]
             active.move_to(*target)
     def ai_move(self):
         active = self.model.active_unit
+        if not active.static_state:
+            return
         if active.team != "noir" or self.model.auto_resolve:
             enemies = [u for u in self.model.units if u.team != active.team]
             if enemies:
@@ -53,15 +55,20 @@ class BattleController:
                     if path and active.points >= self.model.grid.weights[path[0]]:
                         active.points -= self.model.grid.weights[path[0]]
                         active.move_to(*path[0])
+                    else:
+                        active.points=0
     def process_bombs_and_attacks(self):
         active=self.model.active_unit
         enemies=[u for u in self.model.units if u.team!=active.team]
         if (active.x,active.y) in self.model.bomb_tiles:
             bomb=Bomb(active.x,active.y)
             dead_units=bomb.explode(self.model.units)
+            active_died=active in dead_units
             for u in dead_units:
                 self.model.remove_unit(u)
             self.model.bomb_tiles.remove((active.x, active.y))
+            if active_died:
+                return
         for enemy in enemies:
             if (enemy.x,enemy.y)==(active.x,active.y):
                 self.model.remove_unit(enemy)

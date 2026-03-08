@@ -1,7 +1,10 @@
 
 import pygame
 from .Utilities import weight_to_color,reachable_tiles_nx,mouse_over
-
+RESSOURCES_IMAGES={
+    "nom":pygame.image.load("./assets/fonts/ant.png")
+}
+RESSOURCES=["nom"]
 class BattleRenderer:
     def __init__(self, model, screen, sidebar):
         self.model = model
@@ -40,7 +43,7 @@ class BattleRenderer:
     def draw_resources(self):
         for res in self.model.resources_obj:
             offset = res.draw_offset()
-            self.game_surface.blit(res.resource, (res.x * 50, res.y * 50 + offset))
+            self.game_surface.blit(RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset))
 
     def draw_units(self):
         mouse = pygame.mouse.get_pos()

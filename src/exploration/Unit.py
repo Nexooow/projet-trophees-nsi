@@ -1,4 +1,5 @@
 import pygame
+import math
 class Unit:
     def __init__(self, x, y, image, team,power=1,points=5,diagonal=False):
         self.x = x
@@ -13,19 +14,26 @@ class Unit:
         self.diagonal=diagonal
         self.power=power
         self.alive=True
-        self.size=100
+        self.size=self.image.get_width()//2,self.image.get_height()
         self.image_scale=0.5
         self.frame_index=0
         self.frames=self.load_frames()
         self.image=self.frames[0][self.frame_index]
         self.rect=self.image.get_rect()
-        self.static=self.frames[0][1]
+        self.static=self.frames[0][0]
         self.static_state=True
         self.time=pygame.time.get_ticks()
         self.destination=None
         self.speed=0.1
         self.target_screen_x,self.target_screen_y=None,None
         self.mask=pygame.mask.from_surface(self.image)
+        self.start_time = pygame.time.get_ticks()
+        self.hover_height = 10
+        self.hover_speed = 0.005
+
+    def draw_offset(self):
+        elapsed_time = (pygame.time.get_ticks() - self.start_time) * self.hover_speed
+        return self.hover_height * math.sin(elapsed_time)
     def load_frames(self):
         frames = []
         spritesheet, animation_steps = self.image,[2]
@@ -33,11 +41,11 @@ class Unit:
             temp = []
             for i in range(x):
                 temp_img = spritesheet.subsurface(
-                    i * self.size, y * self.size, self.size, self.size
+                    i * self.size[0], y * self.size[1], self.size[0], self.size[1]
                 )
                 temp_img = pygame.transform.scale(
                     temp_img,
-                    (self.size * self.image_scale, self.size * self.image_scale),
+                    (self.size[0] * self.image_scale, self.size[1] * self.image_scale),
                 )
                 temp += [temp_img]
             frames += [temp]

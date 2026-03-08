@@ -2,6 +2,7 @@ from .State import State
 import pygame
 import math
 from exploration.ExpeditionMap import ExpeditionMap
+from .BattleState import BattleState
 class ExpeditionState(State):
 
     def __init__(self, state_manager):
@@ -21,20 +22,32 @@ class ExpeditionState(State):
         self.auto=False
         self.waiting_for_battle_result=False
     def update(self,events):
+        if self.waiting_for_battle_result:
+            battle_state=self.stateManager.states_managers.get("battle")
+            if battle_state and battle_state.model.battle_won is not None:
+                if battle_state.model.battle_won:
+                    #On marque la node comme conquise
+                    if self.selected_node:
+                        self.expedition_map.clear(self.selected_node)
+                        
+                        self.selected_node = None
+                self.waiting_for_battle_result=False
+                #On retire le BattleState (pour préparer le suivant)
+                self.stateManager.states_managers["battle"]=None
+                self.state='map'
+                return
         if self.state=="map":
             self.map_state(events)
         elif self.state=="node_menu":
             self.node_menu_state(events)
-        elif self.state=="battle":
-            self.battle_state(events)
+        
     def draw(self):
         if self.state=="map":
             self.draw_map_state()
         elif self.state=="node_menu":
             self.draw_map_state()
             self.draw_node_menu()
-        elif self.state=="battle":
-            self.draw_battle_state()
+        
     def map_state(self,events):
         
         for event in events:
@@ -74,10 +87,7 @@ class ExpeditionState(State):
         self.expedition_map.draw(self.screen,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
         
-    def battle_state(self,events):
-        pass
-    def draw_battle_state(self):
-        self.screen.fill((0,0,0))
+    
     def draw_node_menu(self):
         node=self.selected_node
         if not node:
@@ -112,6 +122,20 @@ class ExpeditionState(State):
                     self.state = "map"
                     self.selected_node = None
     def start_battle(self):
+        current_node = self.selected_node
+
+        self.stateManager.start_battle(
+            current_node.difficulty,
+            colony=[],
+            auto=self.auto
+        )
+        
+        
+        self.waiting_for_battle_result = True 
+
+    """
+    def start_battle(self):
+        
         current_node=self.selected_node
         self.state="battle"
         grid=current_node.create_game()
@@ -120,4 +144,5 @@ class ExpeditionState(State):
             self.expedition_map.clear(current_node)
         self.state = "map"
         self.selected_node = None
+    """
     
