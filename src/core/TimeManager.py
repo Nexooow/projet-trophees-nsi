@@ -4,7 +4,7 @@ class TimeManager:
         self.game = game
         self.paused =  False
         self.day = 1
-        self.time = 0
+        self.time = 60*12
         self.sub_frame_count = 0
     
     def is_paused (self):
@@ -28,6 +28,15 @@ class TimeManager:
         Définit le temps actuel en minutes.
         """
         self.time = time
+        
+    def time_until (self, hour, minute):
+        """
+        Renvoie le temps restant en minutes jusqu'à l'heure et la minute spécifiées.
+        """
+        current_hour, current_minute = self.get_time()
+        target_time = hour * 60 + minute
+        current_time = current_hour * 60 + current_minute
+        return max(0, target_time - current_time)
         
     def is_day(self) -> bool:
         """

@@ -115,6 +115,15 @@ class Element:
         child.parent = self
         self.children.append(child)
         return self
+        
+    def add_children(self, children: list["Element"]) -> "Element":
+        """
+        Attache plusieurs éléments enfants.
+        """
+        for child in children:
+            child.parent = self
+            self.children.append(child)
+        return self
 
     def remove_child(self, child_id: str) -> "Element":
         self.children = [c for c in self.children if c.id != child_id]

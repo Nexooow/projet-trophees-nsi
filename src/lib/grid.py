@@ -1,5 +1,7 @@
 import heapq
 import math
+import random
+
 
 class Grid:
     CELL_SIZE = 8  # Taille d'une cellule en pixels
@@ -12,9 +14,12 @@ class Grid:
         # Dimensions de la grille en cellules (8x8 pixels par cellule)
         self.width = math.ceil(self.pixel_width / self.CELL_SIZE)
         self.height = math.ceil(self.pixel_height / self.CELL_SIZE)
+        
+        self.cached_paths = {}
 
         # Initialiser la grille avec des cellules "full"
         self.grid = []
+        self.dirty_cells = set()
         for y in range(self.height):
             row = []
             for x in range(self.width):
@@ -22,8 +27,10 @@ class Grid:
                     {
                         "state": "full",  # "full", "empty", "partial"
                         "bitmap": None,  # Matrice 8x8 pour les cellules partielles
+                        "variant": random.randint(0, 4),
                     }
                 )
+                self.dirty_cells.add((x, y))
             self.grid.append(row)
 
     def __iter__(self):
@@ -45,13 +52,23 @@ class Grid:
         if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
             self.grid[cell_y][cell_x]["state"] = state
             self.grid[cell_y][cell_x]["bitmap"] = bitmap
-            
-    def get_cell_center (self, x, y):
+            self.dirty_cells.add((cell_x, cell_y))
+
+            # ajouter le flag "dirty" aux cellules voisines
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    nx, ny = cell_x + dx, cell_y + dy
+                    if 0 <= nx < self.width and 0 <= ny < self.height:
+                        self.dirty_cells.add((nx, ny))
+
+    def get_cell_center(self, x, y):
         """
         Retourne les coordonnées du centre d'une cellule
         """
         cell = self.pixel_to_cell(x, y)
-        return cell[0] * self.CELL_SIZE + (self.CELL_SIZE // 2), cell[1] * self.CELL_SIZE + (self.CELL_SIZE // 2)
+        return cell[0] * self.CELL_SIZE + (self.CELL_SIZE // 2), cell[
+            1
+        ] * self.CELL_SIZE + (self.CELL_SIZE // 2)
 
     def pixel_to_cell(self, pixel_x, pixel_y):
         """Convertit des coordonnées pixel en coordonnées cellule"""
@@ -73,64 +90,64 @@ class Grid:
         bmp_x = pixel_x - cell_pixel_x
         bmp_y = pixel_y - cell_pixel_y
         return bmp_x, bmp_y
-    
+
     def supprimer_cellules(self, x, y, size):
         """
-        Retourne les cellules en collision avec le carré (x,y) de côté size
-        Supprime les cellules dans un carré (x, y, size)
-        Met à jour les cellules qui sont en collision avec le rectangle
+        Supprime les cellules dans un cercle.
+        x, y : coin haut gauche du carré englobant le cercle
+        size : diamètre du cercle
         """
-        y-=self.start_y
+        y -= self.start_y
+
+        # Centre et rayon du cercle
+        radius = size / 2
+        center_x = x + radius
+        center_y = y + radius
+        radius_sq = radius * radius
+
+        # Bounding box du cercle pour déterminer quelles cellules vérifier
         x2 = x + size
         y2 = y + size
 
-        grid_x1 = math.floor(max(0, x // self.CELL_SIZE))
-        grid_y1 = math.floor(max(0, y // self.CELL_SIZE))
-        grid_x2 = math.floor(min(self.width - 1, x2 // self.CELL_SIZE))
-        grid_y2 = math.floor(min(self.height - 1, y2 // self.CELL_SIZE))
+        # Convertir en coordonnées de cellules (bounding box)
+        cell_x1, cell_y1 = self.pixel_to_cell(x, y)
+        cell_x2, cell_y2 = self.pixel_to_cell(x2, y2)
 
-        # coordonnées du rectangle en pixels
-        rect_x1 = max(0, x)
-        rect_y1 = max(0, y)
-        rect_x2 = min(self.pixel_width, x + size)
-        rect_y2 = min(self.pixel_height, y + size)
-
-        # Convertir en coordonnées de cellules
-        cell_x1, cell_y1 = self.pixel_to_cell(rect_x1, rect_y1)
-        cell_x2, cell_y2 = self.pixel_to_cell(rect_x2 - 1, rect_y2 - 1)
-
-        # parcourir toutes les cellules touchées
+        # parcourir toutes les cellules touchées par la bounding box
         for cell_y in range(cell_y1, cell_y2 + 1):
             for cell_x in range(cell_x1, cell_x2 + 1):
                 if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
-                    self.update_cell_with_rect(
-                        cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
+                    self.update_cell_with_circle(
+                        cell_x, cell_y, center_x, center_y, radius_sq
                     )
-                    
-    def update_cell_with_rect(
-        self, cell_x, cell_y, rect_x1, rect_y1, rect_x2, rect_y2
-    ):
+
+    def update_cell_with_circle(self, cell_x, cell_y, cx, cy, r_sq):
         """
-        Met à jour une cellule en fonction d'un rectangle de suppression
+        Met à jour une cellule en fonction d'un cercle de suppression
         """
         cell = self.grid[cell_y][cell_x]
 
-        # Coordonnées pixel de la cellule
-        cell_pixel_x, cell_pixel_y = self.cell_to_pixel(cell_x, cell_y)
+        # Si déjà vide, rien à faire
+        if cell["state"] == "empty":
+            return
 
-        # intersection entre la cellule et le rectangle de suppression
-        inter_x1 = max(cell_pixel_x, rect_x1)
-        inter_y1 = max(cell_pixel_y, rect_y1)
-        inter_x2 = min(cell_pixel_x + self.CELL_SIZE, rect_x2)
-        inter_y2 = min(cell_pixel_y + self.CELL_SIZE, rect_y2)
+        # Coordonnées pixel de la cellule (coin haut gauche)
+        cell_px, cell_py = self.cell_to_pixel(cell_x, cell_y)
 
-        # Si la cellule est entièrement dans le rectangle
-        if (
-            inter_x1 == cell_pixel_x
-            and inter_y1 == cell_pixel_y
-            and inter_x2 == cell_pixel_x + self.CELL_SIZE
-            and inter_y2 == cell_pixel_y + self.CELL_SIZE
-        ):
+        # si 4 coins dans le cercle; la rendre vide
+        corners = [
+            (cell_px, cell_py),
+            (cell_px + self.CELL_SIZE, cell_py),
+            (cell_px, cell_py + self.CELL_SIZE),
+            (cell_px + self.CELL_SIZE, cell_py + self.CELL_SIZE),
+        ]
+
+        corners_inside = 0
+        for c_x, c_y in corners:
+            if (c_x - cx) ** 2 + (c_y - cy) ** 2 <= r_sq:
+                corners_inside += 1
+
+        if corners_inside == 4:
             self.set_cell_state(cell_x, cell_y, "empty", None)
             return
 
@@ -141,16 +158,22 @@ class Grid:
             ]
         elif cell["state"] == "partial":
             bitmap = cell["bitmap"]
-        else: 
+        else:
             return
-        
+
         # Marquer les pixels supprimés dans le bitmap
-        for py in range(math.floor(inter_y1), math.floor(inter_y2)):
-            for px in range(math.floor(inter_x1), math.floor(inter_x2)):
-                bmp_x = px - cell_pixel_x
-                bmp_y = py - cell_pixel_y
-                if 0 <= bmp_x < self.CELL_SIZE and 0 <= bmp_y < self.CELL_SIZE:
-                    bitmap[bmp_y][bmp_x] = False
+        # On itère sur les pixels de la cellule
+        for py in range(self.CELL_SIZE):
+            pixel_world_y = cell_py + py + 0.5
+            for px in range(self.CELL_SIZE):
+                if not bitmap[py][px]:
+                    continue  # Déjà creusé
+
+                pixel_world_x = cell_px + px + 0.5
+
+                # Si le pixel est dans le cercle
+                if (pixel_world_x - cx) ** 2 + (pixel_world_y - cy) ** 2 <= r_sq:
+                    bitmap[py][px] = False
 
         # Vérifier si la cellule est maintenant vide ou partielle
         is_filled = any(any(row) for row in bitmap)
@@ -178,11 +201,11 @@ class Grid:
             (0, 1),
             (1, 0),
             (0, -1),
-            (-1, 0), 
+            (-1, 0),
             (1, 1),
             (-1, 1),
-            (1, -1), 
-            (-1, -1), 
+            (1, -1),
+            (-1, -1),
         ]
 
         for dx, dy in directions:
@@ -200,18 +223,29 @@ class Grid:
         Distance entre deux points
         """
         return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
-    
-    def get_path (self, start, goal):
-        start_cell = self.pixel_to_cell(start[0], start[1]-self.start_y)
-        goal_cell = self.pixel_to_cell(goal[0], goal[1]-self.start_y)
-        return self.a_star(start_cell, goal_cell)
+
+    def get_path(self, start, goal):
+        """
+        Retourne le chemin d'un point a vers un point b sur la grille.
+        Utilise un cache pour éviter de recalculer les chemins.
+        """
+        start_cell = self.pixel_to_cell(start[0], start[1] - self.start_y)
+        goal_cell = self.pixel_to_cell(goal[0], goal[1] - self.start_y)
+        cache_key = f"{start_cell}:{goal_cell}"
+        if cache_key in self.cached_paths:
+            return self.cached_paths[cache_key]
+        elif f"{goal_cell}:{start_cell}" in self.cached_paths:
+            return self.cached_paths[cache_key][::-1]
+        else:
+            path = self.a_star(start_cell, goal_cell)
+            self.cached_paths[cache_key] = path
+            return path
 
     def a_star(self, start, goal):
         """
         Implémentation de l'algorithme A* pour trouver le chemin le plus court
         entre start et goal.
         """
-        print(start, goal)
         # Vérifier que start et goal sont dans les limites
         if not (0 <= start[0] < self.width and 0 <= start[1] < self.height):
             return None
