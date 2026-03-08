@@ -5,6 +5,7 @@ from states.ExpeditionState import ExpeditionState
 from states.MenuState import MenuState
 from states.State import State
 from states.BattleState import BattleState
+from states.BattleState import BattleState
 
 class StateManager:
     """
@@ -51,6 +52,7 @@ class StateManager:
 
     def is_flag_active(self, flag: str) -> bool:
         return flag in self.get_current_state().flags
+    
     def start_battle(self, difficulty, colony, auto):
         self.states_managers["battle"] = BattleState(self, difficulty, colony, auto)
         self.set_state("battle")
