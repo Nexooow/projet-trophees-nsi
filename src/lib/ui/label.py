@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import pygame
 
-from constants import UIColors
+from constants import UIColors, FONT_M5X7
 from lib.utils import parse_color
 
 from .element import Element
@@ -12,14 +12,13 @@ from .element import Element
 if TYPE_CHECKING:
     from .manager import UIManager
 
-
 class Label(Element):
     """
     Un simple label texte.
     """
 
-    DEFAULT_FONT_PATH: Optional[str] = "assets/fonts/m5x7.ttf"
-    DEFAULT_FONT_SIZE: int = 20
+    DEFAULT_FONT_PATH: str = FONT_M5X7
+    DEFAULT_FONT_SIZE: int = 16
 
     def __init__(self, ui: "UIManager", id: str, text: str = "", rect=(0, 0, 0, 0)):
         self.text = text
@@ -41,8 +40,8 @@ class Label(Element):
         self.text_color = parse_color(color)
         return self
 
-    def set_font(self, path: Optional[str], size: int) -> "Label":
-        self.font_path = path
+    def set_font(self, name: Optional[str], size: int) -> "Label":
+        self.font_name = name
         self.font_size = size
         self.font_cache = None  # invalider le cache
         return self

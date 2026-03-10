@@ -2,11 +2,12 @@
 Tests pour les classes / fonctions utilitaires.
 """
 
-from src.lib.grid import Grid
 from src.lib.file import File
+from src.lib.grid import Grid
+from src.lib.settings import Settings
+
 
 class TestUtils:
-    
     def test_grid(self):
         grid = Grid((40, 40), 0)
         assert grid.width == 5
@@ -17,11 +18,11 @@ class TestUtils:
                 assert grid.grid[y][x]["state"] == "full"
                 if x == y:
                     grid.set_cell_state(x, y, "empty")
-        
+
         # Test A*
         path_possible = grid.a_star((0, 0), (4, 4))
         assert path_possible == [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]
-        
+
         path_impossible = grid.a_star((0, 4), (4, 0))
         assert path_impossible is None
 
@@ -50,3 +51,26 @@ class TestUtils:
         assert f.defiler() == "A"
         assert f.defiler() == "B"
         assert f.est_vide()
+
+    def test_settings(self):
+        sets = Settings()
+
+        assert not sets.get("debug_mode")
+        assert not sets.DEBUG_MODE
+
+        sets.set("debug_mode", True)
+        assert sets.get("DEBUG_MODE")
+        assert sets.DEBUG_MODE
+
+        sets.DEBUG_MODE = False
+        assert not sets.get("debug_mode")
+        assert not sets.DEBUG_MODE
+
+        assert sets.get("inexistant", "fallback") == "fallback"
+
+        sets.set("debug_mode", True)
+        sets.reset()
+        assert not sets.DEBUG_MODE
+
+        data = sets.all()
+        assert "DEBUG_MODE" in data

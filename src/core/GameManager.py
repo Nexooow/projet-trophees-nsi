@@ -1,13 +1,16 @@
-import pygame
 import typing
 
+import pygame
+
+from lib.ui import UIManager
+
 from .EventManager import EventManager
+from .SaveManager import SaveManager
 
 # import pygame_gui
 from .StateManager import StateManager
 from .TimeManager import TimeManager
-from lib.ui import UIManager
-from lib.sidebar import Sidebar
+
 
 class GameManager:
     def __init__(self):
@@ -15,18 +18,17 @@ class GameManager:
 
         self.screen = pygame.display.set_mode(
             (0, 0),
-            pygame.FULLSCREEN
-            | pygame.SRCALPHA
-            | pygame.HWSURFACE,  # plein écran, support de la transparence, accélération matérielle
+            pygame.FULLSCREEN | pygame.SRCALPHA,
         )
         self.width, self.height = self.screen.get_size()
         self.clock = pygame.time.Clock()
-        
+
         self.game_id: typing.Optional[str] = None
-        
+
         self.ui = UIManager(self)
-        self.state = StateManager(self)
         self.time = TimeManager(self)
+        self.save = SaveManager(self)
+        self.state = StateManager(self)
         # self.events = EventManager(self)
 
     def is_game_started(self) -> bool:
@@ -54,11 +56,25 @@ class GameManager:
         self.state.draw()
         self.ui.draw()
 
-    def sauvegarder (self):
-        pass # TODO: sauvegarder les données du jeu dans un dictionnaire
+    def sauvegarder(self, save_id: typing.Optional[str] = None) -> str:
+        """
+        Sauvegarde l'état courant du jeu dans un fichier JSON.
+        Retourne le save_id utilisé.
+        """
+        return self.save.sauvegarder(save_id)
 
-    def restaurer (self, data: dict):
-        pass # TODO: restaurer les données du jeu à partir du dictionnaire data
-        
+    def restaurer(self, save_id: typing.Optional[str] = None) -> bool:
+        """
+        Restaure une partie depuis un fichier JSON.
+        Si save_id est None, charge la sauvegarde la plus récente.
+        Retourne True si la restauration a réussi.
+        """
+        success = self.save.restaurer(save_id)
+        if success:
+            # S'assurer qu'on est bien dans l'état colony après restauration
+            if self.state.current_state != "colony":
+                self.state.set_state("colony")
+        return success
+
     def trigger_game_over(self, reason: str):
-        pass # TODO: gérer la fin du jeu
+        pass  # TODO: gérer la fin du jeu

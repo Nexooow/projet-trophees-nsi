@@ -1,15 +1,19 @@
 """
 Fichier contenant la configuration et les constantes globales du jeu.
 """
+
 import os
 
 GAME_NAME = "Rise of the Anthill"
-SAVES_PATH = os.path.join(os.path.dirname(__file__), "../", "data", "saves")
+SAVES_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "saves"])
+
+FONTS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets", "fonts"])
+FONT_M5X7 = os.sep.join([FONTS_PATH, "m5x7.ttf"])
 
 COLONY_WIDTH = 2867
 COLONY_HEIGHT = 1612
 COLONY_GRASS_START = 360
-COLONY_UNDERGROUND_START = COLONY_GRASS_START+40
+COLONY_UNDERGROUND_START = COLONY_GRASS_START + 40
 
 COLONY_BRUSH_SIZE = 20
 
@@ -18,6 +22,7 @@ GALERY_COLOR = "#9c4e3e"
 DARK_GALERY_COLOR = "#6e3228"
 DIRT_COLOR = "#b86858"
 DARK_DIRT_COLOR = "#783828"
+
 
 class UIColors:
     BG = (92, 64, 51)  # #5C4033
@@ -40,10 +45,11 @@ class UIColors:
     BTN_BG_ACTIVE = (160, 104, 77)  # #A0684D
 
     SHADOW = (26, 18, 13)  # #1A120D
-    
+
     GREEN = (50, 168, 82)
     DARK_GREEN = (20, 103, 86)
-    
+
+
 # colony tasks
 
 TASK_ANT_TYPE: dict = {
@@ -55,6 +61,7 @@ TASK_ANT_TYPE: dict = {
     "research": "scientist",
     "explore": "explorer",
     "feed_queen": "worker",
+    "deliver_larva": "worker",
 }
 
 TASK_DEFAULT_PRIORITY: dict = {
@@ -65,6 +72,59 @@ TASK_DEFAULT_PRIORITY: dict = {
     "heal": 4,
     "research": 1,
     "explore": 1,
+    "feed_queen": 10,
+    "deliver_larva": 8,
 }
 
 PRICE_PER_DIRTPIXEL = 2
+
+# Nombre maximum de larves en production simultanée (augmentable plus tard)
+QUEEN_MAX_LARVAE = 3
+
+# Fourmis productibles par la reine : coût en nourriture et temps en secondes
+QUEEN_LARVAS: dict = {
+    "worker": {
+        "label": "Ouvrière",
+        "cost": 20,
+        "time": 30,
+    },
+    "nurse": {
+        "label": "Nourrice",
+        "cost": 25,
+        "time": 40,
+    },
+    "warrior": {
+        "label": "Guerrière",
+        "cost": 40,
+        "time": 60,
+    },
+    "scientist": {
+        "label": "Scientifique",
+        "cost": 50,
+        "time": 90,
+    },
+    "explorer": {
+        "label": "Exploratrice",
+        "cost": 35,
+        "time": 50,
+    },
+}
+
+# Améliorations disponibles via la reine pour la colonie
+QUEEN_UPGRADES: dict = {
+    "birth_speed": {
+        "label": "Vitesse de naissance",
+        "description": "Réduit le temps de production des fourmis",
+        "levels": [
+            {"cost": 150, "effect": "-10 %"},
+            {"cost": 350, "effect": "-10 %"},
+            {"cost": 700, "effect": "-10 %"},
+        ],
+    },
+    "science": {
+        "label": "Science",
+        "description": "Débloque les technologies scientifiques",
+        "cost": 300,
+        "levels": [],
+    },
+}

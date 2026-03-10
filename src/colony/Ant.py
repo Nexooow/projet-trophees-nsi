@@ -1,12 +1,12 @@
 import math
 import typing
-import pygame
 import uuid
 
-from constants import COLONY_UNDERGROUND_START
-from lib.file import File
+import pygame
 
 from colony.TaskManager import Task
+from constants import COLONY_UNDERGROUND_START
+from lib.file import File
 from lib.utils import import_asset
 
 IMAGES = {
@@ -63,13 +63,15 @@ class Ant(pygame.sprite.Sprite):
         self.path = File()
         self.next_cell = None
         self.target_pos = None
-        
-    def is_available (self):
+
+    def is_available(self):
         return self.current_task_id is None
 
     def get_current_cell(self):
         """Retourne la cellule actuelle de la fourmi"""
-        return self.colony.grid.pixel_to_cell(int(self.pos.x), int(self.pos.y))
+        return self.colony.grid.pixel_to_cell(
+            int(self.pos.x), int(self.pos.y) - self.colony.grid.start_y
+        )
 
     def is_static(self):
         """Vérifie si la fourmi est immobile"""
@@ -162,11 +164,13 @@ class Ant(pygame.sprite.Sprite):
                 temp += [temp_img]
             frames += [temp]
         return frames
-        
-    def execute_task (self, task: "Task"):
-        raise NotImplementedError("Les sous-classes de Ant doivent implémenter la méthode execute_task")
-    
-    def add_task (self, task: "Task"):
+
+    def execute_task(self, task: "Task"):
+        raise NotImplementedError(
+            "Les sous-classes de Ant doivent implémenter la méthode execute_task"
+        )
+
+    def add_task(self, task: "Task"):
         self.current_task_id = task.id
         self.execute_task(task)
 

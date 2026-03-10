@@ -13,11 +13,11 @@ class TimeManager:
         """
         return self.paused or self.game.state.is_flag_active("pause")
         
-    def get_time (self):
+    def get_time (self, offset = 0):
         """
         Renvoie le temps actuel sous la forme d'un tuple (heures, minutes).
         """
-        return divmod(self.time, 60)
+        return divmod(self.time + offset, 60)
     
     def format (self):
         t = self.get_time()
@@ -28,6 +28,20 @@ class TimeManager:
         Définit le temps actuel en minutes.
         """
         self.time = time
+        
+    def every (self, hours = None, minutes = None):
+        """
+        Renvoie si le temps actuel est divisible par l'intervalle spécifié.
+        Vérifie également si le jeu est en pause pour éviter les répétitions infinies.
+        """
+        if hours is not None and minutes is not None:
+            return self.time % (hours * 60 + minutes) == 0 and not self.is_paused()
+        elif hours is not None:
+            return self.time % (hours * 60) == 0 and not self.is_paused()
+        elif minutes is not None:
+            return self.time % minutes == 0 and not self.is_paused()
+        else:
+            return False
         
     def time_until (self, hour, minute):
         """

@@ -1,7 +1,6 @@
 import typing
 
 from states.ColonyState import ColonyState
-from states.MapState import MapState
 from states.ExpeditionState import ExpeditionState
 from states.MenuState import MenuState
 from states.State import State
@@ -15,10 +14,9 @@ class StateManager:
     def __init__(self, game):
         self.game = game
 
-        self.states_managers: dict[str, State] = {
+        self.states_managers: dict = {
             "menu": MenuState(self),
             "colony": ColonyState(self),
-            "map": MapState(self),
             "expedition": ExpeditionState(self),
             "battle": None,  # sera créé dynamiquement lors d'une bataille
         }

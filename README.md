@@ -1,8 +1,17 @@
-# projet-trophees-nsi
+# Rise of the Anthill
 
-Projet réalisé dans le cadre du concours "Les trophées NSI"
+DESCRIPTION RAPIDE ICI
 
-## Installation 
+---
+
+## Installation, démarrage et prérequis
+
+### Prérequis
+
+- **Python 3.8+**: Le projet est testé pour fonctionner sur cette version, mais il est **fortement recommandé** d'utiliser la dernière version stable de Python.
+- pip (pour l'installation des dépendances, comme vu ci-dessous)
+
+### Installation 
 
 ```bash
 git clone https://github.com/Nexooow/projet-trophees-nsi.git
@@ -15,6 +24,28 @@ pip install -r "requirements.txt"
 ```bash
 python3 src/main.py
 ```
+
+## Développé avec
+
+- PyCharm / Visual Studio Code
+- Assets réalisés avec Pixel Studio (via Steam)
+
+## Versions
+
+A faire
+
+---
+
+## Auteurs
+
+- SCHLEICHER Nikolaï
+- DISCAZEAUX Pierre
+
+## Licence
+
+Apache License 2.0 - Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+--- 
 
 ## Crédits
 

@@ -10,6 +10,7 @@ from .image import Image
 from .label import Label
 from .panel import Panel
 from .progress_bar import ProgressBar
+from .scrollable_panel import ScrollablePanel
 
 
 class UIManager:
@@ -21,9 +22,9 @@ class UIManager:
         self.game = game
         self.screen: pygame.Surface = game.screen
 
-        self.elements: dict[str, Element] = {}
+        self.elements: dict = {}
         # liste des éléments triés par ordre de z-index croissant
-        self.draw_order: list[str] = []
+        self.draw_order: list = []
 
     def add(self, element: Element) -> Element:
         """
@@ -123,6 +124,18 @@ class UIManager:
         self.add(el)
         return el
 
+    def scrollable_panel(
+        self,
+        id: str,
+        rect=(0, 0, 0, 0),
+    ) -> ScrollablePanel:
+        """
+        Crée, enregistre et retourne un ScrollablePanel.
+        """
+        el = ScrollablePanel(self, id, rect)
+        self.add(el)
+        return el
+
     def update(self, events: list) -> None:
         """
         Transmet les événements pygame à tous les éléments racines.
@@ -132,9 +145,12 @@ class UIManager:
                 pygame.MOUSEBUTTONDOWN,
                 pygame.MOUSEBUTTONUP,
                 pygame.MOUSEMOTION,
+                pygame.MOUSEWHEEL,
             ):
-                for eid in self.draw_order:
-                    el = self.elements[eid]
+                for eid in list(self.draw_order):
+                    el = self.elements.get(eid)
+                    if el is None:
+                        continue
                     # On ne distribue qu'aux éléments racines ; les enfants reçoivent
                     # les événements récursivement via Element.handle_event().
                     if el.parent is None:
@@ -144,8 +160,10 @@ class UIManager:
         """
         Dessine tous les éléments racines visibles dans l'ordre des z-index.
         """
-        for eid in self.draw_order:
-            el = self.elements[eid]
+        for eid in list(self.draw_order):
+            el = self.elements.get(eid)
+            if el is None:
+                continue
             if el.parent is None:
                 el.draw(self.screen)
 

@@ -1,5 +1,6 @@
 import pygame
 
+from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
 from colony.rooms.Depot import Depot
 from colony.rooms.Nursery import Nursery
@@ -31,9 +32,7 @@ class ColonyState(State):
         self.tasks = TaskManager(self)
 
         self.sidebar = None
-        self.world = pygame.Surface(
-            (COLONY_WIDTH, COLONY_HEIGHT), pygame.SRCALPHA | pygame.HWSURFACE
-        )
+        self.world = pygame.Surface((COLONY_WIDTH, COLONY_HEIGHT), pygame.SRCALPHA)
         self.camera_x = -(COLONY_WIDTH - self.game.width) // 2
         self.camera_y = 0
 
@@ -54,7 +53,7 @@ class ColonyState(State):
         self.ants = []
         # self.ennemies = []
 
-        self.food = 200
+        self.food = 2000
         # self.science = 0
 
         light_dirt = pygame.Color(DIRT_COLOR)
@@ -63,6 +62,11 @@ class ColonyState(State):
         self.light_gal_rgb = (light_gal.r, light_gal.g, light_gal.b)
 
         self.init_default_paths()
+
+        queen_room = self.get_room("queen")
+        assert queen_room is not None
+        spawn_pos = queen_room.get_passable_entry() or queen_room.get_entry()
+        self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(3)]
         self.render_dirty_cells()
 
         self.night_overlay = pygame.Surface(
@@ -220,6 +224,18 @@ class ColonyState(State):
             return room.get_pos()
         return None
 
+    def get_room_entry(self, room_name):
+        """Retourne la position absolue (pixels) de l'entrée d'une salle."""
+        room = self.get_room(room_name)
+        if room:
+            return room.get_entry()
+        return None
+
+    def save(self):
+        """Sauvegarde la partie et affiche une notification brève."""
+        self.game.sauvegarder()
+        self.sync_ui()
+
     def update(self, events):
         keys = pygame.key.get_pressed()
         screen_width, screen_height = self.game.screen.get_size()
@@ -274,6 +290,7 @@ class ColonyState(State):
         elif h >= 22:  # Dormir à 22h00
             self.is_sleeping = True
             self.sleep_timer = 0
+            self.save()
 
     def get_ambient_light_alpha(self):
         h, m = self.game.time.get_time()
@@ -307,6 +324,34 @@ class ColonyState(State):
         if isinstance(time_label, Label):
             time_label.set_text(self.game.time.format())
 
+        # Mise à jour en temps réel de la barre de progression de la larve en cours
+        queen = self.get_room("queen")
+        if queen is not None and not queen.born_queue.est_vide():
+            from constants import QUEEN_LARVAS
+            from lib.ui.progress_bar import ProgressBar
+
+            ant_type = queen.born_queue.sommet()
+            ant_data = QUEEN_LARVAS.get(ant_type, {})
+            total_seconds = ant_data.get("time", 30)
+            birth_speed_lvl = queen.upgrade_levels.get("birth_speed", 0)
+            if birth_speed_lvl > 0:
+                reduction = 1.0 - 0.10 * birth_speed_lvl
+                total_seconds = max(1, int(total_seconds * reduction))
+            total_frames = total_seconds * 60
+
+            progress = (
+                min(1.0, queen.larvae_timer / total_frames) if total_frames > 0 else 0.0
+            )
+            remaining_s = max(0, total_frames - queen.larvae_timer) // 60
+
+            bar = self.ui.get("queen_larva_bar_0")
+            if isinstance(bar, ProgressBar):
+                bar.set_value(progress)
+
+            time_lbl = self.ui.get("queen_larva_time_0")
+            if isinstance(time_lbl, Label):
+                time_lbl.set_text(f"{remaining_s} s")
+
         night_label = self.ui.get("colony_night_message")
         if isinstance(night_label, Label):
             if self.is_sleeping:
@@ -317,8 +362,8 @@ class ColonyState(State):
     def init_default_paths(self):
         for room_paths in [("depot", "queen"), ("nursery", "queen")]:
             (src, trgt) = room_paths
-            a = self.get_room_coords(src, center=True)
-            b = self.get_room_coords(trgt, center=True)
+            a = self.get_room_entry(src)
+            b = self.get_room_entry(trgt)
 
             if a is None or b is None:
                 continue

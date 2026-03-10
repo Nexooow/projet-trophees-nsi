@@ -11,6 +11,7 @@ from .label import Label
 from .manager import UIManager
 from .panel import Panel
 from .progress_bar import ProgressBar
+from .scrollable_panel import ScrollablePanel
 
 __all__ = [
     "UIColors",
@@ -20,5 +21,6 @@ __all__ = [
     "Panel",
     "Image",
     "ProgressBar",
+    "ScrollablePanel",
     "UIManager",
 ]

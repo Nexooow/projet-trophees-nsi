@@ -5,14 +5,12 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 import pygame
 
 from constants import UIColors
-
 from lib.utils import normalize_rect, parse_color
 
 if TYPE_CHECKING:
     # importe UIManager seulement pour la validation de type,
     # afin d'éviter les imports cycliques lors de l'éxécution
     from .manager import UIManager
-
 
 class Element:
     """
@@ -115,7 +113,7 @@ class Element:
         child.parent = self
         self.children.append(child)
         return self
-        
+
     def add_children(self, children: list["Element"]) -> "Element":
         """
         Attache plusieurs éléments enfants.
@@ -127,6 +125,21 @@ class Element:
 
     def remove_child(self, child_id: str) -> "Element":
         self.children = [c for c in self.children if c.id != child_id]
+        return self
+        
+    def clear_children(self) -> "Element":
+        for child in self.children:
+            child.parent = None
+        self.children = []
+        return self
+        
+    def set_children(self, children: list["Element"]) -> "Element":
+        """
+        Remplace tous les enfants de cet élément par une nouvelle liste.
+        """
+        for child in children:
+            child.parent = self
+        self.children = children
         return self
 
     def draw(self, screen: pygame.Surface):

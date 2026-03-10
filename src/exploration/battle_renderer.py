@@ -1,7 +1,9 @@
 import pygame
 from .Utilities import weight_to_color,reachable_tiles_nx,mouse_over
+from lib.utils import import_asset
+
 RESSOURCES_IMAGES={
-    "nom":pygame.image.load("./assets/fonts/ant.png")
+    "nom":import_asset("fonts", "ant.png")
 }
 RESSOURCES=["nom"]
 class BattleRenderer:

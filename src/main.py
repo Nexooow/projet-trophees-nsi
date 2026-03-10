@@ -12,5 +12,6 @@ while game.is_running():
 
     pygame.display.flip()
     game.clock.tick(60)
+    
 
 pygame.quit()
