@@ -62,8 +62,9 @@ class Unit:
         self.points = self.points_max
 
     def move_to(self, x, y):
-
+        
         self.destination = (x, y)
+        self.orientation= False if self.destination[0]>self.x else True if self.destination[0]<self.x else self.orientation
         print(f"Coords in move to:{self.x, self.y, self.destination}")
 
         self.static_state = False

@@ -100,7 +100,7 @@ def weight_to_color(weight):
     return {
         1: (50, 180, 50),
         2: (160, 120, 60),
-        3: (50, 100, 180),
+        3: (150, 100, 0),
         4: (128, 128, 128),
     }.get(weight, (100, 100, 100))
     # return terrains[weight]["weight"] if weight in terrains else ""

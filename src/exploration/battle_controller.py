@@ -33,8 +33,11 @@ class BattleController:
     def move_player(self, active, key, tiles, friendlies, grid):
         dx, dy = 0, 0
         if key == pygame.K_LEFT:
+            active.orientation=True
             dx = -1
+            
         elif key == pygame.K_RIGHT:
+            active.orientation=False
             dx = 1
         elif key == pygame.K_UP:
             dy = -1
