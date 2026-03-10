@@ -53,6 +53,7 @@ class BattleRenderer:
         for res in self.model.resources_obj:
             offset = res.draw_offset()
             self.game_surface.blit(RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset))
+            self.game_surface.blit(RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset))
 
     def draw_units(self):
         mouse = pygame.mouse.get_pos()

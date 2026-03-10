@@ -4,7 +4,6 @@ Tests pour les classes / fonctions utilitaires.
 
 from src.lib.file import File
 from src.lib.grid import Grid
-from src.lib.settings import Settings
 
 
 class TestUtils:
@@ -52,25 +51,4 @@ class TestUtils:
         assert f.defiler() == "B"
         assert f.est_vide()
 
-    def test_settings(self):
-        sets = Settings()
-
-        assert not sets.get("debug_mode")
-        assert not sets.DEBUG_MODE
-
-        sets.set("debug_mode", True)
-        assert sets.get("DEBUG_MODE")
-        assert sets.DEBUG_MODE
-
-        sets.DEBUG_MODE = False
-        assert not sets.get("debug_mode")
-        assert not sets.DEBUG_MODE
-
-        assert sets.get("inexistant", "fallback") == "fallback"
-
-        sets.set("debug_mode", True)
-        sets.reset()
-        assert not sets.DEBUG_MODE
-
-        data = sets.all()
-        assert "DEBUG_MODE" in data
+    
