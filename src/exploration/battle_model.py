@@ -6,6 +6,7 @@ from .Utilities import neighbors
 from lib.perlin import Perlin
 import networkx as netx
 import math
+from lib.utils import import_asset
 TILE_SIZE=50
 SIDEBAR_WIDTH=50
 class HoveringResource:
@@ -88,8 +89,8 @@ class BattleModel:
         self.init_battle(colony)
     def init_battle(self,colony):
         
-        img_fourmi=pygame.image.load("./assets/fonts/ant.png")
-        img_scarab=pygame.image.load("./assets/fonts/scarab.png")
+        img_fourmi=import_asset("fonts","ant.png")
+        img_scarab=import_asset("fonts","scarab.png")
         positions_of_ressources = sample(
             list(product(range(self.grid_w), range(int(self.grid_h * 4 / 14)))),
             randint(1, 5),
