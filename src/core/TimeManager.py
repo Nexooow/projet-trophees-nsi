@@ -1,3 +1,5 @@
+ACCEL = 1
+
 class TimeManager:
     
     def __init__ (self, game):
@@ -63,7 +65,7 @@ class TimeManager:
         Met à jour le temps.
         """
         if not self.paused:
-            self.sub_frame_count += 1
+            self.sub_frame_count += 1 * ACCEL
             if self.sub_frame_count >= 60:
                 self.time += 1
                 self.sub_frame_count = 0

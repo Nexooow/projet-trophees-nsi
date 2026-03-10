@@ -85,27 +85,27 @@ QUEEN_MAX_LARVAE = 3
 QUEEN_LARVAS: dict = {
     "worker": {
         "label": "Ouvrière",
-        "cost": 20,
+        "cost": 500,
         "time": 30,
     },
     "nurse": {
         "label": "Nourrice",
-        "cost": 25,
+        "cost": 700,
         "time": 40,
     },
     "warrior": {
         "label": "Guerrière",
-        "cost": 40,
+        "cost": 1000,
         "time": 60,
     },
     "scientist": {
         "label": "Scientifique",
-        "cost": 50,
+        "cost": 2000,
         "time": 90,
     },
     "explorer": {
         "label": "Exploratrice",
-        "cost": 35,
+        "cost": 1500,
         "time": 50,
     },
 }

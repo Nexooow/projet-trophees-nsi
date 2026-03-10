@@ -98,6 +98,7 @@ class TaskManager:
     def find_available_ants(self, type: str):
         ants = []
         for ant in self.colony.ants:
+            #print(f"ant n{self.colony.ants.index(ant)} - {ant.is_available()} - {ant.pos}")
             if ant.type == type and ant.is_available():
                 ants.append(ant)
         return ants
@@ -107,15 +108,16 @@ class TaskManager:
             if task.is_expired():
                 task.expire()
         for file_name, file in self.files.items():
-            if not file.est_vide():
-                available_ants = self.find_available_ants(file_name)
+            if file.est_vide():
+                continue
             available_ants = self.find_available_ants(file_name)
             for ant in available_ants:
                 if file.est_vide():
-                    break
+                    break;
                 task_id = file.defiler()
                 if task_id is None or task_id not in self.tasks:
                     continue
                 task = self.tasks[task_id]
+                print(f"assignation tache {task.type} à {ant.id}")
                 task.start(ant.id)
                 ant.add_task(task)

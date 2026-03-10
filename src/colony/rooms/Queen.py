@@ -70,15 +70,16 @@ class Queen(Room):
 
     def update_self(self, events):
         if self.game.time.every(minutes=self.feed_interval):
-            self.colony.tasks.add_task(
-                "feed_queen",
-                data={"deadline": self.feed_time},
-                on_expired=self.on_queen_starved,
-            )
+            #self.colony.tasks.add_task(
+            #    "feed_queen",
+            #    data={"deadline": self.feed_time},
+            #    on_expired=self.on_queen_starved,
+            #)
+            pass # TODO: fix 
 
-        self._update_larvae_production()
+        self.update_larvae_production()
 
-    def _update_larvae_production(self):
+    def update_larvae_production(self):
         """
         Fait avancer le timer de production de la première larve en file.
         Quand le timer atteint la durée totale, la fourmi est créée et
@@ -106,6 +107,8 @@ class Queen(Room):
         self.larvae_timer += 1
 
         if self.larvae_timer >= total_frames:
+            
+            print("naissance")
 
             self.born_queue.defiler()
             self.larvae_timer = 0
@@ -123,6 +126,8 @@ class Queen(Room):
         nursery = self.colony.get_room("nursery")
         if nursery is None:
             return
+        
+        print("fourmi envoyée")
 
         queen_entry = self.get_passable_entry()
         nursery_entry = nursery.get_passable_entry()
@@ -467,10 +472,13 @@ class Queen(Room):
 
         slot_w = inner_w - PADDING * 2
         label_h = LARVAE_ITEM_HEIGHT - LARVAE_BAR_HEIGHT - GAP - PADDING
+        
 
         for idx in range(self.max_larvae):
             slot_y = PADDING + SECTION_HEIGHT + GAP + idx * (LARVAE_ITEM_HEIGHT + GAP)
             filled = idx < nb_filled
+            
+            print(filled, idx)
 
             slot = (
                 ui.panel(

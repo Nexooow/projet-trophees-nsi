@@ -15,14 +15,36 @@ class Worker(Ant):
 
         # État interne pour deliver_larva
         self.delivery_phase: typing.Optional[str] = None
-        self.delivery_ant_type: typing.Optional[str] = None
+        self.delivery_data: typing.Optional[str] = None
         self.delivery_pos: typing.Optional[typing.Tuple[int, int]] = None
 
     def execute_task(self, task: "Task"):
         """Aiguille vers le bon handler selon le type de tâche."""
         if task.type == "deliver_larva":
             self.start_deliver_larva(task)
-        # TODO: ajouter d'autres tâches ici
+            print("début livraison")
+        elif task.type == "feed_queen":
+            self.start_feed_queen(task)
+            
+    def start_feed_queen(self, task: "Task"):
+        data = task.data or {}
+        pickup_pos = data.get("pickup_pos")
+        deliver_pos = data.get("delivery_pos")
+
+        if pickup_pos is None or deliver_pos is None:
+            self.finish_task()
+            print("annulée")
+            return
+
+        self.delivery_pos = deliver_pos
+        self.delivery_phase = _PHASE_GO_PICKUP
+
+        pickup_cell = self.colony.grid.pixel_to_cell(
+            int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
+        )
+        
+        self.move_to(pickup_cell[0], pickup_cell[1])
+        
 
     def start_deliver_larva(self, task: "Task"):
         """
@@ -30,12 +52,15 @@ class Worker(Ant):
         l'ouvrière chercher la larve auprès de la reine.
         """
         data = task.data or {}
-        self.delivery_ant_type = data.get("ant_type")
+        self.delivery_data = data.get("ant_type")
         pickup_pos = data.get("pickup_pos")
         deliver_pos = data.get("delivery_pos")
+        
+        print("début livraison par la fourmi")
 
-        if pickup_pos is None or deliver_pos is None or self.delivery_ant_type is None:
+        if pickup_pos is None or deliver_pos is None or self.delivery_data is None:
             self.finish_task()
+            print("annulée")
             return
 
         self.delivery_pos = deliver_pos
@@ -72,6 +97,8 @@ class Worker(Ant):
             self.move_to(delivery_cell[0], delivery_cell[1])
 
         elif self.delivery_phase == _PHASE_GO_DELIVER:
+            
+            # TODO: changer le fonctionnement selon le type de livraison (larve ou nourriture pour la reine)
             # Arrivée à la nurserie
             self.delivery_phase = _PHASE_DONE
             self.hatch_larva()
@@ -86,7 +113,7 @@ class Worker(Ant):
             # Les autres types pourront être ajoutés ici
         }
 
-        ant_type = self.delivery_ant_type or "worker"
+        ant_type = self.delivery_data or "worker"
         ant_class = _ANT_CLASS_MAP.get(ant_type, WorkerAnt)
 
         # TODO: gérer la naissance via la nursery
@@ -102,5 +129,5 @@ class Worker(Ant):
             self.current_task_id = None
 
         self.delivery_phase = None
-        self.delivery_ant_type = None
+        self.delivery_data = None
         self.delivery_pos = None
