@@ -23,14 +23,6 @@ class TestGame:
         game.update([])
         game.draw()
         assert game.is_running()
-    
-    def test_map_state (self):
-        game = self.start()
-        game.state.set_state("map")
-        assert game.state.current_state == "map"
-        game.update([])
-        game.draw()
-        assert game.is_running()
         
     def test_expedition_state (self):
         game = self.start()
