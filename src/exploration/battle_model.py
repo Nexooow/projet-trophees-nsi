@@ -65,6 +65,20 @@ class Grid:
                     if 0 <= nx < width and 0 <= ny < height:
                         self.diagonal_edges.append(((x, y), (nx, ny), {"weight": self.weights[(nx, ny)] * 1.414}))
         self.graph=netx.DiGraph(self.edges)
+        
+    def get_mask(self,x,y):
+        #Bitmask à partir des voisins (1 pour le haut, 2 pour la droite, 4 pour le bas et 8 pour la gauche)
+        w=self.weights[(x,y)]
+        mask=0
+        if y>0 and self.weights[(x,y-1)]==w:
+            mask|=1
+        if x<self.width-1 and self.weights[(x+1,y)]==w:
+            mask|=2
+        if y<self.height-1 and self.weights[(x,y+1)]==w:
+            mask|=4
+        if x>0 and self.weights[(x-1,y)]==w:
+            mask|=8
+        return mask
 class BattleModel:
     def __init__(self, difficulty, colony, auto_resolve=False):
         self.difficulty = difficulty

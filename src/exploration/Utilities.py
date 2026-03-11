@@ -1,5 +1,5 @@
 import heapq
-
+from random import randint
 import networkx as nx
 import pygame
 
@@ -131,3 +131,16 @@ def mouse_over(unit):
     if not unit.rect.collidepoint(mouse):
         return False
     return unit.mask.get_at((mouse[0] - unit.rect.x, mouse[1] - unit.rect.y))
+def generate_tiles(base_color, tile_size):
+    tiles = []
+    for mask in range(16):
+        surf = pygame.Surface((tile_size, tile_size))
+        shade = mask * 5
+        color = (
+            min(base_color[0] + shade, 255),
+            min(base_color[1] + shade, 255),
+            min(base_color[2] + shade, 255),
+        )
+        surf.fill(color)
+        tiles.append(surf)
+    return tiles
