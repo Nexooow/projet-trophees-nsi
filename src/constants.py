@@ -100,12 +100,12 @@ QUEEN_LARVAS: dict = {
     },
     "scientist": {
         "label": "Scientifique",
-        "cost": 2000,
+        "cost": 4000,
         "time": 90,
     },
     "explorer": {
         "label": "Exploratrice",
-        "cost": 1500,
+        "cost": 2000,
         "time": 50,
     },
 }
@@ -116,15 +116,20 @@ QUEEN_UPGRADES: dict = {
         "label": "Vitesse de naissance",
         "description": "Réduit le temps de production des fourmis",
         "levels": [
-            {"cost": 150, "effect": "-10 %"},
-            {"cost": 350, "effect": "-10 %"},
-            {"cost": 700, "effect": "-10 %"},
+            {"cost": 5000, "effect": "-10 %"},
+            {"cost": 7500, "effect": "-10 %"},
+            {"cost": 10000, "effect": "-10 %"},
         ],
     },
     "science": {
         "label": "Science",
         "description": "Débloque les technologies scientifiques",
-        "cost": 300,
+        "cost": 7000,
         "levels": [],
     },
+}
+
+# TODO: ajouter des items, utilisables dans le système d'exploration/combat
+ITEMS = {
+    
 }

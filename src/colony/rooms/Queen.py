@@ -255,8 +255,13 @@ class Queen(Room):
         stat_h = 24
         btn_y = SCROLL_ITEM_HEIGHT - PADDING - BTN_HEIGHT
         stat_w = (card_w - PADDING * 2 - GAP) // 2
+        
+        larves_disponibles = QUEEN_LARVAS.copy()
+        
+        if self.upgrade_levels.get("science", 0) == 0:
+            del larves_disponibles["scientist"]
 
-        for i, (ant_type, data) in enumerate(QUEEN_LARVAS.items()):
+        for i, (ant_type, data) in enumerate(larves_disponibles.items()):
             y_card = i * (SCROLL_ITEM_HEIGHT + ITEM_GAP) + PADDING
 
             card = (

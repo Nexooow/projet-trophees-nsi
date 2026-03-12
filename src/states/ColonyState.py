@@ -20,6 +20,8 @@ from lib.grid import Grid
 from lib.sidebar import Sidebar
 from lib.ui import Label
 from lib.utils import import_asset
+from constants import QUEEN_LARVAS
+from lib.ui.progress_bar import ProgressBar
 
 from .State import State
 
@@ -55,6 +57,8 @@ class ColonyState(State):
 
         self.food = 2000
         # self.science = 0
+        
+        self.inventory = {}
 
         light_dirt = pygame.Color(DIRT_COLOR)
         self.light_dirt_rgb = (light_dirt.r, light_dirt.g, light_dirt.b)
@@ -206,6 +210,23 @@ class ColonyState(State):
     def disable(self):
         """Supprime les éléments UI de la colonie."""
         self.ui.clear()
+    
+    def add_item(self, name, quantity = None):
+        if quantity is None:
+            quantity = 1
+        if name in self.inventory:
+            self.inventory[name] += quantity
+        else:
+            self.inventory[name] = quantity
+            
+    def remove_item(self, name, quantity=None):
+        if name not in self.inventory:
+            return
+        if quantity is None:
+            del self.inventory[name]
+        self.inventory[name] -= quantity
+        if self.inventory[name] <= 0:
+            del self.inventory[name]
 
     def get_room(self, room_name):
         """
@@ -280,12 +301,11 @@ class ColonyState(State):
 
     def update_day_cycle(self):
         h, m = self.game.time.get_time()
-
         if self.is_sleeping:
             self.sleep_timer += 1
             if self.sleep_timer >= 180:  # 3 secondes à 60 FPS
                 self.is_sleeping = False
-                self.game.time.set_time(6 * 60)  # Réveil à 6h00
+                self.game.time.set_time(8 * 60)  # Réveil à 8h00
                 self.game.time.day += 1
         elif h >= 22:  # Dormir à 22h00
             self.is_sleeping = True
@@ -295,14 +315,10 @@ class ColonyState(State):
     def get_ambient_light_alpha(self):
         h, m = self.game.time.get_time()
         time_in_minutes = h * 60 + m
-        # Lever du soleil : 6h00 -> 9h00 (360 -> 540)
-        # Journée : 9h00 -> 19h00 (540 -> 1140)
-        # Coucher du soleil : 19h00 -> 22h00 (1140 -> 1320)
-        # Nuit : 22h00 -> 6h00 (1320 -> 1440 / 0 -> 360)
         max_darkness = 200
-        if 360 <= time_in_minutes < 540:
+        if 8*60 <= time_in_minutes < 540:
             # Transition Nuit -> Jour (Dégressif)
-            ratio = (time_in_minutes - 360) / (540 - 360)
+            ratio = (time_in_minutes - 8*60) / (540 - 8*60)
             return int(max_darkness * (1 - ratio))
         elif 540 <= time_in_minutes < 1140:
             # Journée
@@ -327,8 +343,6 @@ class ColonyState(State):
         # Mise à jour en temps réel de la barre de progression de la larve en cours
         queen = self.get_room("queen")
         if queen is not None and not queen.born_queue.est_vide():
-            from constants import QUEEN_LARVAS
-            from lib.ui.progress_bar import ProgressBar
 
             ant_type = queen.born_queue.sommet()
             ant_data = QUEEN_LARVAS.get(ant_type, {})

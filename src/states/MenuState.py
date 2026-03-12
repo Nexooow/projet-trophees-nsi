@@ -5,13 +5,12 @@ import pygame
 from constants import GAME_NAME, UIColors
 
 from .State import State
+from .ColonyState import ColonyState
 
-# ── Dimensions communes ────────────────────────────────────────────────────────
 BTN_W, BTN_H = 260, 52
 SPACING = BTN_H + 16
 PANEL_PADDING = 32
 
-# ── Palette du sous-menu sauvegardes ──────────────────────────────────────────
 SAVE_CARD_H = 72
 SAVE_CARD_GAP = 8
 SAVE_CARD_PADDING = 12
@@ -316,11 +315,10 @@ class MenuState(State):
             scroll.add_child(card)
 
     def on_new_game(self):
-        from states.ColonyState import ColonyState
-
         self.game.state.states_managers["colony"] = ColonyState(self.game.state)
         self.game.game_id = None
         self.game.state.set_state("colony")
+        self.game.sauvegarder()
 
     def load_save(self, save_id: str):
         """Charge une sauvegarde spécifique et bascule vers la colonie."""

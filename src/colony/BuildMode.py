@@ -60,13 +60,24 @@ class BuildMode:
                     "colony_sidebar_build",
                     (4, 4, sidebar.width-4*2, sidebar.height-4*2)
                 ).set_border(None, 0).add_children([
-                    self.ui.label("colony_sidebar_build_title", "Construction", (4, 6, sidebar.width-8*2, 30)).set_font_size(36).set_align("center", "center"),
-                    # TODO: prix galeries + salles
+                    self.ui.label(
+                        "colony_sidebar_build_title",
+                        "Construction",
+                        (4, 6, sidebar.width-8*2, 30)
+                    )
+                    .set_font_size(36)
+                    .set_align("center", "center"),
+                    
+                    # TODO: prix terre et salles
+                    
                     self.ui.button(
                         "colony_sidebar_build_cancel",
                         "Annuler", 
                         (4, sidebar.height-46-30-4, sidebar.width-8*2, 30)
-                    ).set_font_size(24).set_align("center", "center").on("click", self.cancel_build),
+                    )
+                    .set_font_size(24)
+                    .set_align("center", "center")
+                    .on("click", self.cancel_build),
                     self.ui.button(
                         "colony_sidebar_build_start",
                         "Démarrer la construction", 

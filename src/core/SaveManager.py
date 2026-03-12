@@ -93,6 +93,7 @@ class SaveManager:
         colony = self.get_colony()
         colony_data: dict = {"food": colony.food}
 
+        colony_data["inventory"] = colony.inventory
         colony_data["grid"] = self.serialize_grid(colony)
         colony_data["rooms"] = self.serialize_rooms(colony)
         colony_data["ants"] = self.serialize_ants(colony)
@@ -238,6 +239,7 @@ class SaveManager:
         colony_data = data.get("colony", {})
         colony = self.get_colony()
         colony.food = colony_data.get("food", 0)
+        colony.inventory = colony_data.get("inventory", {})
 
         grid_data = colony_data.get("grid")
         if grid_data:

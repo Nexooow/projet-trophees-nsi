@@ -22,7 +22,7 @@ class StateManager:
             "battle": None,  # sera créé dynamiquement lors d'une bataille
         }
         self.last_state = None
-        self.current_state: str = "expedition"
+        self.current_state: str = "menu"
 
         self.get_current_state().enable()
 

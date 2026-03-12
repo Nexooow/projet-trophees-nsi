@@ -20,3 +20,12 @@ class Depot(Room):
 
     def update_self(self, events):
         pass
+    
+    def interact(self):
+        sidebar = self.colony.sidebar
+        assert sidebar is not None
+        
+        width = sidebar.width
+        height = sidebar.height
+        
+        pass # TODO: afficher l'inventaire de la colonie
