@@ -4,6 +4,9 @@ import uuid
 from constants import TASK_ANT_TYPE, TASK_DEFAULT_PRIORITY
 from lib.file import File
 
+def distance (pos1, pos2):
+    return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
+
 
 class Task:
     def __init__(
@@ -68,6 +71,9 @@ class TaskManager:
             "scientist": File(),
             "explorer": File(),
         }
+        
+    def get_task(self, task_id: uuid.UUID):
+        return self.tasks[task_id]
 
     def add_task(
         self, type, data=None, on_start=None, on_complete=None, on_expired=None
@@ -95,13 +101,14 @@ class TaskManager:
     def complete_task(self, task_id: uuid.UUID):
         self.tasks[task_id].complete()
 
-    def find_available_ants(self, type: str):
+    def find_available_ants(self, type: str, pos = None):
         ants = []
         for ant in self.colony.ants:
-            #print(f"ant n{self.colony.ants.index(ant)} - {ant.is_available()} - {ant.pos}")
             if ant.type == type and ant.is_available():
                 ants.append(ant)
-        return ants
+        if pos is None:
+            return ants
+        return sorted(ants, key=lambda ant: distance(ant.pos, pos))
 
     def update(self):
         for task in list(self.tasks.values()):
@@ -113,11 +120,10 @@ class TaskManager:
             available_ants = self.find_available_ants(file_name)
             for ant in available_ants:
                 if file.est_vide():
-                    break;
+                    break
                 task_id = file.defiler()
                 if task_id is None or task_id not in self.tasks:
                     continue
                 task = self.tasks[task_id]
-                print(f"assignation tache {task.type} à {ant.id}")
                 task.start(ant.id)
                 ant.add_task(task)

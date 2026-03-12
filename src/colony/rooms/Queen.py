@@ -68,14 +68,30 @@ class Queen(Room):
         # Représente le temps écoulé sur la larve actuellement en tête de file.
         self.larvae_timer: int = 0
 
+        # Indique si une tâche feed_queen est déjà en cours (non complétée)
+        self.feed_task_pending: bool = False
+
     def update_self(self, events):
-        if self.game.time.every(minutes=self.feed_interval):
-            #self.colony.tasks.add_task(
-            #    "feed_queen",
-            #    data={"deadline": self.feed_time},
-            #    on_expired=self.on_queen_starved,
-            #)
-            pass # TODO: fix 
+        if (
+            self.game.time.every(minutes=self.feed_interval)
+            and not self.feed_task_pending
+        ):
+            depot = self.colony.get_room("depot")
+            depot_entry = depot.get_passable_entry() if depot is not None else None
+            queen_entry = self.get_passable_entry()
+
+            if depot_entry is not None and queen_entry is not None:
+                self.feed_task_pending = True
+                self.colony.tasks.add_task(
+                    "bring_food_queen",
+                    data={
+                        "deadline": self.feed_time,
+                        "pickup_pos": depot_entry,
+                        "delivery_pos": queen_entry,
+                    },
+                    on_complete=self.on_feed_task_done,
+                    on_expired=self.on_feed_task_expired,
+                )
 
         self.update_larvae_production()
 
@@ -107,7 +123,6 @@ class Queen(Room):
         self.larvae_timer += 1
 
         if self.larvae_timer >= total_frames:
-            
             print("naissance")
 
             self.born_queue.defiler()
@@ -126,12 +141,12 @@ class Queen(Room):
         nursery = self.colony.get_room("nursery")
         if nursery is None:
             return
-        
+
         print("fourmi envoyée")
 
         queen_entry = self.get_passable_entry()
         nursery_entry = nursery.get_passable_entry()
-            
+
         if queen_entry is None or nursery_entry is None:
             return
 
@@ -477,14 +492,11 @@ class Queen(Room):
 
         slot_w = inner_w - PADDING * 2
         label_h = LARVAE_ITEM_HEIGHT - LARVAE_BAR_HEIGHT - GAP - PADDING
-        
 
         for idx in range(self.max_larvae):
             slot_y = PADDING + SECTION_HEIGHT + GAP + idx * (LARVAE_ITEM_HEIGHT + GAP)
             filled = idx < nb_filled
             
-            print(filled, idx)
-
             slot = (
                 ui.panel(
                     f"queen_larva_slot_{idx}",
@@ -613,6 +625,19 @@ class Queen(Room):
         if upg_id == "larvae_slots":
             self.max_larvae += 1
         # D'autres effets pourront être ajoutés ici selon l'upg_id
+
+    def on_feed_task_done(self):
+        """
+        Appelé quand la tâche feed_queen est complétée avec succès.
+        """
+        self.feed_task_pending = False
+
+    def on_feed_task_expired(self):
+        """
+        Appelé quand la tâche feed_queen expire (délai dépassé).
+        """
+        self.feed_task_pending = False
+        self.on_queen_starved()
 
     def on_queen_starved(self):
         self.hp -= 10

@@ -54,13 +54,13 @@ class UIColors:
 
 TASK_ANT_TYPE: dict = {
     "dig": "worker",
-    "bring_food": "worker",
     "build": "worker",
     "fight": "warrior",
     "heal": "nurse",
     "research": "scientist",
     "explore": "explorer",
-    "feed_queen": "worker",
+    "bring_food": "worker",
+    "bring_food_queen": "worker",
     "deliver_larva": "worker",
 }
 
@@ -72,7 +72,7 @@ TASK_DEFAULT_PRIORITY: dict = {
     "heal": 4,
     "research": 1,
     "explore": 1,
-    "feed_queen": 10,
+    "bring_food_queen": 10,
     "deliver_larva": 8,
 }
 
