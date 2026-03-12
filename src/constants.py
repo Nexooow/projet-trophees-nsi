@@ -130,6 +130,6 @@ QUEEN_UPGRADES: dict = {
 }
 
 # TODO: ajouter des items, utilisables dans le système d'exploration/combat
-ITEMS = {
-    
-}
+# Dictionnaires des items disponibles, la clé est l'ID de l'item
+# La valeur doit être un dictionnaire avec les clés "label", "description"
+ITEMS = {}

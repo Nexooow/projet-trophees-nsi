@@ -183,7 +183,7 @@ class ColonyState(State):
             "colony_btn_expedition",
             "",
             (btn_x, btn_y, menu_btn_size, menu_btn_size),
-        ).on("click", lambda: print("A faire, implémenter l'expédition")).set_z_index(
+        ).on("click", self.start_exploration).set_z_index(
             10
         ).add_child(
             self.ui.image(
@@ -206,6 +206,10 @@ class ColonyState(State):
             .set_font("assets/fonts/m5x7.ttf", 16)
             .set_text_color(UIColors.TEXT)
         )
+        
+    def start_exploration(self):
+        self.save()
+        self.stateManager.set_state("exploration")
 
     def disable(self):
         """Supprime les éléments UI de la colonie."""
@@ -265,6 +269,8 @@ class ColonyState(State):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_b:
                     self.build_mode.switch()
+                elif event.key == pygame.K_e:
+                    self.start_exploration()
 
         if self.build_mode.enabled:
             self.build_mode.update(events)
