@@ -81,6 +81,7 @@ class Queen(Room):
             queen_entry = self.get_passable_entry()
 
             if depot_entry is not None and queen_entry is not None:
+                
                 self.feed_task_pending = True
                 self.colony.tasks.add_task(
                     "bring_food_queen",

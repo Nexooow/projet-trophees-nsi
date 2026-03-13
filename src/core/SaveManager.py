@@ -347,10 +347,12 @@ class SaveManager:
             queen.born_queue.enfiler(ant_type)
 
     def restore_ants(self, colony, ants_data: list):
+        from colony.ants.Nurse import Nurse
         from colony.ants.Worker import Worker
 
         _ANT_CLASS_MAP = {
             "worker": Worker,
+            "nurse": Nurse,
         }
 
         colony.ants.clear()

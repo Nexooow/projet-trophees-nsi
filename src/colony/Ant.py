@@ -195,6 +195,7 @@ class Ant(pygame.sprite.Sprite):
         current_cell = self.get_current_cell()
         path = self.colony.grid.a_star(current_cell, (target_cell_x, target_cell_y))
         if path:
+            print("chemin trouvé")
             self.set_path(path)
             return True
         return False

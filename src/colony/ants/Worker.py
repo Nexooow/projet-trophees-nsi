@@ -1,6 +1,7 @@
 import typing
 
 from colony.Ant import Ant
+from colony.ants.Nurse import Nurse
 from colony.TaskManager import Task
 
 # Phases de la tâche deliver_larva
@@ -44,7 +45,7 @@ class Worker(Ant):
         pickup_cell = self.colony.grid.pixel_to_cell(
             int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
         )
-        
+
         self.moving = True
         if not self.move_to(pickup_cell[0], pickup_cell[1]):
             self.finish_task()
@@ -62,6 +63,7 @@ class Worker(Ant):
 
         if pickup_pos is None or deliver_pos is None or self.delivery_data is None:
             self.finish_task()
+            print("annulée")
             return
 
         self.delivery_pos = deliver_pos
@@ -74,6 +76,7 @@ class Worker(Ant):
         self.moving = True
         if not self.move_to(pickup_cell[0], pickup_cell[1]):
             self.finish_task()
+            print("annulée")
             return
 
     def update(self):
@@ -87,20 +90,20 @@ class Worker(Ant):
             return
 
         if self.moving:
-            if not self.is_static():
+            if self.is_static():
                 self.moving = False
-            # Dans tous les cas on attend qu'elle soit arrivée
-            return
+            else:
+                # La fourmi est toujours en mouvement
+                return
 
         # On attend que la fourmi soit immobile (chemin entièrement parcouru)
         if not self.is_static():
             return
-            
+
         current_task = self.get_current_task()
         assert current_task is not None
 
         if self.delivery_phase == _PHASE_GO_PICKUP:
-            
             self.delivery_phase = _PHASE_GO_DELIVER
             assert self.delivery_pos is not None
             delivery_cell = self.colony.grid.pixel_to_cell(
@@ -108,22 +111,21 @@ class Worker(Ant):
                 int(self.delivery_pos[1]) - self.colony.grid.start_y,
             )
             self.moving = True
-            
+
             if current_task.type == "bring_food_queen":
                 self.colony.food -= 200
-            
+
             if not self.move_to(delivery_cell[0], delivery_cell[1]):
                 self.finish_task()
                 return
 
         elif self.delivery_phase == _PHASE_GO_DELIVER:
-
             self.delivery_phase = _PHASE_DONE
 
             if current_task.type == "bring_food_queen":
                 pass  # La nourriture est considérée livrée à l'arrivée
             elif current_task.type == "deliver_larva":
-                pass # TODO: déléguer la naissance à la nursery
+                pass # TODO: faire apparaitre la nouvelle fourmi
 
             self.finish_task()
 
