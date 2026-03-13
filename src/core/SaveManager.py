@@ -17,14 +17,13 @@ CELL_STATES = {
     "full_v3": 3,
     "full_v4": 4,
     "occupied": 10,
-    "occupied_wallkable": 11,
+    "occupied_walkable": 11,
 }
 
 
 class SaveManager:
     """
-    Gestionnaire central des sauvegardes.
-    Associé au GameManager via game.save.
+    Gestionnaire des sauvegardes.
     """
 
     def __init__(self, game):
@@ -87,12 +86,16 @@ class SaveManager:
         return save_id
 
     def save_dict(self, save_id: str) -> dict:
+        """
+        Retourne un dictionnaire contenant les données du jeu à sauvegarder.
+        """
         game = self.game
         time_mgr = game.time
 
         colony = self.get_colony()
         colony_data: dict = {"food": colony.food}
 
+        colony_data["inventory"] = colony.inventory
         colony_data["grid"] = self.serialize_grid(colony)
         colony_data["rooms"] = self.serialize_rooms(colony)
         colony_data["ants"] = self.serialize_ants(colony)
@@ -152,6 +155,9 @@ class SaveManager:
         return rows
 
     def serialize_rooms(self, colony) -> dict:
+        """
+        Sérialise les données des salles de la colonie.
+        """
         rooms_data: dict = {}
         for room in colony.rooms:
             if room.name == "queen":
@@ -159,6 +165,9 @@ class SaveManager:
         return rooms_data
 
     def serialize_queen(self, queen) -> dict:
+        """
+        Sérialise les données de la reine.
+        """
         # File de larves : liste des types en attente
         born_queue_list = [item for (item, _) in queen.born_queue.content]
 
@@ -185,6 +194,9 @@ class SaveManager:
         }
 
     def serialize_ants(self, colony) -> list:
+        """
+        Sérialise la liste des fourmis de la colonie.
+        """
         ants_list = []
         for ant in colony.ants:
             ants_list.append(
@@ -228,6 +240,9 @@ class SaveManager:
         return True
 
     def restore_from_dict(self, data: dict):
+        """
+        Restaure l'état du jeu à partir d'un dictionnaire de données.
+        """
         game = self.game
 
         time_data = data.get("time", {})
@@ -238,6 +253,7 @@ class SaveManager:
         colony_data = data.get("colony", {})
         colony = self.get_colony()
         colony.food = colony_data.get("food", 0)
+        colony.inventory = colony_data.get("inventory", {})
 
         grid_data = colony_data.get("grid")
         if grid_data:
@@ -256,7 +272,11 @@ class SaveManager:
                 colony.grid.dirty_cells.add((x, y))
 
     def restore_grid(self, colony, rows: list):
+        """
+        Restaure la grille à partir de la sauvegarde.
+        """
         grid = colony.grid
+        grid.cached_paths = {}
 
         INT_TO_STATE: dict = {}
         for key, code in CELL_STATES.items():
@@ -327,10 +347,12 @@ class SaveManager:
             queen.born_queue.enfiler(ant_type)
 
     def restore_ants(self, colony, ants_data: list):
+        from colony.ants.Nurse import Nurse
         from colony.ants.Worker import Worker
 
         _ANT_CLASS_MAP = {
             "worker": Worker,
+            "nurse": Nurse,
         }
 
         colony.ants.clear()

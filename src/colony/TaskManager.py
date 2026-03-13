@@ -5,6 +5,10 @@ from constants import TASK_ANT_TYPE, TASK_DEFAULT_PRIORITY
 from lib.file import File
 
 
+def distance(pos1, pos2):
+    return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
+
+
 class Task:
     def __init__(
         self,
@@ -69,6 +73,9 @@ class TaskManager:
             "explorer": File(),
         }
 
+    def get_task(self, task_id: uuid.UUID):
+        return self.tasks[task_id]
+
     def add_task(
         self, type, data=None, on_start=None, on_complete=None, on_expired=None
     ):
@@ -87,37 +94,49 @@ class TaskManager:
     def delete_task(self, task_id: uuid.UUID):
         if task_id in self.tasks:
             task_data = self.tasks[task_id]
-            self.files[TASK_ANT_TYPE[task_data.type]].content.remove(
-                (task_id, task_data.priority)
-            )
+            # On retire la tâche de la file si elle y est encore
+            file = self.files[TASK_ANT_TYPE[task_data.type]]
+            for i, (tid, _) in enumerate(file.content):
+                if tid == task_id:
+                    file.content.pop(i)
+                    break
             del self.tasks[task_id]
 
     def complete_task(self, task_id: uuid.UUID):
         self.tasks[task_id].complete()
 
-    def find_available_ants(self, type: str):
+    def find_available_ants(self, type: str, pos=None):
         ants = []
         for ant in self.colony.ants:
-            #print(f"ant n{self.colony.ants.index(ant)} - {ant.is_available()} - {ant.pos}")
             if ant.type == type and ant.is_available():
                 ants.append(ant)
-        return ants
+        if pos is None:
+            return ants
+        return sorted(ants, key=lambda ant: distance(ant.pos, pos))
 
     def update(self):
         for task in list(self.tasks.values()):
             if task.is_expired():
                 task.expire()
-        for file_name, file in self.files.items():
-            if file.est_vide():
+
+        for ant_type, file in self.files.items():
+            # On récupère les fourmis disponibles pour ce type
+            available_ants = self.find_available_ants(ant_type)
+            if not available_ants:
                 continue
-            available_ants = self.find_available_ants(file_name)
-            for ant in available_ants:
-                if file.est_vide():
-                    break;
+
+            # On distribue les tâches en attente aux fourmis disponibles
+            while not file.est_vide() and available_ants:
                 task_id = file.defiler()
-                if task_id is None or task_id not in self.tasks:
+                if task_id not in self.tasks:
                     continue
+
                 task = self.tasks[task_id]
-                print(f"assignation tache {task.type} à {ant.id}")
+                # Si la tâche est déjà assignée ou expirée, on passe à la suivante
+                if task.is_assigned() or task.is_expired():
+                    continue
+
+                # On prend la première fourmi disponible
+                ant = available_ants.pop(0)
                 task.start(ant.id)
                 ant.add_task(task)

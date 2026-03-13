@@ -54,7 +54,6 @@ class Ant(pygame.sprite.Sprite):
         self.pos = pygame.Vector2(pos)
         self.rect = self.image.get_rect(center=pos)
         self.direction = pygame.Vector2(0, 0)
-
         # Tâche actuellement assignée par le TaskManager (id ou None)
         self.current_task_id: typing.Optional[uuid.UUID] = None
 
@@ -115,13 +114,9 @@ class Ant(pygame.sprite.Sprite):
                 # Normaliser la direction et appliquer la vitesse
                 self.direction = direction_to_target.normalize()
                 self.pos += self.direction * self.speed
-
-                # Mettre à jour la direction du sprite
-                if self.direction.x < 0:
-                    self.flip = True
-                elif self.direction.x != 0:
-                    self.flip = False
-
+                
+                # TODO: gérer l'orientation/angle
+                
         if self.rect is not None:
             self.rect.center = (int(self.pos.x), int(self.pos.y))
 
@@ -165,6 +160,12 @@ class Ant(pygame.sprite.Sprite):
             frames += [temp]
         return frames
 
+    def get_current_task(self) -> typing.Optional["Task"]:
+        """
+        Retourne la tâche actuellement assignée à la fourmi.
+        """
+        return self.colony.tasks.get_task(self.current_task_id)
+
     def execute_task(self, task: "Task"):
         raise NotImplementedError(
             "Les sous-classes de Ant doivent implémenter la méthode execute_task"
@@ -175,7 +176,9 @@ class Ant(pygame.sprite.Sprite):
         self.execute_task(task)
 
     def set_path(self, path):
-        """Définit un nouveau chemin pour la fourmi"""
+        """
+        Définit un nouveau chemin pour la fourmi
+        """
         # Vider le chemin actuel
         self.path = File()
         # Ajouter les nouvelles cellules
@@ -186,14 +189,15 @@ class Ant(pygame.sprite.Sprite):
         self.target_pos = None
 
     def move_to(self, target_cell_x, target_cell_y):
-        """Calcule et définit un chemin vers une cellule cible"""
+        """
+        Calcule et définit un chemin vers une cellule cible
+        """
         current_cell = self.get_current_cell()
         path = self.colony.grid.a_star(current_cell, (target_cell_x, target_cell_y))
         if path:
             print("chemin trouvé")
             self.set_path(path)
             return True
-        print("pas de chemin trouvé")
         return False
 
     def stop(self):

@@ -1,4 +1,4 @@
-ACCEL = 1
+ACCEL = 1 # variable utilisée pour des tests/debug pour accéler le temps
 
 class TimeManager:
     
