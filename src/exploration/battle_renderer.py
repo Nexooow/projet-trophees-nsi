@@ -4,7 +4,7 @@ from lib.utils import import_asset
 from random import randint
 from lib.perlin import Perlin
 RESSOURCES_IMAGES={
-    "nom":import_asset("fonts", "ant.png")
+    "nom":import_asset("icons", "leaf.png")
 }
 RESSOURCES=["nom"]
 class BattleRenderer:
@@ -12,11 +12,13 @@ class BattleRenderer:
         self.model = model
         self.screen = screen
         self.sidebar = sidebar
-        self.perlin = Perlin(seed=123, scale=8, octaves=2, normalize=True)
+        self.perlin = Perlin( scale=8, octaves=2, normalize=True)
         self.game_surface = pygame.Surface(
             (screen.get_width() - 250, screen.get_height())
         )
-        self.ui_surface = pygame.Surface((250, screen.get_height()))
+        self.ui_surface = pygame.Surface((250, screen.get_height()),
+
+        )
         self.tile_size=self.model.grid.tile
         self.base_colors = {
             1: (210,180,120),
@@ -66,27 +68,7 @@ class BattleRenderer:
         self.screen.blit(self.game_surface, (0, 0))
         self.screen.blit(self.ui_surface, (self.game_surface.get_width(), 0))
         pygame.display.flip()
-    """
-    def draw_grid(self):
-        grid = self.model.grid
-        for x in range(grid.width):
-            for y in range(grid.height):
-                rect = pygame.Rect(x * grid.tile, y * grid.tile, grid.tile, grid.tile)
-                color = weight_to_color(grid.weights[(x, y)])
-                pygame.draw.rect(self.game_surface, color, rect)
-                if (x, y) in self.model.bomb_tiles:
-                    pygame.draw.rect(self.game_surface, (200, 50, 50), rect)
-                pygame.draw.rect(self.game_surface, (255, 255, 255), rect, 1)
-        # Mise en couleur des tiles atteignables
-        tiles = reachable_tiles_nx(self.model.active_unit, grid, self.model.units)
-        for x, y in tiles.keys():
-            pygame.draw.rect(
-                self.game_surface,
-                (255, 255, 0),
-                pygame.Rect(x * grid.tile, y * grid.tile, grid.tile, grid.tile),
-                2,
-            )
-    """
+    
     def draw_grid(self):
         grid = self.model.grid
         for x in range(grid.width):
@@ -98,7 +80,7 @@ class BattleRenderer:
                 self.game_surface.blit(tile_img,rect)
                 if (x, y) in self.model.bomb_tiles:
                     pygame.draw.rect(self.game_surface, (200, 50, 50), rect)
-                pygame.draw.rect(self.game_surface, (255, 255, 255), rect, 1)
+                pygame.draw.rect(self.game_surface, (255, 255, 255,128), rect, 1)
         # Mise en couleur des tiles atteignables
         tiles = reachable_tiles_nx(self.model.active_unit, grid, self.model.units)
         for x, y in tiles.keys():

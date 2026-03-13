@@ -3,6 +3,9 @@ import pygame
 import math
 from exploration.ExpeditionMap import ExpeditionMap
 from .BattleState import BattleState
+from lib.perlin import Perlin
+from exploration.Utilities import weight_to_color
+CELL_SIZE=5
 class ExpeditionState(State):
 
     def __init__(self, state_manager):
@@ -14,6 +17,7 @@ class ExpeditionState(State):
         self.cam_y=400
         self.camera_zoom=1.0
         self.screen=self.game.screen
+        
         self.cam_world=pygame.Surface((1000,700),pygame.SRCALPHA | pygame.HWSURFACE)              
         self.clock=pygame.time.Clock()
         self.state='map'
@@ -21,6 +25,35 @@ class ExpeditionState(State):
         self.menu_rects={}
         self.auto=False
         self.waiting_for_battle_result=False
+        self.perlin=Perlin(
+            scale=200,
+            octaves=4,
+            steps=4,
+            normalize=True
+            )
+        self.screen_sizes=self.screen.get_width(),self.screen.get_height()
+        self.pygame_surf=pygame.Surface(
+            (self.screen_sizes[0],self.screen_sizes[1])
+        )
+        self.noise_map=self.perlin.noise_map(self.screen_sizes[0]//4,self.screen_sizes[1]//4)
+        self.weights={}
+        for y in range(self.screen_sizes[1]//4):
+            for x in range(self.screen_sizes[0]//4):
+                w = int(self.noise_map[y][x] * 3) + 1
+                self.weights[(x, y)] = w
+        self.base_colors = {
+            1: (210,180,120),
+            2: (80,160,80),
+            3: (130,90,60),
+            4: (120,120,120),
+        }
+        self.cells_color={
+            col:[
+                self.draw_cells(color,mask)
+                for mask in range(16)
+            ]
+            for col,color in self.base_colors.items()
+        }
     def update(self,events):
         if self.waiting_for_battle_result:
             battle_state=self.stateManager.states_managers.get("battle")
@@ -32,7 +65,7 @@ class ExpeditionState(State):
                         
                         self.selected_node = None
                 self.waiting_for_battle_result=False
-                #On retire le BattleState (pour préparer le suivant)
+                #On retire le BattleState (pour préparer le suivant)CELL_SIZE
                 self.stateManager.states_managers["battle"]=None
                 self.state='map'
                 return
@@ -82,8 +115,13 @@ class ExpeditionState(State):
         if keys[pygame.K_RIGHT]:
             self.cam_x+=speed
     def draw_map_state(self):
-        
-        self.screen.fill((100,100,150)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
+        self.pygame_surf.fill((0,0,0))
+
+        for x in range(self.screen_sizes[0]//4):
+            for y in range(self.screen_sizes[1]//4):
+                self.pygame_surf.blit(self.cells_color[self.weights[(x,y)]][self.get_mask(x,y)],pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        self.screen.blit(self.pygame_surf,(0,0))
+        #self.screen.fill((100,100,150)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
         self.expedition_map.draw(self.screen,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
         
@@ -132,17 +170,42 @@ class ExpeditionState(State):
         
         
         self.waiting_for_battle_result = True 
-
-    """
-    def start_battle(self):
-        
-        current_node=self.selected_node
-        self.state="battle"
-        grid=current_node.create_game()
-        grid.game(current_node.difficulty,colony=[],auto_resolve=self.auto)
-        if grid.battle_won:
-            self.expedition_map.clear(current_node)
-        self.state = "map"
-        self.selected_node = None
-    """
+    def draw_cells(self,base_color,mask):
+        surf=pygame.Surface((CELL_SIZE,CELL_SIZE))
+        surf.fill(base_color)
+        noise=self.perlin.noise_map(CELL_SIZE,CELL_SIZE)
+        for x in range(CELL_SIZE):
+            for y in range(CELL_SIZE):
+                n=noise[x][y]
+                shade=int((n-0.5)*40)
+                color=(
+                    max(min(base_color[0] + shade, 255), 0),
+                    max(min(base_color[1] + shade, 255), 0),
+                    max(min(base_color[2] + shade, 255), 0),
+                )
+                surf.set_at((x,y),color)
+        edge_color=tuple(max(c-30,0) for c in base_color)
+        if not (mask & 1):
+            pygame.draw.rect(surf,edge_color,(0,0,CELL_SIZE,4))
+        if not (mask & 2):
+            pygame.draw.rect(surf,edge_color,(CELL_SIZE-4,0,4,CELL_SIZE))
+        if not (mask & 4):
+            pygame.draw.rect(surf,edge_color,(0,CELL_SIZE-4,CELL_SIZE,4))
+        if not (mask & 8):
+            pygame.draw.rect(surf,edge_color,(0,0,4,CELL_SIZE))
+        return surf
+    def get_mask(self,x,y):
+        #Bitmask à partir des voisins (1 pour le haut, 2 pour la droite, 4 pour le bas et 8 pour la gauche)
+        w=self.weights[(x,y)]
+        mask=0
+        width,height=self.screen_sizes[0]//4,self.screen_sizes[1]//4
+        if y>0 and self.weights[(x,y-1)]==w:
+            mask|=1
+        if x<width-1 and self.weights[(x+1,y)]==w:
+            mask|=2
+        if y<height-1 and self.weights[(x,y+1)]==w:
+            mask|=4
+        if x>0 and self.weights[(x-1,y)]==w:
+            mask|=8
+        return mask
     

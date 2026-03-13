@@ -2,7 +2,7 @@ import pygame
 from itertools import product
 from random import choice,sample,randint,random,choices,shuffle
 from .Unit import Unit
-from .Utilities import neighbors
+from .Utilities import neighbors,fill
 from lib.perlin import Perlin
 import networkx as netx
 import math
@@ -16,7 +16,7 @@ class HoveringResource:
         self.resource = resource
         self.tile_size = tile_size
         self.start_time = pygame.time.get_ticks()
-        self.hover_height = 10
+        self.hover_height = 5
         self.hover_speed = 0.005
 
     def draw_offset(self):
@@ -45,7 +45,7 @@ class Grid:
         self.diagonal_edges = []
         
 
-        perlin = Perlin(seed=42, scale=20, octaves=4, steps=4, normalize=True)
+        perlin = Perlin( scale=20, octaves=4, steps=4, normalize=True)
         noise_map = perlin.noise_map(width, height)
         for y in range(height):
             for x in range(width):
@@ -130,7 +130,7 @@ class BattleModel:
         nb_enemies = 2 + self.difficulty * 2
         positions = list(product(range(self.grid_w), range(int(self.grid_h * 4 / 14))))
         pos1 = sample(positions, min(nb_enemies, len(positions)))
-        
+        img_fourmi_rouge=fill(img_fourmi,pygame.Color(255,0,0))
         self.enemies = [
             choices([Unit(x, y, img_fourmi, "rouge"),
                      Unit(x,y,img_scarab,"rouge",points=3,diagonal=True)],

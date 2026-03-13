@@ -18,12 +18,14 @@ class BattleState(State):
         if self.model.active_unit not in self.model.units:
             self.model.turn_index %= len(self.model.units)
             self.model.active_unit = self.model.units[self.model.turn_index]
-        if self.model.active_unit.points<=0 and self.model.active_unit.static_state:
-            self.model.next_turn()
         if self.model.active_unit.points > 0:
+
+            self.controller.process_bombs_and_attacks()
             self.controller.handle_input(events)
             self.controller.ai_move()
-            self.controller.process_bombs_and_attacks()
+        if self.model.active_unit.points<=0 and self.model.active_unit.static_state:
+            self.model.next_turn()
+        
         if len(self.model.friendlies) == 0:
             self.model.battle_won = False
             self.manager.game.battle_won = False
