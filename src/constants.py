@@ -31,6 +31,7 @@ class UIColors:
     BG_DISABLED = (62, 42, 35)  # #3E2A23
 
     TEXT = (244, 232, 193)  # #F4E8C1
+    TEXT_SECONDARY = (204, 193, 159)
     TEXT_HOVER = (255, 248, 220)  # #FFF8DC
     TEXT_DISABLED = (139, 115, 85)  # #8B7355
 
@@ -76,7 +77,7 @@ TASK_DEFAULT_PRIORITY: dict = {
     "deliver_larva": 8,
 }
 
-PRICE_PER_DIRTPIXEL = 2
+PRICE_PER_DIRTPIXEL = 0.05
 
 # Nombre maximum de larves en production simultanée (augmentable plus tard)
 QUEEN_MAX_LARVAE = 3

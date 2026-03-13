@@ -11,6 +11,7 @@ from constants import (
     COLONY_WIDTH,
     PRICE_PER_DIRTPIXEL,
 )
+from lib.utils import distance
 
 if typing.TYPE_CHECKING:
     from states.ColonyState import ColonyState
@@ -21,6 +22,7 @@ class BuildMode:
         self.colony = colony_state
         self.ui = colony_state.ui
         self.enabled = False
+        self.valid_selections = set()
         self.selections = set()
         self.builds = []
         
@@ -69,6 +71,22 @@ class BuildMode:
                     .set_align("center", "center"),
                     
                     # TODO: prix terre et salles
+
+                    self.ui.label(
+                        "colony_sidebar_build_dug",
+                        "Pixels creusés",
+                        (4, 36+6, sidebar.width-8*2, 30)
+                    )
+                    .set_font_size(24)
+                    .set_align("left", "center"),
+
+                    self.ui.label(
+                        "colony_sidebar_colony_price",
+                        f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}",
+                        (4, 36+25, sidebar.width-8*2, 30)
+                    )
+                    .set_font_size(20).set_align("right", "center").set_text_color(UIColors.TEXT_SECONDARY),
+                    
                     
                     self.ui.button(
                         "colony_sidebar_build_cancel",
@@ -78,6 +96,7 @@ class BuildMode:
                     .set_font_size(24)
                     .set_align("center", "center")
                     .on("click", self.cancel_build),
+
                     self.ui.button(
                         "colony_sidebar_build_start",
                         "Démarrer la construction", 
@@ -88,6 +107,23 @@ class BuildMode:
             sidebar.show()
         else:
             sidebar.hide()
+
+    def find_closest_selection (self, select_x, select_y):
+        selections_tri = sorted(self.selections, key=lambda s: distance(s, (select_x, select_y)))
+        select_proche = selections_tri[0]
+        if distance(select_proche, (select_x, select_y)) <= 2*COLONY_BRUSH_SIZE:
+            return select_proche
+        else: 
+            return None
+        
+    def is_linked_gallery(self, select_x, select_y):
+        pos = self.colony.grid.pixel_to_cell(select_x, select_y-COLONY_UNDERGROUND_START)
+        cell = self.colony.grid.get_cell(*pos)
+        return cell["state"] == "empty" or cell["state"] == "partial"
+    
+    def closest_valid (self, select_x, select_y):
+        closest = self.find_closest_selection(select_x, select_y)
+        return closest in self.valid_selections
         
     def update(self, events):
         self.sync_ui()
@@ -115,9 +151,13 @@ class BuildMode:
                 brush_x = mouse_pos[0] - COLONY_BRUSH_SIZE // 2
                 brush_y = mouse_pos[1] - COLONY_BRUSH_SIZE // 2
                 self.selections.add((brush_x, brush_y))
+                if self.closest_valid(brush_x, brush_y) or self.is_linked_gallery(brush_x, brush_y):
+                    self.valid_selections.add((brush_x, brush_y))
                 
     def sync_ui (self):
-        pass
+        dug_pixels_cost = self.colony.ui.get("colony_sidebar_colony_price")
+        if isinstance(dug_pixels_cost, Label):
+            dug_pixels_cost.set_text(f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}")
 
     def draw(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -133,7 +173,7 @@ class BuildMode:
             center_y = y + radius
             pygame.draw.circle(
                 self.colony.world,
-                COLONY_BRUSH_COLOR,
+                "green" if (x, y) in self.valid_selections else COLONY_BRUSH_COLOR,
                 (center_x, center_y),
                 radius,
             )
@@ -159,7 +199,8 @@ class BuildMode:
         """
         Commence la construction.
         """
-        # TODO: ICI, lancer la construction, et ajouter les tâches
+        # TODO: Trier les selections selon leur distance aux galeries existantes. (il est possible que la selection de l'utilisateur soit inaccessibl au fourmis)
+
         self.selections.clear()
         self.switch()
         

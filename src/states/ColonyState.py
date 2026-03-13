@@ -80,6 +80,9 @@ class ColonyState(State):
         self.sleep_timer = 0
 
     def enable(self):
+
+        self.game.start_ambient_sound("ambient1")
+
         self.sidebar = Sidebar(self.ui, (8, 8, 360, self.game.height - 16))
         w, h = self.game.width, self.game.height
         padding = 8
@@ -209,7 +212,7 @@ class ColonyState(State):
         
     def start_exploration(self):
         self.save()
-        self.stateManager.set_state("exploration")
+        self.stateManager.set_state("expedition")
 
     def disable(self):
         """Supprime les éléments UI de la colonie."""

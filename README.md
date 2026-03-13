@@ -49,12 +49,12 @@ Apache License 2.0 - Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ## Crédits
 
-### Palette de couleurs (assets)
-
-TwilioQuest 76, par Kerrie Lake:
-- https://lospec.com/palette-list/twilioquest-76
-
 ### Polices d'écriture
 
 m5x7, par Daniel Linssen (https://managore.itch.io/):
 - https://managore.itch.io/m5x7
+
+### Sons ambients
+
+Evening Nature with Crickets, Birds and Distant Dogs – Part 2, par Eryliaa:
+- https://pixabay.com/sound-effects/nature-evening-nature-with-crickets-birds-and-distant-dogs-part-2-445150/

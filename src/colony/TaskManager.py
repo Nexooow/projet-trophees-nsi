@@ -3,10 +3,7 @@ import uuid
 
 from constants import TASK_ANT_TYPE, TASK_DEFAULT_PRIORITY
 from lib.file import File
-
-
-def distance(pos1, pos2):
-    return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
+from lib.utils import distance
 
 
 class Task:

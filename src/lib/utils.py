@@ -23,3 +23,10 @@ def parse_color(color) -> Optional[Any]:
 def import_asset(*args):
     path = os.sep.join(["data", "assets"] + list(args))
     return pygame.image.load(path)
+
+def import_sound(*args):
+    path = os.sep.join(["data", "assets", "sounds"] + list(args))
+    return pygame.mixer.music.load(path)
+
+def distance(pos1, pos2):
+    return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5

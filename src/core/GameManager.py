@@ -3,6 +3,7 @@ import typing
 import pygame
 
 from lib.ui import UIManager
+from lib.utils import import_sound
 
 from .EventManager import EventManager
 from .SaveManager import SaveManager
@@ -10,6 +11,10 @@ from .SaveManager import SaveManager
 # import pygame_gui
 from .StateManager import StateManager
 from .TimeManager import TimeManager
+
+sounds = {
+    "ambient1": import_sound("ambient1.mp3")
+}
 
 
 class GameManager:
@@ -24,6 +29,7 @@ class GameManager:
         self.clock = pygame.time.Clock()
 
         self.game_id: typing.Optional[str] = None
+        self.current_sound = ""
 
         self.ui = UIManager(self)
         self.time = TimeManager(self)
@@ -33,6 +39,19 @@ class GameManager:
 
     def is_game_started(self) -> bool:
         return self.game_id is not None
+    
+    def start_ambient_sound (self, name):
+        try:
+            if name == self.current_sound:
+                return
+            else:
+                pygame.mixer.music.stop()
+            sound = sounds[name]
+            self.current_sound = name
+            pygame.mixer.music.play(loops=-1, fade_ms=500)
+            pygame.mixer.music.set_volume(0.15)
+        except:
+            print(f"Impossible de jouer la musique d'ambience {name}")
 
     def is_running(self) -> bool:
         """

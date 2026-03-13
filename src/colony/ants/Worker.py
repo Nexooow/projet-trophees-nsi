@@ -6,6 +6,7 @@ from colony.TaskManager import Task
 
 # Phases de la tâche deliver_larva
 _PHASE_GO_PICKUP = "go_pickup"
+_PHASE_GO = "go"
 _PHASE_GO_DELIVER = "go_deliver"
 _PHASE_DONE = "done"
 
@@ -15,9 +16,9 @@ class Worker(Ant):
         super().__init__(colony, "worker", data, pos)
 
         # État interne pour deliver_larva
-        self.delivery_phase: typing.Optional[str] = None
-        self.delivery_data: typing.Optional[str] = None
-        self.delivery_pos: typing.Optional[typing.Tuple[int, int]] = None
+        self.task_phase: typing.Optional[str] = None
+        self.task_data: typing.Optional[str] = None
+        self.task_pos: typing.Optional[typing.Tuple[int, int]] = None
         # True dès qu'un move_to a été lancé et que la fourmi n'est pas encore arrivée
         self.moving: bool = False
 
@@ -28,6 +29,30 @@ class Worker(Ant):
             print("début livraison")
         elif task.type == "bring_food_queen":
             self.start_feed_queen(task)
+        elif task.type == "dig":
+            pass
+
+    def start_dig (self, task: "Task"):
+        data = task.data or {}
+        dig_pos = data.get("dig_pos")
+
+        if dig_pos is None:
+            self.finish_task()
+            return
+        
+        self.task_pos = dig_pos
+        self.task_phase = _PHASE_GO
+
+        target_cell = self.colony.grid.pixel_to_cell(
+            int(dig_pos[0]), int(dig_pos[1]) - self.colony.grid.start_y
+        )
+
+        self.moving = True
+        if not self.move_to(*target_cell):
+            self.finish_task()
+            
+        
+        
 
     def start_feed_queen(self, task: "Task"):
         data = task.data or {}
@@ -39,8 +64,8 @@ class Worker(Ant):
             print("annulée")
             return
 
-        self.delivery_pos = deliver_pos
-        self.delivery_phase = _PHASE_GO_PICKUP
+        self.task_pos = deliver_pos
+        self.task_phase = _PHASE_GO_PICKUP
 
         pickup_cell = self.colony.grid.pixel_to_cell(
             int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
@@ -49,7 +74,6 @@ class Worker(Ant):
         self.moving = True
         if not self.move_to(pickup_cell[0], pickup_cell[1]):
             self.finish_task()
-            return
 
     def start_deliver_larva(self, task: "Task"):
         """
@@ -57,17 +81,17 @@ class Worker(Ant):
         l'ouvrière chercher la larve auprès de la reine.
         """
         data = task.data or {}
-        self.delivery_data = data.get("ant_type")
+        self.task_data = data.get("ant_type")
         pickup_pos = data.get("pickup_pos")
         deliver_pos = data.get("delivery_pos")
 
-        if pickup_pos is None or deliver_pos is None or self.delivery_data is None:
+        if pickup_pos is None or deliver_pos is None or self.task_data is None:
             self.finish_task()
             print("annulée")
             return
 
-        self.delivery_pos = deliver_pos
-        self.delivery_phase = _PHASE_GO_PICKUP
+        self.task_pos = deliver_pos
+        self.task_phase = _PHASE_GO_PICKUP
 
         pickup_cell = self.colony.grid.pixel_to_cell(
             int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
@@ -76,8 +100,6 @@ class Worker(Ant):
         self.moving = True
         if not self.move_to(pickup_cell[0], pickup_cell[1]):
             self.finish_task()
-            print("annulée")
-            return
 
     def update(self):
         """Met à jour le mouvement et gère les transitions de phase."""
@@ -86,7 +108,7 @@ class Worker(Ant):
 
     def update_delivery(self):
         """Vérifie si l'ouvrière a atteint sa destination et fait avancer la phase."""
-        if self.delivery_phase is None:
+        if self.task_phase is None:
             return
 
         if self.moving:
@@ -103,12 +125,12 @@ class Worker(Ant):
         current_task = self.get_current_task()
         assert current_task is not None
 
-        if self.delivery_phase == _PHASE_GO_PICKUP:
-            self.delivery_phase = _PHASE_GO_DELIVER
-            assert self.delivery_pos is not None
+        if self.task_phase == _PHASE_GO_PICKUP:
+            self.task_phase = _PHASE_GO_DELIVER
+            assert self.task_pos is not None
             delivery_cell = self.colony.grid.pixel_to_cell(
-                int(self.delivery_pos[0]),
-                int(self.delivery_pos[1]) - self.colony.grid.start_y,
+                int(self.task_pos[0]),
+                int(self.task_pos[1]) - self.colony.grid.start_y,
             )
             self.moving = True
 
@@ -119,8 +141,8 @@ class Worker(Ant):
                 self.finish_task()
                 return
 
-        elif self.delivery_phase == _PHASE_GO_DELIVER:
-            self.delivery_phase = _PHASE_DONE
+        elif self.task_phase == _PHASE_GO_DELIVER:
+            self.task_phase = _PHASE_DONE
 
             if current_task.type == "bring_food_queen":
                 pass  # La nourriture est considérée livrée à l'arrivée
@@ -136,7 +158,7 @@ class Worker(Ant):
             del self.colony.tasks.tasks[self.current_task_id]
             self.current_task_id = None
 
-        self.delivery_phase = None
-        self.delivery_data = None
-        self.delivery_pos = None
+        self.task_phase = None
+        self.task_data = None
+        self.task_pos = None
         self.moving = False

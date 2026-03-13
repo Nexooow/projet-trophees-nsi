@@ -59,7 +59,7 @@ class Queen(Room):
 
         # Niveaux d'amélioration déjà achetés (clé = id amélioration).
         # Pour les améliorations sans niveaux : 0 = non débloquée, 1 = débloquée.
-        self.upgrade_levels: dict[str, int] = {k: 0 for k in QUEEN_UPGRADES}
+        self.upgrade_levels: dict = {k: 0 for k in QUEEN_UPGRADES}
 
         # Nombre max de slots de larves (peut croître avec l'upgrade "larvae_slots")
         self.max_larvae: int = QUEEN_MAX_LARVAE
