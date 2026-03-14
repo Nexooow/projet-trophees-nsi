@@ -6,6 +6,8 @@ from .BattleState import BattleState
 from lib.perlin import Perlin
 from exploration.Utilities import weight_to_color
 CELL_SIZE=5
+CHUNK_SIZE=32
+MAX_CHUNK_DIST=8
 class ExpeditionState(State):
 
     def __init__(self, state_manager):
@@ -35,12 +37,9 @@ class ExpeditionState(State):
         self.pygame_surf=pygame.Surface(
             (self.screen_sizes[0],self.screen_sizes[1])
         )
-        self.noise_map=self.perlin.noise_map(self.screen_sizes[0]//4,self.screen_sizes[1]//4)
-        self.weights={}
-        for y in range(self.screen_sizes[1]//4):
-            for x in range(self.screen_sizes[0]//4):
-                w = int(self.noise_map[y][x] * 3) + 1
-                self.weights[(x, y)] = w
+        self.chunks={}
+        self.noise=self.perlin.noise_map(CELL_SIZE,CELL_SIZE)
+        
         self.base_colors = {
             1: (210,180,120),
             2: (80,160,80),
@@ -115,12 +114,21 @@ class ExpeditionState(State):
         if keys[pygame.K_RIGHT]:
             self.cam_x+=speed
     def draw_map_state(self):
-        self.pygame_surf.fill((0,0,0))
-
-        for x in range(self.screen_sizes[0]//4):
-            for y in range(self.screen_sizes[1]//4):
-                self.pygame_surf.blit(self.cells_color[self.weights[(x,y)]][self.get_mask(x,y)],pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-        self.screen.blit(self.pygame_surf,(0,0))
+        chunk_pixel = CHUNK_SIZE * CELL_SIZE
+        start_cx = int(self.cam_x // chunk_pixel)
+        start_cy = int(self.cam_y // chunk_pixel)
+        end_cx = int((self.cam_x + self.screen_sizes[0]) // chunk_pixel) + 1
+        end_cy = int((self.cam_y + self.screen_sizes[1]) // chunk_pixel) + 1
+        for cx in range(start_cx, end_cx):
+            for cy in range(start_cy, end_cy):
+                chunk = self.get_chunk(cx, cy)
+                screen_x = cx * chunk_pixel - self.cam_x
+                screen_y = cy * chunk_pixel - self.cam_y
+                self.screen.blit(chunk, (screen_x, screen_y))
+        
+        for (cx, cy) in list(self.chunks):
+            if abs(cx - start_cx) > MAX_CHUNK_DIST or abs(cy - start_cy) > MAX_CHUNK_DIST:
+                del self.chunks[(cx, cy)]
         #self.screen.fill((100,100,150)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
         self.expedition_map.draw(self.screen,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
@@ -165,18 +173,19 @@ class ExpeditionState(State):
         self.stateManager.start_battle(
             current_node.difficulty,
             colony=[],
-            auto=self.auto
+            auto=self.auto,
+            world_pos=current_node.position
         )
         
         
         self.waiting_for_battle_result = True 
+    
     def draw_cells(self,base_color,mask):
         surf=pygame.Surface((CELL_SIZE,CELL_SIZE))
         surf.fill(base_color)
-        noise=self.perlin.noise_map(CELL_SIZE,CELL_SIZE)
         for x in range(CELL_SIZE):
             for y in range(CELL_SIZE):
-                n=noise[x][y]
+                n=self.noise[x][y]
                 shade=int((n-0.5)*40)
                 color=(
                     max(min(base_color[0] + shade, 255), 0),
@@ -194,6 +203,7 @@ class ExpeditionState(State):
         if not (mask & 8):
             pygame.draw.rect(surf,edge_color,(0,0,4,CELL_SIZE))
         return surf
+    """
     def get_mask(self,x,y):
         #Bitmask à partir des voisins (1 pour le haut, 2 pour la droite, 4 pour le bas et 8 pour la gauche)
         w=self.weights[(x,y)]
@@ -208,4 +218,49 @@ class ExpeditionState(State):
         if x>0 and self.weights[(x-1,y)]==w:
             mask|=8
         return mask
-    
+    """
+    def get_mask(self, x, y):
+        w = self.get_weight(x, y)
+        mask = 0
+        if self.get_weight(x, y-1) == w:
+            mask |= 1
+        if self.get_weight(x+1, y) == w:
+            mask |= 2
+        if self.get_weight(x, y+1) == w:
+            mask |= 4
+        if self.get_weight(x-1, y) == w:
+            mask |= 8
+
+        return mask
+        
+    def get_weight(self,x,y):
+        n=self.perlin.noise(x,y)
+        return int(n*3)+1
+    def generate_chunk(self,cx,cy):
+        surf=pygame.Surface(
+            (CHUNK_SIZE*CELL_SIZE,CHUNK_SIZE*CELL_SIZE)
+        )
+        weights={
+            (x,y):self.get_weight(cx*CHUNK_SIZE+x,cy*CHUNK_SIZE+y)
+            for x in range(-1,CHUNK_SIZE+1)
+            for y in range(-1,CHUNK_SIZE+1)
+        }
+        for x in range(CHUNK_SIZE):
+            for y in range(CHUNK_SIZE):
+                w=weights[(x,y)]
+                mask = 0
+                if weights[(x, y-1)] == w: mask |= 1
+                if weights[(x+1, y)] == w: mask |= 2
+                if weights[(x, y+1)] == w: mask |= 4
+                if weights[(x-1, y)] == w: mask |= 8
+                surf.blit(
+                    self.cells_color[w][mask],
+                    (x*CELL_SIZE,y*CELL_SIZE)
+                )
+        return surf
+    def get_chunk(self, cx, cy):
+
+        if (cx, cy) not in self.chunks:
+            self.chunks[(cx, cy)] = self.generate_chunk(cx, cy)
+
+        return self.chunks[(cx, cy)]

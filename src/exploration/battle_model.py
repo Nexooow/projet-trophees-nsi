@@ -36,7 +36,7 @@ class Bomb:
 
 
 class Grid:
-    def __init__(self, width, height):
+    def __init__(self, width, height, center_x, center_y):
         self.width = width
         self.height = height
         self.tile = TILE_SIZE
@@ -46,12 +46,22 @@ class Grid:
         
 
         perlin = Perlin( scale=20, octaves=4, steps=4, normalize=True)
+        offset_x = center_x - width//2
+        offset_y = center_y - height//2
+        for y in range(height):
+            for x in range(width):
+                world_x = offset_x + x
+                world_y = offset_y + y
+                n=perlin.noise(world_x,world_y)
+                w=int(n*3)+1
+                self.weights[(x,y)]=w
+        """
         noise_map = perlin.noise_map(width, height)
         for y in range(height):
             for x in range(width):
                 w = int(noise_map[y][x] * 3) + 1
                 self.weights[(x, y)] = w
-
+        """
         for y in range(height):
             for x in range(width):
                 for nx, ny in neighbors(x, y, width, height):
@@ -79,15 +89,17 @@ class Grid:
         if x>0 and self.weights[(x-1,y)]==w:
             mask|=8
         return mask
+CELL_SIZE=5
 class BattleModel:
-    def __init__(self, difficulty, colony, auto_resolve=False):
+    def __init__(self, difficulty, colony, auto_resolve=False, world_pos=None):
         self.difficulty = difficulty
         self.auto_resolve = auto_resolve
         self.battle_won = None
-
+        cell_x=int(world_pos[0]//CELL_SIZE)
+        cell_y=int(world_pos[1]//CELL_SIZE)
         self.grid_w = 20 + difficulty * 2
         self.grid_h = 14 + difficulty
-        self.grid = Grid(self.grid_w, self.grid_h)
+        self.grid = Grid(self.grid_w, self.grid_h,cell_x,cell_y)
 
         self.units = []
         self.friendlies = []

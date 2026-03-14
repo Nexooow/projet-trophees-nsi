@@ -64,6 +64,8 @@ class BattleController:
                 target = closest_enemy(
                     active, enemies, self.model.grid, self.model.units
                 )
+                if target not in self.model.units:
+                    return
                 if target:
                     path = shortest_path(
                         active.tile(),
@@ -81,7 +83,6 @@ class BattleController:
                         active.points=0
     def process_bombs_and_attacks(self):
         active=self.model.active_unit
-        enemies=[u for u in self.model.units if u.team!=active.team]
         if (active.x,active.y) in self.model.bomb_tiles:
             bomb=Bomb(active.x,active.y)
             dead_units=bomb.explode(self.model.units)
@@ -91,6 +92,8 @@ class BattleController:
             self.model.bomb_tiles.remove((active.x, active.y))
             if active_died:
                 return
+        
+        enemies=[u for u in self.model.units if u.team!=active.team]
         for enemy in enemies:
             if (enemy.x, enemy.y) == (active.x, active.y):
                 self.model.remove_unit(enemy)
