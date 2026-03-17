@@ -169,12 +169,12 @@ class ExpeditionState(State):
                     self.selected_node = None
     def start_battle(self):
         current_node = self.selected_node
-
         self.stateManager.start_battle(
             current_node.difficulty,
             colony=[],
             auto=self.auto,
-            world_pos=current_node.position
+            world_pos=current_node.position,
+            perlin=self.perlin
         )
         
         

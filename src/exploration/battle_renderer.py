@@ -7,6 +7,11 @@ RESSOURCES_IMAGES={
     "nom":import_asset("icons", "leaf.png")
 }
 RESSOURCES=["nom"]
+IMG={
+    "grass":import_asset("icons","grass.png"),
+    "rock":import_asset("icons","rock.png")
+}
+TILE_SIZE=50
 class BattleRenderer:
     def __init__(self, model, screen, sidebar):
         self.model = model
@@ -61,6 +66,7 @@ class BattleRenderer:
         self.ui_surface.fill((30, 30, 30))
 
         self.draw_grid()
+        self.draw_useless_obj()
         self.draw_resources()
         self.draw_units()
         self.draw_sidebar()
@@ -96,6 +102,16 @@ class BattleRenderer:
             self.game_surface.blit(RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset))
             self.game_surface.blit(RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset))
 
+    def draw_useless_obj(self):
+        for (x,y), obj in self.model.grid.objects.items():
+
+            screen_x = x * TILE_SIZE
+            screen_y = y * TILE_SIZE
+
+            if obj == "tree":
+                self.game_surface.blit(IMG["tree"], (screen_x, screen_y))
+            elif obj == "rock":
+                self.game_surface.blit(IMG["rock"], (screen_x, screen_y))
     def draw_units(self):
         mouse = pygame.mouse.get_pos()
         for unit in self.model.units:

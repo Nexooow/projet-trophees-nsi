@@ -5,10 +5,10 @@ from exploration.battle_renderer import BattleRenderer
 import pygame
 from exploration.Griddy import Sidebar
 class BattleState(State):
-    def __init__(self, manager, difficulty=1, colony=None, auto_resolve=False, world_pos=None):
+    def __init__(self, manager, difficulty=1, colony=None, auto_resolve=False, world_pos=None, perlin=None):
         super().__init__(manager,"battle",[])
         self.manager = manager
-        self.model = BattleModel(difficulty, colony, auto_resolve, world_pos)
+        self.model = BattleModel(difficulty, colony, auto_resolve, world_pos, perlin)
         self.controller = BattleController(self.model)
         screen = pygame.display.set_mode((self.model.grid.width*50 + 250, self.model.grid.height*50))
         self.renderer = BattleRenderer(self.model, screen, Sidebar(250,700))

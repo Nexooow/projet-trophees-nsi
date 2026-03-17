@@ -53,6 +53,6 @@ class StateManager:
     def is_flag_active(self, flag: str) -> bool:
         return flag in self.get_current_state().flags
     
-    def start_battle(self, difficulty, colony, auto, world_pos):
-        self.states_managers["battle"] = BattleState(self, difficulty, colony, auto, world_pos)
+    def start_battle(self, difficulty, colony, auto, world_pos, perlin):
+        self.states_managers["battle"] = BattleState(self, difficulty, colony, auto, world_pos, perlin)
         self.set_state("battle")

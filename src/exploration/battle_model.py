@@ -36,25 +36,27 @@ class Bomb:
 
 
 class Grid:
-    def __init__(self, width, height, center_x, center_y):
+    def __init__(self, width, height, center_x, center_y, perlin):
         self.width = width
         self.height = height
         self.tile = TILE_SIZE
         self.weights = {}
         self.edges = []
         self.diagonal_edges = []
-        
-
-        perlin = Perlin( scale=20, octaves=4, steps=4, normalize=True)
+        self.perlin=perlin
+        self.objects={}
+        self.biome=self.detect_biome(center_x,center_y)
+        #perlin = Perlin( scale=20, octaves=4, steps=4, normalize=True)
         offset_x = center_x - width//2
         offset_y = center_y - height//2
         for y in range(height):
             for x in range(width):
                 world_x = offset_x + x
                 world_y = offset_y + y
-                n=perlin.noise(world_x,world_y)
+                n=self.perlin.noise(world_x,world_y)
                 w=int(n*3)+1
                 self.weights[(x,y)]=w
+        self.generate_objects(center_x,center_y)
         """
         noise_map = perlin.noise_map(width, height)
         for y in range(height):
@@ -89,17 +91,52 @@ class Grid:
         if x>0 and self.weights[(x-1,y)]==w:
             mask|=8
         return mask
+    def detect_biome(self,center_x,center_y,radius=20):
+        counts={1:0,2:0,3:0,4:0}
+        for dy in range(-radius,radius):
+            for dx in range(-radius,radius):
+                n=self.perlin.noise(center_x+dx,center_y+dy)
+                w=int(n*3)+1
+                counts[w]+=1
+        total=sum(counts.values())
+        return {k: v/total for k,v in counts.items()}
+    def generate_objects(self,center_x,center_y):
+        for y in range(self.height):
+            for x in range(self.width):
+                world_x=center_x+x
+                world_y=center_y+y
+                w=self.weights[(x,y)]
+                n=self.perlin.noise(world_x+1000,world_y+1000)
+                if n>0.65:
+                    if self.perlin.noise(world_x+2000,world_y+2000):
+                        self.objects[(x,y)]="grass"
+                else:
+                    if self.biome[2]>0.3:
+                        if w>=2 and n<0.6:
+                            self.objects[(x,y)]="grass"
+                    elif self.biome[3]>0.3:
+                        if w >= 3 and n > 0.5:
+                            self.objects[(x,y)] = "rock"
+                    
+                    elif self.biome[1]>0.3:
+                        if n > 0.75:
+                            self.objects[(x,y)] = "rock"
+                    
+                    elif self.biome[4]>0.3:
+                        if n > 0.7:
+                            self.objects[(x,y)] = "grass"
 CELL_SIZE=5
 class BattleModel:
-    def __init__(self, difficulty, colony, auto_resolve=False, world_pos=None):
+    def __init__(self, difficulty, colony, auto_resolve=False, world_pos=None, perlin=None):
         self.difficulty = difficulty
         self.auto_resolve = auto_resolve
         self.battle_won = None
+        self.perlin=perlin
         cell_x=int(world_pos[0]//CELL_SIZE)
         cell_y=int(world_pos[1]//CELL_SIZE)
         self.grid_w = 20 + difficulty * 2
         self.grid_h = 14 + difficulty
-        self.grid = Grid(self.grid_w, self.grid_h,cell_x,cell_y)
+        self.grid = Grid(self.grid_w, self.grid_h,cell_x,cell_y, perlin)
 
         self.units = []
         self.friendlies = []
