@@ -26,7 +26,7 @@ from lib.ui.progress_bar import ProgressBar
 from .State import State
 
 _leaf_image = import_asset("icons", "leaf.png")
-
+_hammer_image = import_asset("icons", "hammer.png")
 
 class ColonyState(State):
     def __init__(self, state_manager):
@@ -73,6 +73,7 @@ class ColonyState(State):
         self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(3)]
         self.render_dirty_cells()
 
+        self.paused = False
         self.night_overlay = pygame.Surface(
             self.game.screen.get_size(), pygame.SRCALPHA
         )
@@ -162,7 +163,7 @@ class ColonyState(State):
         ).on("click", lambda: self.build_mode.switch()).set_z_index(10).add_child(
             self.ui.image(
                 "colony_btn_build_icon",
-                _leaf_image,  # TODO: changer l'icone
+                _hammer_image,
                 (
                     (menu_btn_size - menu_icon_size) // 2,
                     (menu_btn_size - menu_icon_size) // 2,
@@ -263,6 +264,42 @@ class ColonyState(State):
         """Sauvegarde la partie et affiche une notification brève."""
         self.game.sauvegarder()
         self.sync_ui()
+        
+    def switch_pause_menu (self):
+        self.paused = not self.paused
+        self.game.time.set_pause(self.paused)
+        
+        screen_width = self.game.screen.get_width()
+        screen_height = self.game.screen.get_height()
+        
+        if self.paused:
+            self.ui.panel(
+                "colony_pause_frame",
+                (0, 0, screen_width, screen_height)
+            ).set_z_index(100).set_bg_color((0, 0, 0, 128)).add_child(
+                self.ui.panel(
+                    "colony_pause_menu",
+                    (screen_width / 2 - 200, screen_height / 2 - 100, 400, 200)
+                ).set_z_index(101).add_child(
+                    self.ui.button(
+                        "colony_pause_resume",
+                        "Reprendre",
+                        (100, 50, 200, 50)
+                    )
+                ).add_child(
+                    self.ui.button(
+                        "colony_pause_quit",
+                        "Quitter",
+                        (100, 110, 200, 50)
+                    ).set_colors(
+                        normal=(110, 40, 40),
+                        hover=(150, 55, 55),
+                        active=(180, 65, 65),
+                    ).on("click", self.game.quitter)
+                )
+            )
+        else:
+            self.ui.remove("colony_pause_frame")
 
     def update(self, events):
         keys = pygame.key.get_pressed()
@@ -274,7 +311,13 @@ class ColonyState(State):
                     self.build_mode.switch()
                 elif event.key == pygame.K_e:
                     self.start_exploration()
+                elif event.key == pygame.K_ESCAPE:
+                    self.switch_pause_menu()
 
+        if self.game.time.is_paused():
+            self.sync_ui()
+            return
+        
         if self.build_mode.enabled:
             self.build_mode.update(events)
 
