@@ -115,7 +115,15 @@ class Ant(pygame.sprite.Sprite):
                 self.direction = direction_to_target.normalize()
                 self.pos += self.direction * self.speed
                 
-                # TODO: gérer l'orientation/angle
+                (vx, vy) = self.direction
+                a = math.atan2(vx, vy)
+                if vx >= 0:
+                    self.angle = a
+                    if vx > 0:
+                        self.flip = True
+                else:
+                    self.flip = False
+                    self.angle = a
                 
         if self.rect is not None:
             self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -134,7 +142,11 @@ class Ant(pygame.sprite.Sprite):
         """Dessine la fourmi à l'écran"""
         if self.image is None:
             return
-        img = pygame.transform.flip(self.image, self.flip, False)
+        print(self.flip, self.angle)
+        img = pygame.transform.rotate(
+            pygame.transform.flip(self.image, self.flip, False),
+            self.angle*(90/math.pi)
+        )
         # Centrer l'image sur la position
         draw_pos = (
             int(self.pos.x - img.get_width() / 2),
