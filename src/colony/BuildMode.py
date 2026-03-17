@@ -1,8 +1,9 @@
-import pygame
 import math
 import typing
+from tabnanny import NannyNag
 
-from lib.ui import Button, Label, UIColors
+import pygame
+
 from constants import (
     COLONY_BRUSH_COLOR,
     COLONY_BRUSH_SIZE,
@@ -11,6 +12,7 @@ from constants import (
     COLONY_WIDTH,
     PRICE_PER_DIRTPIXEL,
 )
+from lib.ui import Button, Label, UIColors
 from lib.utils import distance
 
 if typing.TYPE_CHECKING:
@@ -25,8 +27,8 @@ class BuildMode:
         self.valid_selections = set()
         self.selections = set()
         self.builds = []
-        
-    def get_dug_pixels (self) -> int:
+
+    def get_dug_pixels(self) -> int:
         """
         Retourne une approximation du nombre de pixels qui vont être creusés.
         Permet de calculer le coût en nourriture de la construction.
@@ -35,99 +37,151 @@ class BuildMode:
         for x, y in self.selections:
             count += math.pi * (COLONY_BRUSH_SIZE / 2) ** 2
         return math.ceil(count)
-        
-    def get_price (self):
+
+    def get_price(self):
         """
         Retourne le coût approximatif en nourriture de la construction.
         """
-        return self.get_dug_pixels() * PRICE_PER_DIRTPIXEL + 0 # TODO: remplacer 0 par le cout de la construction des salles
-        
+        return (
+            self.get_dug_pixels() * PRICE_PER_DIRTPIXEL + 0
+        )  # TODO: remplacer 0 par le cout de la construction des salles
+
     def switch(self):
         assert self.colony.sidebar is not None
         sidebar = self.colony.sidebar
-        
+
         self.enabled = not self.enabled
         btn = self.ui.get("colony_btn_build")
         if isinstance(btn, Button):
-            if self.enabled:                
-                btn.set_colors(
-                    normal=UIColors.GREEN, hover=UIColors.DARK_GREEN
-                )
+            if self.enabled:
+                btn.set_colors(normal=UIColors.GREEN, hover=UIColors.DARK_GREEN)
             else:
                 btn.set_colors(normal=UIColors.BTN_BG, hover=UIColors.BTN_BG_HOVER)
-        
+
         if self.enabled:
             sidebar.set_content(
                 self.ui.panel(
                     "colony_sidebar_build",
-                    (4, 4, sidebar.width-4*2, sidebar.height-4*2)
-                ).set_border(None, 0).add_children([
-                    self.ui.label(
-                        "colony_sidebar_build_title",
-                        "Construction",
-                        (4, 6, sidebar.width-8*2, 30)
-                    )
-                    .set_font_size(36)
-                    .set_align("center", "center"),
-                    
-                    # TODO: prix terre et salles
-
-                    self.ui.label(
-                        "colony_sidebar_build_dug",
-                        "Pixels creusés",
-                        (4, 36+6, sidebar.width-8*2, 30)
-                    )
-                    .set_font_size(24)
-                    .set_align("left", "center"),
-
-                    self.ui.label(
-                        "colony_sidebar_colony_price",
-                        f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}",
-                        (4, 36+25, sidebar.width-8*2, 30)
-                    )
-                    .set_font_size(20).set_align("right", "center").set_text_color(UIColors.TEXT_SECONDARY),
-                    
-                    
-                    self.ui.button(
-                        "colony_sidebar_build_cancel",
-                        "Annuler", 
-                        (4, sidebar.height-46-30-4, sidebar.width-8*2, 30)
-                    )
-                    .set_font_size(24)
-                    .set_align("center", "center")
-                    .on("click", self.cancel_build),
-
-                    self.ui.button(
-                        "colony_sidebar_build_start",
-                        "Démarrer la construction", 
-                        (4, sidebar.height-46, sidebar.width-8*2, 30)
-                    ).set_font_size(24).set_align("center", "center").on("click", self.start_build)
-                ]).set_z_index(13) 
+                    (4, 4, sidebar.width - 4 * 2, sidebar.height - 4 * 2),
+                )
+                .set_border(None, 0)
+                .add_children(
+                    [
+                        self.ui.label(
+                            "colony_sidebar_build_title",
+                            "Construction",
+                            (4, 6, sidebar.width - 8 * 2, 30),
+                        )
+                        .set_font_size(36)
+                        .set_align("center", "center"),
+                        # TODO: prix terre et salles
+                        self.ui.label(
+                            "colony_sidebar_build_dug",
+                            "Pixels creusés",
+                            (4, 36 + 6, sidebar.width - 8 * 2, 30),
+                        )
+                        .set_font_size(24)
+                        .set_align("left", "center"),
+                        self.ui.label(
+                            "colony_sidebar_colony_price",
+                            f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}",
+                            (4, 36 + 25, sidebar.width - 8 * 2, 30),
+                        )
+                        .set_font_size(20)
+                        .set_align("right", "center")
+                        .set_text_color(UIColors.TEXT_SECONDARY),
+                        self.ui.button(
+                            "colony_sidebar_build_cancel",
+                            "Annuler",
+                            (
+                                4,
+                                sidebar.height - 46 - 30 - 4,
+                                sidebar.width - 8 * 2,
+                                30,
+                            ),
+                        )
+                        .set_font_size(24)
+                        .set_align("center", "center")
+                        .on("click", self.cancel_build),
+                        self.ui.button(
+                            "colony_sidebar_build_start",
+                            "Démarrer la construction",
+                            (4, sidebar.height - 46, sidebar.width - 8 * 2, 30),
+                        )
+                        .set_font_size(24)
+                        .set_align("center", "center")
+                        .on("click", self.start_build),
+                    ]
+                )
+                .set_z_index(13)
             )
             sidebar.show()
         else:
             sidebar.hide()
 
-    def find_closest_selection (self, select_x, select_y):
-        selections_tri = sorted(self.selections, key=lambda s: distance(s, (select_x, select_y)))
+    def find_closest_selection(self, select_x, select_y) -> typing.Optional[tuple]:
+        selections_tri = sorted(
+            self.selections, key=lambda s: distance(s, (select_x, select_y))
+        )
         select_proche = selections_tri[0]
-        if distance(select_proche, (select_x, select_y)) <= 2*COLONY_BRUSH_SIZE:
+        if distance(select_proche, (select_x, select_y)) <= 2 * COLONY_BRUSH_SIZE:
             return select_proche
-        else: 
+        else:
             return None
-        
+
     def is_linked_gallery(self, select_x, select_y):
-        pos = self.colony.grid.pixel_to_cell(select_x, select_y-COLONY_UNDERGROUND_START)
+        pos = self.colony.grid.pixel_to_cell(
+            select_x, select_y - COLONY_UNDERGROUND_START
+        )
         cell = self.colony.grid.get_cell(*pos)
+        if not cell:
+            return False
         return cell["state"] == "empty" or cell["state"] == "partial"
-    
-    def closest_valid (self, select_x, select_y):
-        closest = self.find_closest_selection(select_x, select_y)
-        return closest in self.valid_selections
-        
+
+    def closest_valid(self, select_x, select_y):
+        if not self.selections:
+            return False
+
+        # On cherche s'il y a une sélection valide assez proche
+        for sel_x, sel_y in self.valid_selections:
+            if distance((sel_x, sel_y), (select_x, select_y)) <= COLONY_BRUSH_SIZE:
+                return True
+        return False
+
+    def validate_selections(self):
+        """
+        Parcourt les sélections pour valider celles qui sont connectées
+        à une galerie existante ou à une sélection déjà valide.
+        """
+        to_validate = [
+            sel for sel in self.selections if sel not in self.valid_selections
+        ]
+
+        # On valide ce qui touche une galerie
+        still_invalid = []
+        for sel in to_validate:
+            if self.is_linked_gallery(sel[0], sel[1]):
+                self.valid_selections.add(sel)
+            else:
+                still_invalid.append(sel)
+
+        # on propage la validité par proximité
+        changed = True
+        while changed and still_invalid:
+            changed = False
+            remaining = []
+            for sel in still_invalid:
+                if self.closest_valid(sel[0], sel[1]):
+                    self.valid_selections.add(sel)
+                    changed = True
+                else:
+                    remaining.append(sel)
+            still_invalid = remaining
+
+
     def update(self, events):
         self.sync_ui()
-        
+
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_c:  # clear
@@ -150,14 +204,16 @@ class BuildMode:
             ):
                 brush_x = mouse_pos[0] - COLONY_BRUSH_SIZE // 2
                 brush_y = mouse_pos[1] - COLONY_BRUSH_SIZE // 2
+
                 self.selections.add((brush_x, brush_y))
-                if self.closest_valid(brush_x, brush_y) or self.is_linked_gallery(brush_x, brush_y):
-                    self.valid_selections.add((brush_x, brush_y))
-                
-    def sync_ui (self):
+                self.validate_selections()
+
+    def sync_ui(self):
         dug_pixels_cost = self.colony.ui.get("colony_sidebar_colony_price")
         if isinstance(dug_pixels_cost, Label):
-            dug_pixels_cost.set_text(f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}")
+            dug_pixels_cost.set_text(
+                f"{self.get_dug_pixels()} x {PRICE_PER_DIRTPIXEL} = {self.get_price()}"
+            )
 
     def draw(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -195,7 +251,7 @@ class BuildMode:
                 radius,
             )
 
-    def start_build (self):
+    def start_build(self):
         """
         Commence la construction.
         """
@@ -203,8 +259,8 @@ class BuildMode:
 
         self.selections.clear()
         self.switch()
-        
-    def cancel_build (self):
+
+    def cancel_build(self):
         """
         Annule la construction.
         """

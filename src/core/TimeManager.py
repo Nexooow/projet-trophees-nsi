@@ -15,6 +15,12 @@ class TimeManager:
         """
         return self.paused or self.game.state.is_flag_active("pause")
         
+    def set_pause (self, paused: bool):
+        """
+        Définit si le temps est en pause ou non.
+        """
+        self.paused = paused
+        
     def get_time (self, offset = 0):
         """
         Renvoie le temps actuel sous la forme d'un tuple (heures, minutes).

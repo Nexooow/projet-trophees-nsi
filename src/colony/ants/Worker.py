@@ -50,9 +50,6 @@ class Worker(Ant):
         self.moving = True
         if not self.move_to(*target_cell):
             self.finish_task()
-            
-        
-        
 
     def start_feed_queen(self, task: "Task"):
         data = task.data or {}
@@ -147,7 +144,7 @@ class Worker(Ant):
             if current_task.type == "bring_food_queen":
                 pass  # La nourriture est considérée livrée à l'arrivée
             elif current_task.type == "deliver_larva":
-                pass # TODO: faire apparaitre la nouvelle fourmi
+                pass  # TODO: faire apparaitre la nouvelle fourmi
 
             self.finish_task()
 

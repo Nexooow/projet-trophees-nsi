@@ -36,6 +36,9 @@ class GameManager:
         self.save = SaveManager(self)
         self.state = StateManager(self)
         # self.events = EventManager(self)
+    
+    def quitter (self):
+        self.running = False
 
     def is_game_started(self) -> bool:
         return self.game_id is not None

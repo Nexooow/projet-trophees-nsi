@@ -60,14 +60,6 @@ class MenuState(State):
             "center", "center"
         )
 
-        self.ui.label(
-            "menu_subtitle",
-            "Sous titre ici",
-            (0, h // 6 + 90, w, 36),
-        ).set_font("assets/fonts/m5x7.ttf", 28).set_text_color(
-            (180, 160, 130)
-        ).set_align("center", "center")
-
     def show_view(self, view: str):
         """Détruit les panneaux de vue et reconstruit celui demandé."""
         self.destroy_view_panels()
@@ -143,7 +135,7 @@ class MenuState(State):
                 hover=(150, 55, 55),
                 active=(180, 65, 65),
             )
-            .on("click", self.on_quit)
+            .on("click", self.game.quitter)
             .set_z_index(1)
         )
 
@@ -327,6 +319,3 @@ class MenuState(State):
             self.game.state.set_state("colony")
         else:
             self.show_view("main")
-
-    def on_quit(self):
-        self.game.running = False
