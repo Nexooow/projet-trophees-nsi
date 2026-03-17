@@ -16,8 +16,7 @@ class BattleState(State):
         if self.model.battle_won is not None:
             self.stateManager.set_state("expedition")
         if self.model.active_unit not in self.model.units:
-            if not self.model.unit:
-                return
+            
             self.model.turn_index %= len(self.model.units)
             self.model.active_unit = self.model.units[self.model.turn_index]
         if self.model.active_unit.points > 0:
