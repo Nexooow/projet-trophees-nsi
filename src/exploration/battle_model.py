@@ -46,24 +46,26 @@ class Grid:
         self.perlin=perlin
         self.objects={}
         self.biome=self.detect_biome(center_x,center_y)
+        
         #perlin = Perlin( scale=20, octaves=4, steps=4, normalize=True)
+        
+        self.dominance=min(max(self.biome.values()),0.7)
+        self.dominant_weight=max(self.biome,key=self.biome.get)
+
+        scale=10+(1-self.dominance)*25
+        persistence=0.3+(1-self.dominance)*0.5
+        self.local_perlin=Perlin(scale=scale, octaves=2,  persistence=persistence, steps=4, normalize=True)
+        
         offset_x = center_x - width//2
         offset_y = center_y - height//2
         for y in range(height):
             for x in range(width):
                 world_x = offset_x + x
                 world_y = offset_y + y
-                n=self.perlin.noise(world_x,world_y)
-                w=int(n*3)+1
+                w=self.get_weight(world_x,world_y)
                 self.weights[(x,y)]=w
         self.generate_objects(center_x,center_y)
-        """
-        noise_map = perlin.noise_map(width, height)
-        for y in range(height):
-            for x in range(width):
-                w = int(noise_map[y][x] * 3) + 1
-                self.weights[(x, y)] = w
-        """
+        
         for y in range(height):
             for x in range(width):
                 for nx, ny in neighbors(x, y, width, height):
@@ -125,6 +127,20 @@ class Grid:
                     elif self.biome[4]>0.3:
                         if n > 0.7:
                             self.objects[(x,y)] = "grass"
+    def get_weight(self,world_x,world_y):
+        global_n=self.perlin.noise(world_x,world_y)
+        local_n=self.local_perlin.noise(world_x,world_y)
+        n=(global_n*0.6)+(local_n*(0.4))
+        bias=(
+            (self.biome[2]-0.25)*0.25+
+            (self.biome[3]-0.25)*0.35+
+            (self.biome[1]-0.25)* -0.2+
+            (self.biome[4]-0.25)*0.15
+        )
+        n=min(max(n+bias,0),1)
+        n += (random() - 0.5) * 0.05
+        return int(n*3)+1
+        
 CELL_SIZE=5
 class BattleModel:
     def __init__(self, difficulty, colony, auto_resolve=False, world_pos=None, perlin=None):

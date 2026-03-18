@@ -28,7 +28,7 @@ class ExpeditionState(State):
         self.auto=False
         self.waiting_for_battle_result=False
         self.perlin=Perlin(
-            scale=200,
+            scale=30,
             octaves=4,
             steps=4,
             normalize=True
@@ -86,7 +86,7 @@ class ExpeditionState(State):
             if event.type==pygame.QUIT:
                 self.stateManager.game.running=False
             if event.type==pygame.MOUSEBUTTONDOWN:
-                world_x,world_y=event.pos[0]+self.cam_x,event.pos[1]+self.cam_y
+                world_x,world_y=event.pos[0] + self.cam_x,event.pos[1] + self.cam_y
                 clicked_node=self.expedition_map.get_node_at_pos(world_x,world_y)
                 
                 if clicked_node:
