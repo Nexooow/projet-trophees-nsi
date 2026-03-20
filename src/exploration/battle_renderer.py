@@ -129,5 +129,5 @@ class BattleRenderer:
 
     def draw_sidebar(self):
         self.sidebar.draw(
-            self.ui_surface, self.model.units, self.model.active_unit, None
+            self.ui_surface, self.model.units, self.model.active_unit, None, len(self.model.resources_obj)
         )

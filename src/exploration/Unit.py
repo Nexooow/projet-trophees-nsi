@@ -1,6 +1,9 @@
 import pygame
 import math
 class Unit:
+    """
+    Représente les unités dans la battle grid
+    """
     def __init__(self, x, y, image, team, power=1, points=5, diagonal=False):
         self.x = x
         self.y = y

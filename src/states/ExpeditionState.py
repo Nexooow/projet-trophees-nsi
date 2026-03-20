@@ -5,15 +5,15 @@ from exploration.ExpeditionMap import ExpeditionMap
 from .BattleState import BattleState
 from lib.perlin import Perlin
 from exploration.Utilities import weight_to_color
-CELL_SIZE=5
+CELL_SIZE=10
 CHUNK_SIZE=32
 MAX_CHUNK_DIST=8
 class ExpeditionState(State):
-
+    """
+    Gère la carte (créée à partir d'un bruit de perlin) pour l'expédition ainsi que le passage au BattleState lorsque l'on clique sur une Node
+    """
     def __init__(self, state_manager):
         super().__init__(state_manager, "expedition", ["pause"])
-
-        # TODO: implémenter le système d'expédition
         self.expedition_map=ExpeditionMap(seed=12345)
         self.cam_x=600
         self.cam_y=400
@@ -54,6 +54,10 @@ class ExpeditionState(State):
             for col,color in self.base_colors.items()
         }
     def update(self,events):
+        for event in events:
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_ESCAPE:
+                    self.stateManager.set_state("colony")
         if self.waiting_for_battle_result:
             battle_state=self.stateManager.states_managers.get("battle")
             if battle_state and battle_state.model.battle_won is not None:
@@ -69,6 +73,7 @@ class ExpeditionState(State):
                 self.state='map'
                 return
         if self.state=="map":
+        
             self.map_state(events)
         elif self.state=="node_menu":
             self.node_menu_state(events)
@@ -129,7 +134,6 @@ class ExpeditionState(State):
         for (cx, cy) in list(self.chunks):
             if abs(cx - start_cx) > MAX_CHUNK_DIST or abs(cy - start_cy) > MAX_CHUNK_DIST:
                 del self.chunks[(cx, cy)]
-        #self.screen.fill((100,100,150)) # Faut trouver une image de bg, ptt un truc qui se genere aussi au fur et a mesure qu'on avance
         self.expedition_map.draw(self.screen,self.cam_x,self.cam_y) # TODO: Foutre une cam+zoom
         pygame.display.flip()
         
@@ -203,22 +207,7 @@ class ExpeditionState(State):
         if not (mask & 8):
             pygame.draw.rect(surf,edge_color,(0,0,4,CELL_SIZE))
         return surf
-    """
-    def get_mask(self,x,y):
-        #Bitmask à partir des voisins (1 pour le haut, 2 pour la droite, 4 pour le bas et 8 pour la gauche)
-        w=self.weights[(x,y)]
-        mask=0
-        width,height=self.screen_sizes[0]//4,self.screen_sizes[1]//4
-        if y>0 and self.weights[(x,y-1)]==w:
-            mask|=1
-        if x<width-1 and self.weights[(x+1,y)]==w:
-            mask|=2
-        if y<height-1 and self.weights[(x,y+1)]==w:
-            mask|=4
-        if x>0 and self.weights[(x-1,y)]==w:
-            mask|=8
-        return mask
-    """
+
     def get_mask(self, x, y):
         w = self.get_weight(x, y)
         mask = 0

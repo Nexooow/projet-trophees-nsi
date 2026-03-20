@@ -6,6 +6,9 @@ from .Node import Node
 
 
 class ExpeditionMap:
+    """
+    Gère la carte d'exploration , avec les nodes et leurs connexions.
+    """
     def __init__(self, seed=None):
         self.seed = seed or randint(0, 10000)
         self.root_node = Node(node_id=0, parent=None, depth=0, seed=self.seed)

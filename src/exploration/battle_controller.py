@@ -5,6 +5,9 @@ from .Utilities import closest_enemy, reachable_tiles_nx, shortest_path
 
 
 class BattleController:
+    """
+    Se charge, pour la Battle Grid: des inputs, des déplacements, et des morts des unités
+    """
     def __init__(self, model):
         self.model = model
 

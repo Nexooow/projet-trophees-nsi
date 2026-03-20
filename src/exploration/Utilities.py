@@ -2,7 +2,9 @@ import heapq
 from random import randint
 import networkx as nx
 import pygame
-
+"""
+Fonctions utilitaires pour la recherche du plus court chemin, les chemins disponibles, etc. pour la Battle Grid
+"""
 
 def xy_to_node(x, y, cols):
     return y * cols + x

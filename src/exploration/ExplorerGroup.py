@@ -2,6 +2,9 @@ from colony.Ant import Ant
 
 
 class ExplorerGroup(Ant):
+    """
+    Gère le groupe de fourmis exploratrices pour l'Exploration Map
+    """
     def __init__(self, name, position, world):
         super().__init__(name, position, world)
         self.explorers = []

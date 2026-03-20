@@ -36,6 +36,9 @@ class Bomb:
 
 
 class Grid:
+    """
+    Représente la grille de jeu, avec les poids de chaque case et les objets présents dessus.
+    """
     def __init__(self, width, height, center_x, center_y, perlin):
         self.width = width
         self.height = height
@@ -143,6 +146,9 @@ class Grid:
         
 CELL_SIZE=5
 class BattleModel:
+    """
+    Gère les données d'une bataille, y compris la grille, les unités, les ressources et l'état de la bataille.
+    """
     def __init__(self, difficulty, colony, auto_resolve=False, world_pos=None, perlin=None):
         self.difficulty = difficulty
         self.auto_resolve = auto_resolve
@@ -171,7 +177,7 @@ class BattleModel:
         img_fourmi=import_asset("fonts","ant.png")
         img_scarab=import_asset("fonts","scarab.png")
         positions_of_ressources = sample(
-            list(product(range(self.grid_w), range(int(self.grid_h * 4 / 14)))),
+            list(product(range(self.grid_w), range(int(self.grid_h )))),
             randint(1, 5),
         )
         self.resources_dispos = {
@@ -205,6 +211,7 @@ class BattleModel:
             for x,y in pos1
         ]
         self.units = self.enemies + self.friendlies
+        shuffle(self.units)
         self.active_unit = self.units[self.turn_index]
 
         protected_tiles = set(pos1 + pos2 + list(self.resources_dispos.keys()))

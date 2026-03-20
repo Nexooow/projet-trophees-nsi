@@ -5,6 +5,9 @@ from exploration.battle_renderer import BattleRenderer
 import pygame
 from exploration.Griddy import Sidebar
 class BattleState(State):
+    """
+    Gère les trois parties du mini-jeu, et se charge du déroulement(passage des tours, fin du jeu, etc.)
+    """
     def __init__(self, manager, difficulty=1, colony=None, auto_resolve=False, world_pos=None, perlin=None):
         super().__init__(manager,"battle",[])
         self.manager = manager

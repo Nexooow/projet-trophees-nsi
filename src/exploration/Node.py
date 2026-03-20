@@ -5,6 +5,9 @@ from .Griddy import *
 
 
 class Node:
+    """
+    Gère les noeuds et la création de leurs enfants lorsqu'ils sont conquis
+    """
     def __init__(self, node_id, parent=None, depth=0, seed=None):
         # self.x = x
         # self.y = y
@@ -49,9 +52,6 @@ class Node:
             )
             self.children.append(child)
             child.is_discovered = True
-
-    def create_game(self, expedition_members=[]):
-        return Game()
 
     def draw(self, screen, cam_x, cam_y, node_radius=20):
         x, y = self.position[0] - cam_x, self.position[1] - cam_y
