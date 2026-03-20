@@ -2,7 +2,6 @@ import math
 from random import randint
 
 import pygame
-from Griddy import Sidebar
 
 
 class Node:
