@@ -93,7 +93,7 @@ class SaveManager:
         time_mgr = game.time
 
         colony = self.get_colony()
-        colony_data: dict = {"food": colony.food}
+        colony_data: dict = {"food": colony.food, "science": colony.science}
 
         colony_data["inventory"] = colony.inventory
         colony_data["grid"] = self.serialize_grid(colony)
@@ -253,6 +253,7 @@ class SaveManager:
         colony_data = data.get("colony", {})
         colony = self.get_colony()
         colony.food = colony_data.get("food", 0)
+        colony.science = colony_data.get("science", 0)
         colony.inventory = colony_data.get("inventory", {})
 
         grid_data = colony_data.get("grid")

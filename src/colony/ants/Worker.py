@@ -17,11 +17,10 @@ class Worker(Ant):
     def __init__(self, colony, data: dict, pos):
         super().__init__(colony, "worker", data, pos)
 
-        # État interne pour deliver_larva
         self.task_phase: typing.Optional[str] = None
         self.task_data: typing.Optional[str] = None
         self.task_pos: typing.Optional[typing.Tuple[int, int]] = None
-        # True dès qu'un move_to a été lancé et que la fourmi n'est pas encore arrivée
+
         self.moving: bool = False
 
     def execute_task(self, task: "Task"):
@@ -130,7 +129,6 @@ class Worker(Ant):
             if self.is_static():
                 self.moving = False
             else:
-                # La fourmi est toujours en mouvement
                 return
 
         # On attend que la fourmi soit immobile (chemin entièrement parcouru)
@@ -167,11 +165,9 @@ class Worker(Ant):
             self.finish_task()
 
         elif self.task_phase == _PHASE_GO:
-            # Arrivé sur le lieu de creusage (ou à côté)
             self.task_phase = _PHASE_DIG
 
             if current_task.type == "dig" and self.task_pos:
-                # On creuse
                 self.colony.grid.supprimer_cellules(
                     self.task_pos[0],
                     self.task_pos[1],

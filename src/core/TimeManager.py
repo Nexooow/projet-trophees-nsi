@@ -7,7 +7,11 @@ class TimeManager:
         self.paused =  False
         self.day = 1
         self.time = 60*12
+        self.time_since_start = 0
         self.sub_frame_count = 0
+
+    def now (self):
+        return self.time_since_start
     
     def is_paused (self):
         """
@@ -71,7 +75,9 @@ class TimeManager:
         Met à jour le temps.
         """
         if not self.paused:
-            self.sub_frame_count += 1 * ACCEL
+            add = 1 * ACCEL
+            self.time_since_start += add
+            self.sub_frame_count += add
             if self.sub_frame_count >= 60:
                 self.time += 1
                 self.sub_frame_count = 0
