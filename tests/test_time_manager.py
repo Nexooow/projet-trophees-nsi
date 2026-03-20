@@ -1,4 +1,4 @@
-from src.core.TimeManager import TimeManager
+from sources.core.TimeManager import TimeManager
 from unittest.mock import MagicMock
 
 def test_time_manager_basic():

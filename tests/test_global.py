@@ -1,4 +1,4 @@
-from src.core.GameManager import GameManager
+from sources.core.GameManager import GameManager
 import pygame
     
 class TestGame:

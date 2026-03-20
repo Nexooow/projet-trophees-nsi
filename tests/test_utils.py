@@ -2,8 +2,8 @@
 Tests pour les classes / fonctions utilitaires.
 """
 
-from src.lib.file import File
-from src.lib.grid import Grid
+from sources.lib.file import File
+from sources.lib.grid import Grid
 
 
 class TestUtils:
