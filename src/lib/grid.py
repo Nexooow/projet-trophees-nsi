@@ -14,7 +14,7 @@ class Grid:
         # Dimensions de la grille en cellules (8x8 pixels par cellule)
         self.width = math.ceil(self.pixel_width / self.CELL_SIZE)
         self.height = math.ceil(self.pixel_height / self.CELL_SIZE)
-        
+
         self.cached_paths = {}
 
         # Initialiser la grille avec des cellules "full"
@@ -23,11 +23,27 @@ class Grid:
         for y in range(self.height):
             row = []
             for x in range(self.width):
+                # calcul de la probabilité de variante en fonction de la profondeur
+                depth_ratio = y / self.height
+                variant = 0
+
+                if depth_ratio > 0.15:
+                    # proba plus grande selon profondeur
+                    stone_prob = (depth_ratio - 0.15) * 0.3
+                    if random.random() < stone_prob:
+                        variant = 3
+
+                # si pas de pierre, chance d'avoir une variation de terre (1 ou 2)
+                if variant == 0:
+                    dirt_variant_prob = 0.02 + depth_ratio * 0.13
+                    if random.random() < dirt_variant_prob:
+                        variant = random.randint(1, 2)
+
                 row.append(
                     {
                         "state": "full",  # "full", "empty", "partial"
                         "bitmap": None,  # Matrice 8x8 pour les cellules partielles
-                        "variant": random.randint(0, 4),
+                        "variant": variant,
                     }
                 )
                 self.dirty_cells.add((x, y))

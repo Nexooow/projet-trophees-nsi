@@ -24,7 +24,7 @@ class Task:
         self.priority = (
             data["priority"]
             if data and "priority" in data
-            else TASK_DEFAULT_PRIORITY[type]
+            else TASK_DEFAULT_PRIORITY.get(type, 1)
         )
         self.deadline = (
             self.manager.colony.game.time.get_time(data["deadline"])
@@ -84,7 +84,7 @@ class TaskManager:
             on_complete=on_complete,
             on_expired=on_expired,
         )
-        ant_type = TASK_ANT_TYPE[type]
+        ant_type = TASK_ANT_TYPE.get(type, "worker")
         self.tasks[task.id] = task
         self.files[ant_type].enfiler(task.id, task.priority)
 
@@ -92,7 +92,7 @@ class TaskManager:
         if task_id in self.tasks:
             task_data = self.tasks[task_id]
             # On retire la tâche de la file si elle y est encore
-            file = self.files[TASK_ANT_TYPE[task_data.type]]
+            file = self.files[TASK_ANT_TYPE.get(task_data.type, "worker")]
             for i, (tid, _) in enumerate(file.content):
                 if tid == task_id:
                     file.content.pop(i)

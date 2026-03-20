@@ -4,13 +4,14 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import pygame
 
-from constants import UIColors, FONT_M5X7
+from constants import FONT_M5X7, UIColors
 from lib.utils import parse_color
 
 from .element import Element
 
 if TYPE_CHECKING:
     from .manager import UIManager
+
 
 class Label(Element):
     """
@@ -45,7 +46,7 @@ class Label(Element):
         self.font_size = size
         self.font_cache = None  # invalider le cache
         return self
-        
+
     def set_font_size(self, size: int) -> "Label":
         self.font_size = size
         self.font_cache = None
@@ -86,6 +87,8 @@ class Label(Element):
         font = self.get_font()
         color = self.current_text_color()
         text_surf = font.render(self.text, True, color)
+        if self.alpha < 255:
+            text_surf.set_alpha(self.alpha)
         self.blit_aligned(screen, text_surf, abs_rect)
 
     def blit_aligned(

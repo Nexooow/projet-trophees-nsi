@@ -5,6 +5,7 @@ from colony.BuildMode import BuildMode
 from colony.rooms.Depot import Depot
 from colony.rooms.Nursery import Nursery
 from colony.rooms.Queen import Queen
+from colony.Sky import Sky
 from colony.TaskManager import TaskManager
 from constants import (
     COLONY_BRUSH_SIZE,
@@ -12,21 +13,25 @@ from constants import (
     COLONY_HEIGHT,
     COLONY_UNDERGROUND_START,
     COLONY_WIDTH,
+    DARK_DIRT_COLOR,
     DIRT_COLOR,
     GALERY_COLOR,
+    INITIAL_FOOD_CAPACITY,
+    QUEEN_LARVAS,
     UIColors,
 )
 from lib.grid import Grid
 from lib.sidebar import Sidebar
 from lib.ui import Label
-from lib.utils import import_asset
-from constants import QUEEN_LARVAS
 from lib.ui.progress_bar import ProgressBar
+from lib.utils import import_asset, lerp_color
 
 from .State import State
 
 _leaf_image = import_asset("icons", "leaf.png")
 _hammer_image = import_asset("icons", "hammer.png")
+_grass_tile = pygame.transform.scale(import_asset("tiles", "grass_tile.png"), (120, 64))
+
 
 class ColonyState(State):
     def __init__(self, state_manager):
@@ -35,6 +40,7 @@ class ColonyState(State):
 
         self.sidebar = None
         self.world = pygame.Surface((COLONY_WIDTH, COLONY_HEIGHT), pygame.SRCALPHA)
+
         self.camera_x = -(COLONY_WIDTH - self.game.width) // 2
         self.camera_y = 0
 
@@ -56,8 +62,9 @@ class ColonyState(State):
         # self.ennemies = []
 
         self.food = 2000
-        # self.science = 0
-        
+        self.food_capacity = INITIAL_FOOD_CAPACITY
+        self.science = 0.0
+
         self.inventory = {}
 
         light_dirt = pygame.Color(DIRT_COLOR)
@@ -80,6 +87,95 @@ class ColonyState(State):
         self.is_sleeping = False
         self.sleep_timer = 0
 
+        # Ciel & Ambiance
+        self.sky = Sky(self.game)
+        self.clock_surface = pygame.Surface((100, 130 - 4), pygame.SRCALPHA)
+
+        # Vignette pour l'effet claustrophobique
+        self.vignette = self.create_vignette(self.game.screen.get_size())
+
+        self.pending_builds = []
+
+    def check_pending_builds(self):
+        if not self.pending_builds:
+            return
+
+        still_pending = []
+        added_count = 0
+        MAX_NEW_TASKS = 5
+
+        for build_data in self.pending_builds:
+            if added_count >= MAX_NEW_TASKS:
+                still_pending.append(build_data)
+                continue
+
+            pos = build_data["pos"]
+            priority = build_data["priority"]
+
+            # Vérification de l'accessibilité
+            cx = pos[0] + COLONY_BRUSH_SIZE / 2
+            cy = pos[1] + COLONY_BRUSH_SIZE / 2
+
+            cell_coords = self.grid.pixel_to_cell(int(cx), int(cy) - self.grid.start_y)
+
+            is_accessible = False
+            # Si la case est déjà accessible
+            if self.grid.is_cell_passable(*cell_coords):
+                is_accessible = True
+            else:
+                # Ou si un voisin est accessible
+                neighbors = self.grid.get_neighbors(*cell_coords)
+                if neighbors:
+                    is_accessible = True
+
+            if is_accessible:
+                self.tasks.add_task(
+                    "dig",
+                    {"dig_pos": pos, "priority": priority},
+                    on_complete=self.check_pending_builds,
+                )
+                added_count += 1
+            else:
+                still_pending.append(build_data)
+
+        self.pending_builds = still_pending
+
+    def create_vignette(self, size):
+        w, h = size
+        # On travaille sur une petite surface pour optimiser
+        vw, vh = 200, 150
+        small = pygame.Surface((vw, vh), pygame.SRCALPHA)
+
+        # Largeur des bandes (15% environ)
+        edge_w = int(vw * 0.15)
+        edge_h = int(vh * 0.15)
+
+        for y in range(vh):
+            for x in range(vw):
+                alpha_x = 0
+                alpha_y = 0
+                
+                if x < edge_w:
+                    f = 1.0 - (x / edge_w)
+                    alpha_x = int(100 * (f**1.5))
+                elif x > vw - edge_w:
+                    f = (x - (vw - edge_w)) / edge_w
+                    alpha_x = int(100 * (f**1.5))
+                    
+                if y < edge_h:
+                    f = 1.0 - (y / edge_h)
+                    alpha_y = int(100 * (f**1.5))
+                elif y > vh - edge_h:
+                    f = (y - (vh - edge_h)) / edge_h
+                    alpha_y = int(100 * (f**1.5))
+
+                alpha = max(alpha_x, alpha_y)
+
+                if alpha > 0:
+                    small.set_at((x, y), (0, 0, 0, alpha))
+
+        return pygame.transform.smoothscale(small, size)
+
     def enable(self):
 
         self.game.start_ambient_sound("ambient1")
@@ -97,10 +193,9 @@ class ColonyState(State):
             "colony_info_panel",
             (info_x, info_y, info_w, info_h),
         ).set_z_index(10).add_child(
-            self.ui.panel("colony_time_preview_panel", (2, 2, 100, info_h - 4))
-            .set_bg_color((255, 0, 255))
-            .set_border(None)
-            .set_z_index(11)
+            self.ui.image(
+                "colony_clock_view", self.clock_surface, (2, 2, 100, info_h - 4)
+            ).set_z_index(11)
         ).add_child(
             self.ui.label(
                 "colony_time",
@@ -187,9 +282,7 @@ class ColonyState(State):
             "colony_btn_expedition",
             "",
             (btn_x, btn_y, menu_btn_size, menu_btn_size),
-        ).on("click", self.start_exploration).set_z_index(
-            10
-        ).add_child(
+        ).on("click", self.start_exploration).set_z_index(10).add_child(
             self.ui.image(
                 "colony_btn_expedition_icon",
                 _leaf_image,  # TODO: changer l'icone
@@ -210,7 +303,7 @@ class ColonyState(State):
             .set_font("assets/fonts/m5x7.ttf", 16)
             .set_text_color(UIColors.TEXT)
         )
-        
+
     def start_exploration(self):
         self.save()
         self.stateManager.set_state("expedition")
@@ -218,15 +311,15 @@ class ColonyState(State):
     def disable(self):
         """Supprime les éléments UI de la colonie."""
         self.ui.clear()
-    
-    def add_item(self, name, quantity = None):
+
+    def add_item(self, name, quantity=None):
         if quantity is None:
             quantity = 1
         if name in self.inventory:
             self.inventory[name] += quantity
         else:
             self.inventory[name] = quantity
-            
+
     def remove_item(self, name, quantity=None):
         if name not in self.inventory:
             return
@@ -264,38 +357,36 @@ class ColonyState(State):
         """Sauvegarde la partie et affiche une notification brève."""
         self.game.sauvegarder()
         self.sync_ui()
-        
-    def switch_pause_menu (self):
+
+    def switch_pause_menu(self):
         self.paused = not self.paused
         self.game.time.set_pause(self.paused)
-        
+
         screen_width = self.game.screen.get_width()
         screen_height = self.game.screen.get_height()
-        
+
         if self.paused:
             self.ui.panel(
-                "colony_pause_frame",
-                (0, 0, screen_width, screen_height)
+                "colony_pause_frame", (0, 0, screen_width, screen_height)
             ).set_z_index(100).set_bg_color((0, 0, 0, 128)).add_child(
                 self.ui.panel(
                     "colony_pause_menu",
-                    (screen_width / 2 - 200, screen_height / 2 - 100, 400, 200)
-                ).set_z_index(101).add_child(
+                    (screen_width / 2 - 200, screen_height / 2 - 100, 400, 200),
+                )
+                .set_z_index(101)
+                .add_child(
                     self.ui.button(
-                        "colony_pause_resume",
-                        "Reprendre",
-                        (100, 50, 200, 50)
+                        "colony_pause_resume", "Reprendre", (100, 50, 200, 50)
                     )
-                ).add_child(
-                    self.ui.button(
-                        "colony_pause_quit",
-                        "Quitter",
-                        (100, 110, 200, 50)
-                    ).set_colors(
+                )
+                .add_child(
+                    self.ui.button("colony_pause_quit", "Quitter", (100, 110, 200, 50))
+                    .set_colors(
                         normal=(110, 40, 40),
                         hover=(150, 55, 55),
                         active=(180, 65, 65),
-                    ).on("click", self.game.quitter)
+                    )
+                    .on("click", self.game.quitter)
                 )
             )
         else:
@@ -317,7 +408,7 @@ class ColonyState(State):
         if self.game.time.is_paused():
             self.sync_ui()
             return
-        
+
         if self.build_mode.enabled:
             self.build_mode.update(events)
 
@@ -345,6 +436,7 @@ class ColonyState(State):
 
         for ant in self.ants:
             ant.update()
+
         for room in self.rooms:
             room.update(events)
 
@@ -368,9 +460,9 @@ class ColonyState(State):
         h, m = self.game.time.get_time()
         time_in_minutes = h * 60 + m
         max_darkness = 200
-        if 8*60 <= time_in_minutes < 540:
+        if 8 * 60 <= time_in_minutes < 540:
             # Transition Nuit -> Jour (Dégressif)
-            ratio = (time_in_minutes - 8*60) / (540 - 8*60)
+            ratio = (time_in_minutes - 8 * 60) / (540 - 8 * 60)
             return int(max_darkness * (1 - ratio))
         elif 540 <= time_in_minutes < 1140:
             # Journée
@@ -392,10 +484,11 @@ class ColonyState(State):
         if isinstance(time_label, Label):
             time_label.set_text(self.game.time.format())
 
+        self.sky.draw_clock(self.clock_surface)
+
         # Mise à jour en temps réel de la barre de progression de la larve en cours
         queen = self.get_room("queen")
         if queen is not None and not queen.born_queue.est_vide():
-
             ant_type = queen.born_queue.sommet()
             ant_data = QUEEN_LARVAS.get(ant_type, {})
             total_seconds = ant_data.get("time", 30)
@@ -422,6 +515,16 @@ class ColonyState(State):
         if isinstance(night_label, Label):
             if self.is_sleeping:
                 night_label.set_text(f"Fin du jour {self.game.time.day}...")
+
+                # Animation d'apparition/disparition
+                # Fade in 0-30, Wait, Fade out 150-180
+                alpha = 255
+                if self.sleep_timer < 30:
+                    alpha = int(255 * (self.sleep_timer / 30))
+                elif self.sleep_timer > 150:
+                    alpha = int(255 * ((180 - self.sleep_timer) / 30))
+
+                night_label.set_alpha(alpha)
             else:
                 night_label.set_text("")
 
@@ -485,6 +588,13 @@ class ColonyState(State):
         pixel_x, pixel_y = self.grid.cell_to_pixel(cell_x, cell_y)
         cell_size = self.grid.CELL_SIZE
 
+        # Calcul de la couleur de la terre en fonction de la profondeur
+        depth_ratio = cell_y / self.grid.height
+
+        # Interpolation vers une couleur de fond plus sombre 
+        current_dirt_rgb = lerp_color(self.light_dirt_rgb, DARK_DIRT_COLOR, depth_ratio)
+        dirt_r, dirt_g, dirt_b = current_dirt_rgb
+
         if state == "empty":
             pygame.draw.rect(
                 self.grid_surface,
@@ -494,7 +604,7 @@ class ColonyState(State):
         elif state == "full":
             pygame.draw.rect(
                 self.grid_surface,
-                self.light_dirt_rgb,
+                current_dirt_rgb,
                 (pixel_x, pixel_y, cell_size, cell_size),
             )
             # Variation visuelle aléatoire (cailloux/bruit)
@@ -502,9 +612,9 @@ class ColonyState(State):
                 pygame.draw.rect(
                     self.grid_surface,
                     (
-                        max(0, self.light_dirt_rgb[0] - 30),
-                        max(0, self.light_dirt_rgb[1] - 30),
-                        max(0, self.light_dirt_rgb[2] - 30),
+                        max(0, dirt_r - 30),
+                        max(0, dirt_g - 30),
+                        max(0, dirt_b - 30),
                     ),
                     (pixel_x + 2, pixel_y + 2, 2, 2),
                 )
@@ -512,9 +622,9 @@ class ColonyState(State):
                 pygame.draw.rect(
                     self.grid_surface,
                     (
-                        min(255, self.light_dirt_rgb[0] + 25),
-                        min(255, self.light_dirt_rgb[1] + 25),
-                        min(255, self.light_dirt_rgb[2] + 25),
+                        min(255, dirt_r + 25),
+                        min(255, dirt_g + 25),
+                        min(255, dirt_b + 25),
                     ),
                     (pixel_x + 5, pixel_y + 1, 2, 2),
                 )
@@ -532,9 +642,9 @@ class ColonyState(State):
                 (1, 0, (cell_size - 1, 0, 1, cell_size)),  # Droite
             ]
             shadow_color = (
-                max(0, self.light_dirt_rgb[0] - 40),
-                max(0, self.light_dirt_rgb[1] - 40),
-                max(0, self.light_dirt_rgb[2] - 40),
+                max(0, current_dirt_rgb[0] - 40),
+                max(0, current_dirt_rgb[1] - 40),
+                max(0, current_dirt_rgb[2] - 40),
             )
             for dx, dy, rect in neighbors:
                 nx, ny = cell_x + dx, cell_y + dy
@@ -592,14 +702,14 @@ class ColonyState(State):
             bitmap = cell["bitmap"]
             if bitmap:
                 shadow_color = (
-                    max(0, self.light_dirt_rgb[0] - 50),
-                    max(0, self.light_dirt_rgb[1] - 50),
-                    max(0, self.light_dirt_rgb[2] - 50),
+                    max(0, dirt_r - 50),
+                    max(0, dirt_g - 50),
+                    max(0, dirt_b - 50),
                 )
                 highlight_color = (
-                    min(255, self.light_dirt_rgb[0] + 30),
-                    min(255, self.light_dirt_rgb[1] + 30),
-                    min(255, self.light_dirt_rgb[2] + 30),
+                    min(255, dirt_r + 30),
+                    min(255, dirt_g + 30),
+                    min(255, dirt_b + 30),
                 )
 
                 for py in range(cell_size):
@@ -609,7 +719,7 @@ class ColonyState(State):
                             gy = pixel_y + py
 
                             pygame.draw.rect(
-                                self.grid_surface, self.light_dirt_rgb, (gx, gy, 1, 1)
+                                self.grid_surface, current_dirt_rgb, (gx, gy, 1, 1)
                             )
 
                             # détecter les bords pour ajouter ombrage
@@ -626,21 +736,22 @@ class ColonyState(State):
         """
         TODO
         """
-        pygame.draw.rect(
-            self.world, "#7dbefa", (0, 0, COLONY_WIDTH, COLONY_GRASS_START)
-        )
-        # TODO: entre 0.12 et 0.15, faire l'herbe et la végétation pour la transition entre extérieur et la partie
-        #  terreuse de la colonie
+        self.sky.draw(self.world)
+
+        # Remplissage de la terre sous l'herbe jusqu'au début du quadrillage souterrain
         pygame.draw.rect(
             self.world,
-            "#4cbd56",
+            DIRT_COLOR,
             (
                 0,
                 COLONY_GRASS_START,
                 COLONY_WIDTH,
-                COLONY_HEIGHT - COLONY_UNDERGROUND_START - COLONY_GRASS_START,
+                COLONY_UNDERGROUND_START - COLONY_GRASS_START,
             ),
         )
+
+        for i in range(COLONY_WIDTH // 120 + 1):
+            self.world.blit(_grass_tile, (i * 120, COLONY_GRASS_START - 24))
 
         self.world.blit(self.grid_surface, (0, COLONY_UNDERGROUND_START))
 
@@ -654,7 +765,18 @@ class ColonyState(State):
 
         self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
 
+        # Vignette (active seulement sous la surface)
+        if -self.camera_y > COLONY_GRASS_START - 200:
+            fade_start = COLONY_GRASS_START - 200
+            depth = -self.camera_y - fade_start
+            alpha_factor = min(1.0, depth / 400.0)
+
+            if alpha_factor > 0:
+                self.vignette.set_alpha(int(255 * alpha_factor))
+                self.game.screen.blit(self.vignette, (0, 0))
+
         darkness = self.get_ambient_light_alpha()
         if darkness > 0:
-            self.night_overlay.fill((0, 0, 50, darkness))
+            # Teinte de nuit plus sombre/neutre pour le sol
+            self.night_overlay.fill((10, 10, 35, darkness))
             self.game.screen.blit(self.night_overlay, (0, 0))

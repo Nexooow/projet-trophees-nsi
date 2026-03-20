@@ -10,6 +10,9 @@ SAVES_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "saves"])
 FONTS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets", "fonts"])
 FONT_M5X7 = os.sep.join([FONTS_PATH, "m5x7.ttf"])
 
+DAY_START = 6 * 60
+DAY_END = 21 * 60
+
 COLONY_WIDTH = 2867
 COLONY_HEIGHT = 1612
 COLONY_GRASS_START = 360
@@ -21,7 +24,12 @@ COLONY_BRUSH_COLOR = "#b12935"
 GALERY_COLOR = "#9c4e3e"
 DARK_GALERY_COLOR = "#6e3228"
 DIRT_COLOR = "#b86858"
-DARK_DIRT_COLOR = "#783828"
+DARK_DIRT_COLOR = (115, 65, 55)
+
+NIGHT_COLOR = (11, 14, 41)
+SUNRISE_COLOR = (255, 153, 102)
+DAY_COLOR = (125, 190, 250)
+SUNSET_COLOR = (235, 107, 86)
 
 
 class UIColors:
@@ -51,6 +59,13 @@ class UIColors:
     DARK_GREEN = (20, 103, 86)
 
 
+# colony constants
+INITIAL_FOOD_CAPACITY = 5000
+INITIAL_MAX_ENERGY = 100
+ENERGY_RECOVERY_RATE = 0.5  # per second in dormitory
+ENERGY_RECOVERY_RATE_GROUND = 0.1  # per second on ground
+ENERGY_CONSUMPTION_RATE = 0.05  # per second when working/moving
+
 # colony tasks
 
 TASK_ANT_TYPE: dict = {
@@ -75,6 +90,8 @@ TASK_DEFAULT_PRIORITY: dict = {
     "explore": 1,
     "bring_food_queen": 10,
     "deliver_larva": 8,
+    "clean": 3,
+    "rest": 0,
 }
 
 PRICE_PER_DIRTPIXEL = 0.05
@@ -134,3 +151,42 @@ QUEEN_UPGRADES: dict = {
 # Dictionnaires des items disponibles, la clé est l'ID de l'item
 # La valeur doit être un dictionnaire avec les clés "label", "description"
 ITEMS = {}
+
+# Configuration des salles constructibles
+ROOMS_CONFIG = {
+    "depot": {
+        "label": "Dépôt",
+        "description": "Stocke la nourriture de la colonie.",
+        "cost": 1000,
+        "width": 13,
+        "height": 8,
+    },
+    "nursery": {
+        "label": "Nurserie",
+        "description": "Lieu où les larves se développent.",
+        "cost": 1500,
+        "width": 15,
+        "height": 7,
+    },
+    "laboratory": {
+        "label": "Laboratoire",
+        "description": "Permet aux scientifiques de mener des recherches.",
+        "cost": 3000,
+        "width": 12,
+        "height": 10,
+    },
+    "dormitory": {
+        "label": "Dortoir",
+        "description": "Permet aux fourmis de récupérer leur énergie.",
+        "cost": 1200,
+        "width": 10,
+        "height": 7,
+    },
+    "waste_yard": {
+        "label": "Dépotoir",
+        "description": "Réduit les maladies en centralisant les déchets.",
+        "cost": 800,
+        "width": 8,
+        "height": 6,
+    },
+}

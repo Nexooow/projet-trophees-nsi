@@ -53,8 +53,8 @@ class GameManager:
             self.current_sound = name
             pygame.mixer.music.play(loops=-1, fade_ms=500)
             pygame.mixer.music.set_volume(0.15)
-        except:
-            print(f"Impossible de jouer la musique d'ambience {name}")
+        except Exception as e:
+            print(f"Impossible de jouer la musique d'ambience {name}: {e}")
 
     def is_running(self) -> bool:
         """

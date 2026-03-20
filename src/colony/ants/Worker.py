@@ -3,11 +3,13 @@ import typing
 from colony.Ant import Ant
 from colony.ants.Nurse import Nurse
 from colony.TaskManager import Task
+from constants import COLONY_BRUSH_SIZE
 
 # Phases de la tâche deliver_larva
 _PHASE_GO_PICKUP = "go_pickup"
 _PHASE_GO = "go"
 _PHASE_GO_DELIVER = "go_deliver"
+_PHASE_DIG = "dig"
 _PHASE_DONE = "done"
 
 
@@ -30,25 +32,41 @@ class Worker(Ant):
         elif task.type == "bring_food_queen":
             self.start_feed_queen(task)
         elif task.type == "dig":
-            pass
+            self.start_dig(task)
 
-    def start_dig (self, task: "Task"):
+    def start_dig(self, task: "Task"):
         data = task.data or {}
         dig_pos = data.get("dig_pos")
 
         if dig_pos is None:
             self.finish_task()
             return
-        
+
         self.task_pos = dig_pos
         self.task_phase = _PHASE_GO
 
+        center_x = dig_pos[0] + COLONY_BRUSH_SIZE / 2
+        center_y = dig_pos[1] + COLONY_BRUSH_SIZE / 2
+
         target_cell = self.colony.grid.pixel_to_cell(
-            int(dig_pos[0]), int(dig_pos[1]) - self.colony.grid.start_y
+            int(center_x), int(center_y) - self.colony.grid.start_y
         )
 
+        # Pour creuser, on peut se déplacer sur la case cible si elle est accessible
+        # Sinon, on cherche une case adjacente accessible
+        if self.colony.grid.is_cell_passable(*target_cell):
+            dest_cell = target_cell
+        else:
+            neighbors = self.colony.grid.get_neighbors(*target_cell)
+            if not neighbors:
+                # aucune case adjacente accessible
+                self.finish_task()
+                return
+            # premier voisin le plus accessible
+            dest_cell = neighbors[0]
+
         self.moving = True
-        if not self.move_to(*target_cell):
+        if not self.move_to(*dest_cell):
             self.finish_task()
 
     def start_feed_queen(self, task: "Task"):
@@ -101,9 +119,9 @@ class Worker(Ant):
     def update(self):
         """Met à jour le mouvement et gère les transitions de phase."""
         super().update()
-        self.update_delivery()
+        self.update_task()
 
-    def update_delivery(self):
+    def update_task(self):
         """Vérifie si l'ouvrière a atteint sa destination et fait avancer la phase."""
         if self.task_phase is None:
             return
@@ -147,6 +165,19 @@ class Worker(Ant):
                 pass  # TODO: faire apparaitre la nouvelle fourmi
 
             self.finish_task()
+
+        elif self.task_phase == _PHASE_GO:
+            # Arrivé sur le lieu de creusage (ou à côté)
+            self.task_phase = _PHASE_DIG
+
+            if current_task.type == "dig" and self.task_pos:
+                # On creuse
+                self.colony.grid.supprimer_cellules(
+                    self.task_pos[0],
+                    self.task_pos[1],
+                    COLONY_BRUSH_SIZE,
+                )
+                self.finish_task()
 
     def finish_task(self):
         """Réinitialise l'état interne et libère la fourmi."""

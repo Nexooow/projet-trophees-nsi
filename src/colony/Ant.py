@@ -5,7 +5,13 @@ import uuid
 import pygame
 
 from colony.TaskManager import Task
-from constants import COLONY_UNDERGROUND_START
+from constants import (
+    COLONY_UNDERGROUND_START,
+    ENERGY_CONSUMPTION_RATE,
+    ENERGY_RECOVERY_RATE,
+    ENERGY_RECOVERY_RATE_GROUND,
+    INITIAL_MAX_ENERGY,
+)
 from lib.file import File
 from lib.utils import import_asset
 
@@ -35,6 +41,8 @@ class Ant(pygame.sprite.Sprite):
         self.data = data
 
         self.power = data["power"]
+        self.max_energy = data.get("max_energy", INITIAL_MAX_ENERGY)
+        self.energy = data.get("energy", self.max_energy)
 
         (level, xp) = convert_xp(data["xp"] if "xp" in data else 0)
         self.level = level
@@ -50,7 +58,8 @@ class Ant(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
 
         self.flip = False
-        self.angle = 0
+        self.angle = 0.0
+        self.target_angle = 0.0
         self.pos = pygame.Vector2(pos)
         self.rect = self.image.get_rect(center=pos)
         self.direction = pygame.Vector2(0, 0)
@@ -78,6 +87,26 @@ class Ant(pygame.sprite.Sprite):
 
     def update(self):
         """Met à jour la position et l'animation de la fourmi"""
+
+        # Gestion de l'énergie
+        if not self.is_static():
+            self.energy = max(0, self.energy - ENERGY_CONSUMPTION_RATE)
+        else:
+            # vérifier si la fourmi est dans un dortoir
+            in_dormitory = False
+            for room in self.colony.rooms:
+                if room.name == "dormitory" and room.rect.collidepoint(self.pos):
+                    in_dormitory = True
+                    break
+
+            if in_dormitory:
+                # Récupération rapide en dortoir
+                self.energy = min(self.max_energy, self.energy + ENERGY_RECOVERY_RATE)
+            else:
+                # Récupération lente si immobile sur le sol
+                self.energy = min(
+                    self.max_energy, self.energy + ENERGY_RECOVERY_RATE_GROUND
+                )
 
         # Pathfinding
         # Si pas de prochaine cellule et qu'il reste du chemin, charger la suivante
@@ -114,17 +143,20 @@ class Ant(pygame.sprite.Sprite):
                 # Normaliser la direction et appliquer la vitesse
                 self.direction = direction_to_target.normalize()
                 self.pos += self.direction * self.speed
-                
-                (vx, vy) = self.direction
-                a = math.atan2(vx, vy)
-                if vx >= 0:
-                    self.angle = a
-                    if vx > 0:
-                        self.flip = True
-                else:
+
+                if self.direction.x > 0:
+                    self.flip = True
+                elif self.direction.x < 0:
                     self.flip = False
-                    self.angle = a
-                
+
+                signe = 1 if self.flip else -1
+                self.target_angle = signe * -math.degrees(
+                    math.atan2(self.direction.y, abs(self.direction.x))
+                )
+
+        # Interpolation douce vers l'angle cible pour éviter les changements brusques d'orientation
+        self.angle += (self.target_angle - self.angle) * 0.15
+
         if self.rect is not None:
             self.rect.center = (int(self.pos.x), int(self.pos.y))
 
@@ -142,10 +174,8 @@ class Ant(pygame.sprite.Sprite):
         """Dessine la fourmi à l'écran"""
         if self.image is None:
             return
-        print(self.flip, self.angle)
         img = pygame.transform.rotate(
-            pygame.transform.flip(self.image, self.flip, False),
-            self.angle*(90/math.pi)
+            pygame.transform.flip(self.image, self.flip, False), self.angle
         )
         # Centrer l'image sur la position
         draw_pos = (
