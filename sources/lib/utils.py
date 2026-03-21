@@ -31,10 +31,13 @@ def import_asset(*args):
 
 def import_sound(*args):
     path = os.sep.join(["data", "assets", "sounds"] + list(args))
-    return pygame.mixer.music.load(path)
-    
+    return path
+
+
 def use_font(size):
-    return pygame.font.Font(os.sep.join(["data", "assets", "fonts", "m5x7.ttf"]), size or 16)
+    return pygame.font.Font(
+        os.sep.join(["data", "assets", "fonts", "m5x7.ttf"]), size or 16
+    )
 
 
 def distance(pos1, pos2):
@@ -49,6 +52,7 @@ def lerp(a, b, t):
 def lerp_color(c1, c2, t):
     """Interpolation linéaire entre deux couleurs (tuples RGB ou RGBA)"""
     return tuple(int(lerp(c1[i], c2[i], t)) for i in range(len(c1)))
+
 
 def fill(surface, color):
     """Remplace la couleur d'une surface pygame en conservant le canal alpha de chaque pixel."""

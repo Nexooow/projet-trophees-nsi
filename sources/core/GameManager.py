@@ -5,7 +5,6 @@ from lib.ui import UIManager
 from lib.utils import import_sound
 
 from .SaveManager import SaveManager
-
 from .StateManager import StateManager
 from .TimeManager import TimeManager
 
@@ -22,7 +21,7 @@ class GameManager:
         self.clock = pygame.time.Clock()
 
         self.game_id: typing.Optional[str] = None
-        
+
         self.sounds = {"ambient1": import_sound("ambient1.mp3")}
         self.current_sound = ""
 
@@ -43,7 +42,8 @@ class GameManager:
                 return
             else:
                 pygame.mixer.music.stop()
-            sound = sounds[name]
+            sound = self.sounds[name]
+            pygame.mixer.music.load(sound)
             self.current_sound = name
             pygame.mixer.music.play(loops=-1, fade_ms=1000)
             pygame.mixer.music.set_volume(0.15)
