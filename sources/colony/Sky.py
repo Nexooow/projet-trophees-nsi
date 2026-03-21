@@ -94,8 +94,8 @@ class Sky:
         sky_color = self.get_sky_color()
         surface.fill(sky_color)
 
-        center_x, center_y = w // 2, h + 20
-        radius = h - 30
+        center_x, center_y = w // 2, h
+        radius = w // 2
 
         orb_color = (200, 200, 200)
         angle = 0

@@ -1,10 +1,7 @@
-from random import randint
-
 import pygame
+from lib.pathfinding import reachable_tiles_nx
 from lib.perlin import Perlin
-from lib.utils import import_asset
-
-from .Utilities import mouse_over, reachable_tiles_nx, weight_to_color
+from lib.utils import import_asset, mouse_over, use_font
 
 RESSOURCES_IMAGES = {"nom": import_asset("icons", "leaf.png")}
 RESSOURCES = ["nom"]
@@ -13,6 +10,50 @@ IMG = {
     "rock": import_asset("icons", "rock.png"),
 }
 TILE_SIZE = 50
+
+
+class Sidebar:
+    """
+    Barre latérale affichant les informations sur la bataille en cours
+    (équipes, points d'action, ressources).
+    """
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def draw(self, screen, units, active, colony, ressources):
+        screen.fill((30, 30, 30))
+        font = use_font(28)
+        friendlies = len([u for u in units if u.team == "noir"])
+        enemies = len([u for u in units if u.team == "rouge"])
+        if colony is None:
+            lines = [
+                f"Active Team: {active.team}",
+                f"Action Points: {active.points}",
+                "",
+                f"Friendlies: {friendlies}",
+                f"Enemies: {enemies}",
+                "",
+                "Resources:",
+                # TODO: Montrer les ressources récupérées / disponibles
+            ]
+        else:
+            lines = [
+                f"Active Team: {active.team}",
+                f"Action Points: {active.points}",
+                "",
+                f"Friendlies: {friendlies}",
+                f"Enemies: {enemies}",
+                "",
+                f"Resources: {len(colony.ressources)}/{ressources}",
+                # TODO: Montrer les ressources récupérées / disponibles
+            ]
+        y = 20
+        for line in lines:
+            text = font.render(line, True, (255, 255, 255))
+            screen.blit(text, (20, y))
+            y += 35
 
 
 class BattleRenderer:
@@ -38,6 +79,25 @@ class BattleRenderer:
             weight: self.generate_autotiles(color)
             for weight, color in self.base_colors.items()
         }
+
+        # Calcul de l'offset pour centrer la grille dans la zone de jeu
+        grid = self.model.grid
+        grid_px_w = grid.width * self.tile_size
+        grid_px_h = grid.height * self.tile_size
+        self.grid_offset_x = max(0, (self.game_surface.get_width() - grid_px_w) // 2)
+        self.grid_offset_y = max(0, (self.game_surface.get_height() - grid_px_h) // 2)
+
+        # Pré-calcul de l'overlay des lignes de grille (semi-transparent, une seule fois)
+        self.grid_overlay = pygame.Surface((grid_px_w, grid_px_h), pygame.SRCALPHA)
+        for x in range(grid.width):
+            for y in range(grid.height):
+                rect = pygame.Rect(
+                    x * self.tile_size,
+                    y * self.tile_size,
+                    self.tile_size,
+                    self.tile_size,
+                )
+                pygame.draw.rect(self.grid_overlay, (255, 255, 255, 25), rect, 1)
 
     def make_autotile(self, base_color, mask):
         surf = pygame.Surface((self.tile_size, self.tile_size))
@@ -87,40 +147,62 @@ class BattleRenderer:
 
     def draw_grid(self):
         grid = self.model.grid
+        ox, oy = self.grid_offset_x, self.grid_offset_y
+
         for x in range(grid.width):
             for y in range(grid.height):
-                rect = pygame.Rect(x * grid.tile, y * grid.tile, grid.tile, grid.tile)
+                rect = pygame.Rect(
+                    x * grid.tile + ox,
+                    y * grid.tile + oy,
+                    grid.tile,
+                    grid.tile,
+                )
                 weight = grid.weights[(x, y)]
                 mask = grid.get_mask(x, y)
                 tile_img = self.tiles[weight][mask]
                 self.game_surface.blit(tile_img, rect)
                 if (x, y) in self.model.bomb_tiles:
                     pygame.draw.rect(self.game_surface, (200, 50, 50), rect)
-                pygame.draw.rect(self.game_surface, (255, 255, 255, 128), rect, 1)
-        # Mise en couleur des tiles atteignables
+
+        # Overlay semi-transparent des lignes de grille (pré-calculé)
+        self.game_surface.blit(self.grid_overlay, (ox, oy))
+
+        # Mise en couleur des cases atteignables
         tiles = reachable_tiles_nx(self.model.active_unit, grid, self.model.units)
         for x, y in tiles.keys():
             pygame.draw.rect(
                 self.game_surface,
                 (255, 255, 0),
-                pygame.Rect(x * grid.tile, y * grid.tile, grid.tile, grid.tile),
+                pygame.Rect(
+                    x * grid.tile + ox,
+                    y * grid.tile + oy,
+                    grid.tile,
+                    grid.tile,
+                ),
                 2,
             )
 
     def draw_resources(self):
+        ox, oy = self.grid_offset_x, self.grid_offset_y
         for res in self.model.resources_obj:
-            offset = res.draw_offset()
-            self.game_surface.blit(
-                RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset)
+            img = RESSOURCES_IMAGES[res.resource]
+            img_w, img_h = img.get_size()
+            float_offset = res.draw_offset()
+            # Centrage horizontal et vertical dans la cellule, avec l'effet de flottement
+            draw_x = res.x * self.tile_size + (self.tile_size - img_w) // 2 + ox
+            draw_y = (
+                res.y * self.tile_size
+                + (self.tile_size - img_h) // 2
+                + float_offset
+                + oy
             )
-            self.game_surface.blit(
-                RESSOURCES_IMAGES[res.resource], (res.x * 50, res.y * 50 + offset)
-            )
+            self.game_surface.blit(img, (draw_x, draw_y))
 
     def draw_useless_obj(self):
+        ox, oy = self.grid_offset_x, self.grid_offset_y
         for (x, y), obj in self.model.grid.objects.items():
-            screen_x = x * TILE_SIZE
-            screen_y = y * TILE_SIZE
+            screen_x = x * TILE_SIZE + ox
+            screen_y = y * TILE_SIZE + oy
 
             if obj == "tree":
                 self.game_surface.blit(IMG["tree"], (screen_x, screen_y))
@@ -128,17 +210,22 @@ class BattleRenderer:
                 self.game_surface.blit(IMG["rock"], (screen_x, screen_y))
 
     def draw_units(self):
-        mouse = pygame.mouse.get_pos()
+        ox, oy = self.grid_offset_x, self.grid_offset_y
         for unit in self.model.units:
             unit.is_static()
-            unit.draw(self.game_surface)
+            unit.draw(self.game_surface, ox, oy, self.tile_size)
             if mouse_over(unit) and unit != self.model.active_unit:
                 tiles = reachable_tiles_nx(unit, self.model.grid, self.model.units)
                 for x, y in tiles.keys():
                     pygame.draw.rect(
                         self.game_surface,
                         (255, 0, 0),
-                        pygame.Rect(x * 50, y * 50, 50, 50),
+                        pygame.Rect(
+                            x * self.tile_size + ox,
+                            y * self.tile_size + oy,
+                            self.tile_size,
+                            self.tile_size,
+                        ),
                         2,
                     )
 

@@ -32,6 +32,9 @@ def import_asset(*args):
 def import_sound(*args):
     path = os.sep.join(["data", "assets", "sounds"] + list(args))
     return pygame.mixer.music.load(path)
+    
+def use_font(size):
+    return pygame.font.Font(os.sep.join(["data", "assets", "fonts", "m5x7.ttf"]), size or 16)
 
 
 def distance(pos1, pos2):
@@ -46,3 +49,24 @@ def lerp(a, b, t):
 def lerp_color(c1, c2, t):
     """Interpolation linéaire entre deux couleurs (tuples RGB ou RGBA)"""
     return tuple(int(lerp(c1[i], c2[i], t)) for i in range(len(c1)))
+
+def fill(surface, color):
+    """Remplace la couleur d'une surface pygame en conservant le canal alpha de chaque pixel."""
+    w, h = surface.get_size()
+    r, g, b, _ = color
+    for x in range(w):
+        for y in range(h):
+            a = surface.get_at((x, y))[3]
+            surface.set_at((x, y), pygame.Color(r, g, b, a))
+    return surface
+
+
+def mouse_over(unit):
+    """
+    Retourne True si la souris survole le sprite de l'unité
+    (collision pixel-perfect via le mask).
+    """
+    mouse = pygame.mouse.get_pos()
+    if not unit.rect.collidepoint(mouse):
+        return False
+    return unit.mask.get_at((mouse[0] - unit.rect.x, mouse[1] - unit.rect.y))

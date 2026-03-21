@@ -3,9 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional
 
 import pygame
-
 from constants import FONT_M5X7, UIColors
-from lib.utils import parse_color
+from lib.utils import parse_color, use_font
 
 from .element import Element
 
@@ -72,9 +71,9 @@ class Label(Element):
                 try:
                     self.font_cache = pygame.font.Font(self.font_path, self.font_size)
                 except FileNotFoundError:
-                    self.font_cache = pygame.font.Font(None, self.font_size)
+                    self.font_cache = use_font(self.font_size)
             else:
-                self.font_cache = pygame.font.Font(None, self.font_size)
+                self.font_cache = use_font(self.font_size)
         return self.font_cache
 
     def current_text_color(self) -> Any:

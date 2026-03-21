@@ -1,8 +1,7 @@
-from random import randint
 import typing
+from random import randint
 
-
-import pygame
+from lib.utils import use_font
 
 from .Node import Node
 
@@ -72,7 +71,7 @@ class ExpeditionMap:
         self.draw_info(screen, visible_nodes)
 
     def draw_info(self, screen, nodes):
-        font = pygame.font.Font(None, 24)
+        font = use_font(24)
         cur_x, cur_y = self.current.position
         info_y = 20
         text = [

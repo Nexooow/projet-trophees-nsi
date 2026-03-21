@@ -1,7 +1,7 @@
 import pygame
+from lib.pathfinding import closest_enemy, reachable_tiles_nx, shortest_path
 
 from .battle_model import Bomb
-from .Utilities import closest_enemy, reachable_tiles_nx, shortest_path
 
 
 class BattleController:

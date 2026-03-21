@@ -2,6 +2,7 @@ import math
 from random import randint
 
 import pygame
+from lib.utils import use_font
 
 
 class Node:
@@ -66,7 +67,7 @@ class Node:
             return
         pygame.draw.circle(screen, color, (int(x), int(y)), node_radius)
         pygame.draw.circle(screen, (255, 255, 255), (int(x), int(y)), node_radius, 2)
-        font = pygame.font.Font(None, 16)
+        font = use_font(16)
         text = font.render(str(self.difficulty), True, (255, 255, 255))
         screen.blit(text, (int(x) - 8, int(y) - 8))
 

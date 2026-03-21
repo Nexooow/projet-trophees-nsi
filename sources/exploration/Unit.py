@@ -85,13 +85,16 @@ class Unit:
         self.target_screen_x, self.target_screen_y = x * 50, y * 50
         print(f"Coord in move to:{self.x, self.y}")
 
-    def draw(self, screen):
+    def draw(self, screen, offset_x=0, offset_y=0, tile_size=50):
         self.update()
         img = pygame.transform.flip(self.image, not self.orientation, False)
 
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.topleft = (self.screen_x, self.screen_y)
-        screen.blit(img, (self.screen_x, self.screen_y))
+        img_w, img_h = img.get_size()
+        draw_x = self.screen_x + (tile_size - img_w) // 2 + offset_x
+        draw_y = self.screen_y + (tile_size - img_h) // 2 + offset_y
+        self.rect.topleft = (draw_x, draw_y)
+        screen.blit(img, (draw_x, draw_y))
 
     def is_static(self):
         if self.destination is None:

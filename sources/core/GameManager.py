@@ -6,11 +6,8 @@ from lib.utils import import_sound
 
 from .SaveManager import SaveManager
 
-# import pygame_gui
 from .StateManager import StateManager
 from .TimeManager import TimeManager
-
-sounds = {"ambient1": import_sound("ambient1.mp3")}
 
 
 class GameManager:
@@ -25,6 +22,8 @@ class GameManager:
         self.clock = pygame.time.Clock()
 
         self.game_id: typing.Optional[str] = None
+        
+        self.sounds = {"ambient1": import_sound("ambient1.mp3")}
         self.current_sound = ""
 
         self.ui = UIManager(self)

@@ -5,14 +5,17 @@ from random import choice, choices, randint, random, sample, shuffle
 
 import networkx as netx
 import pygame
+from lib.pathfinding import neighbors
 from lib.perlin import Perlin
-from lib.utils import import_asset
+from lib.utils import fill, import_asset
 
 from .Unit import Unit
-from .Utilities import fill, neighbors
 
 TILE_SIZE = 50
 SIDEBAR_WIDTH = 50
+
+img_fourmi = import_asset("ant.png")
+img_scarab = import_asset("scarab.png")
 
 
 class HoveringResource:
@@ -199,8 +202,6 @@ class BattleModel:
 
     def init_battle(self, colony):
 
-        img_fourmi = import_asset("fonts", "ant.png")
-        img_scarab = import_asset("fonts", "scarab.png")
         positions_of_ressources = sample(
             list(product(range(self.grid_w), range(int(self.grid_h)))),
             randint(1, 5),

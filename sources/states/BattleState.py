@@ -1,8 +1,7 @@
 import pygame
 from exploration.battle_controller import BattleController
 from exploration.battle_model import BattleModel
-from exploration.battle_renderer import BattleRenderer
-from exploration.Griddy import Sidebar
+from exploration.battle_renderer import BattleRenderer, Sidebar
 
 from .State import State
 
@@ -25,9 +24,7 @@ class BattleState(State):
         self.manager = manager
         self.model = BattleModel(difficulty, colony, auto_resolve, world_pos, perlin)
         self.controller = BattleController(self.model)
-        screen = pygame.display.set_mode(
-            (self.model.grid.width * 50 + 250, self.model.grid.height * 50)
-        )
+        screen = self.manager.game.screen
         self.renderer = BattleRenderer(self.model, screen, Sidebar(250, 700))
 
     def update(self, events):
