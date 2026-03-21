@@ -87,6 +87,8 @@ def shortest_path(
     G = graph.copy()
     if diagonals:
         G.add_edges_from(diagonal_edges)
+    print(G.nodes)
+    print(blocked_positions)
     start = (start[0], start[1])
     target = (target[0], target[1])
     if start not in G or target not in G:
