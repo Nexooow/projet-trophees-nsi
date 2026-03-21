@@ -254,19 +254,31 @@ class BattleModel:
         }
 
     def next_turn(self):
+        if not self.units:
+            self.active_unit = None
+            return
+        """
         assert (
             self.active_unit is not None
         )  # indication pour l'IDE car ici active_unit n'est jamais None
-        self.active_unit.reset_turn()
-        self.turn_index = (self.turn_index + 1) % len(self.units)
+        """
+        if self.active_unit in self.units:
+
+            self.active_unit.reset_turn()
+        self.turn_index %= len(self.units)
         self.active_unit = self.units[self.turn_index]
+        
+        self.turn_index = (self.turn_index + 1) % len(self.units)
 
     def remove_unit(self, unit):
-        if unit in self.units:
-            index = self.units.index(unit)
-            self.units.remove(unit)
-            if index <= self.turn_index and self.turn_index > 0:
-                self.turn_index -= 1
+        if unit not in self.units:
+            return
+        index=self.units.index(unit)
+        self.units.remove(unit)
+        if index < self.turn_index:
+            self.turn_index -= 1
+        
+
         if unit in self.friendlies:
             self.friendlies.remove(unit)
         if unit in self.enemies:

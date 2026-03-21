@@ -25,35 +25,31 @@ class BattleState(State):
         self.manager = manager
         self.model = BattleModel(difficulty, colony, auto_resolve, world_pos, perlin)
         self.controller = BattleController(self.model)
-        screen = pygame.display.set_mode(
-            (self.model.grid.width * 50 + 250, self.model.grid.height * 50)
-        )
-        self.renderer = BattleRenderer(self.model, screen, Sidebar(250, 700))
+        screen=self.manager.game.screen
+        self.renderer = BattleRenderer(self.model, screen, Sidebar(250, screen.get_height()))
 
     def update(self, events):
         if self.model.battle_won is not None:
             self.stateManager.set_state("expedition")
-        if self.model.active_unit not in self.model.units:
-            self.model.turn_index %= len(self.model.units)
-            self.model.active_unit = self.model.units[self.model.turn_index]
-        if self.model.active_unit.points > 0:
-            self.controller.process_bombs_and_attacks()
-            if self.model.active_unit not in self.model.units:
-                return
-            self.controller.handle_input(events)
-            self.controller.ai_move()
-            self.controller.process_bombs_and_attacks()
-        if self.model.active_unit.points <= 0 and self.model.active_unit.static_state:
+            return
+        active=self.model.active_unit
+        if active is None:
+            return
+        self.controller.take_turn(events)
+        self.controller.resolve()
+        if active not in self.model.units:
             self.model.next_turn()
-
-        if len(self.model.friendlies) == 0:
+            return
+        self.check_battle_end()
+        if active in self.model.units and active.points<=0:
+            self.model.next_turn()
+    def check_battle_end(self):
+        if not self.model.friendlies:
             self.model.battle_won = False
             self.manager.game.battle_won = False
-            print("Not cleared")
-        if len(self.model.enemies) == 0:
+
+        elif not self.model.enemies:
             self.model.battle_won = True
             self.manager.game.battle_won = True
-            print("Cleared")
-
     def draw(self):
         self.renderer.draw()
