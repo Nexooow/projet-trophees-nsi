@@ -28,14 +28,19 @@ class BattleState(State):
         self.renderer = BattleRenderer(self.model, screen, Sidebar(250, screen.get_height()))
 
     def update(self, events):
+        #How can we make it so that the overlap problem is fixed, when they move onto an enemy their turn ends but the enemy doesn't die?
+
         if self.model.battle_won is not None:
             self.stateManager.set_state("expedition")
             return
         active=self.model.active_unit
         if active is None:
             return
+        print(f"Active unit: {active} with {active.points} points")
         self.controller.take_turn(events)
+        print(f"After processing turn: Active unit: {active} with {active.points} points")
         self.controller.resolve()
+        print(f"After turn: Active unit: {active} with {active.points} points")
         if active not in self.model.units:
             self.model.next_turn()
             return

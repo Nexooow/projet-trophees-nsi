@@ -110,6 +110,10 @@ def shortest_path(
 
 def closest_enemy(unit, enemies, grid, units):
     """Retourne l'ennemi le plus proche atteignable par l'unité."""
+    enemies = [e for e in enemies if e in units]
+
+    if not enemies:
+        return None
     blocked = [(u.x, u.y) for u in units if u is not unit and u not in enemies]
     closest = None
     dist = float("inf")

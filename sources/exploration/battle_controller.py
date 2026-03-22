@@ -1,5 +1,5 @@
 import pygame
-from lib.pathfinding import closest_enemy, reachable_tiles_nx, shortest_path
+from lib.pathfinding import closest_enemy, reachable_tiles_nx, shortest_path, neighbors
 
 from .battle_model import Bomb
 
@@ -67,23 +67,29 @@ class BattleController:
         active = self.model.active_unit
         grid = self.model.grid
         units = self.model.units
-
+        
+        tiles = reachable_tiles_nx(active, grid, units)
+        enemies_present=any((u.team != active.team and (((u.x, u.y) == (active.x, active.y)) or (u.x, u.y) in neighbors(active.x,active.y,grid.width,grid.height))) for u in units)
+        print(len(tiles))
+        if len(tiles)<=1 and not enemies_present:
+            active.points=0
+            print("ça marche? v2")
+            return True
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     active.points = 0
                     return True
-
                 tiles = reachable_tiles_nx(active, grid, units)
                 print(len(tiles))
-                if len(tiles)<=1:
+                if len(tiles)<=1 and not enemies_present:
                     active.points=0
                     print("ça marche?")
                     return True
                 moved = self.try_move(active, event.key, tiles)
                 if moved:
                     return True
-
+        
         return False
     def handle_ai_turn(self):
         active = self.model.active_unit
