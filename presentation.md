@@ -32,4 +32,3 @@ Nous avons rencontré différents problèmes, comme:
 ## Ouverture
 Nous avons de nombreuses idées d'améliorations possibles, comme le développement de nouvelles fonctionnalités (comme un systeme de déroulement de combat plus poussé), l'amélioration de l'interface utilisateur, l'optimisation des performances, ou encore l'ajout de nouveaux types d'unités ou de ressources.
 Ce projet nous a permis de développer des compétences en algorithmes de recherche et en gestion de projet, et nous a donné l'occasion de travailler avec une répartition de tâches efficace au sein de notre équipe. Nous sommes fiers du travail accompli et sommes impatients de continuer à améliorer notre projet à l'avenir.
-(QUE DU BLABLA)
