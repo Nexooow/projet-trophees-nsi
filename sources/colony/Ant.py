@@ -23,13 +23,6 @@ IMAGES = {
 }
 
 
-def convert_xp(xp: int):
-    """
-    Convertit l'expérience en niveaux
-    """
-    return (0, 0)
-
-
 class Ant(pygame.sprite.Sprite):
     def __init__(self, colony, type: str, data: dict, pos):
 
@@ -43,7 +36,7 @@ class Ant(pygame.sprite.Sprite):
         self.max_energy = data.get("max_energy", INITIAL_MAX_ENERGY)
         self.energy = data.get("energy", self.max_energy)
 
-        (level, xp) = convert_xp(data["xp"] if "xp" in data else 0)
+        (level, xp) = (0, 0)
         self.level = level
         self.xp = xp
 
@@ -62,11 +55,10 @@ class Ant(pygame.sprite.Sprite):
         self.pos = pygame.Vector2(pos)
         self.rect = self.image.get_rect(center=pos)
         self.direction = pygame.Vector2(0, 0)
-        # Tâche actuellement assignée par le TaskManager (id ou None)
         self.current_task_id: typing.Optional[uuid.UUID] = None
 
         # Système de déplacement
-        self.speed = 2.0  # Vitesse en pixels par frame
+        self.speed = 2.0 
         self.path = File()
         self.next_cell = None
         self.target_pos = None

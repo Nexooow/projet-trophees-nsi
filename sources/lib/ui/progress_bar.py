@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import pygame
-
 from constants import UIColors
+from lib.utils import parse_color, use_font
 
 from .element import Element
-from lib.utils import parse_color
 
 if TYPE_CHECKING:
     from .manager import UIManager
@@ -30,11 +29,11 @@ class ProgressBar(Element):
         super().__init__(ui, id, rect)
         self.border_color = UIColors.BORDER
         self.border_width = 2
-        
-    @property # ajoute rapidement le getter et setter pour l'attribut value
+
+    @property  # ajoute rapidement le getter et setter pour l'attribut value
     def value(self) -> float:
         return self._value
-        
+
     def set_value(self, value: float) -> "ProgressBar":
         self._value = max(0.0, min(1.0, value))
         return self
@@ -52,7 +51,7 @@ class ProgressBar(Element):
 
     def get_font(self) -> pygame.font.Font:
         if self.font_cache is None:
-            self.font_cache = pygame.font.Font(None, self.font_size)
+            self.font_cache = use_font(self.font_size)
         return self.font_cache
 
     def draw_self(self, screen: pygame.Surface, abs_rect: pygame.Rect):

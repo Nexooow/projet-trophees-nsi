@@ -4,7 +4,7 @@ import networkx as nx
 import pygame
 
 """
-Fonctions utilitaires pour la recherche du plus court chemin, les chemins disponibles, etc. pour la Battle Grid
+Fonctions de pathfinding et utilitaires de grille pour la Battle Grid.
 """
 
 
@@ -17,17 +17,21 @@ def node_to_xy(node, cols):
 
 
 def neighbors(x, y, width, height, diagonal=False):
+    """Retourne les voisins valides d'une case (x, y) dans la grille."""
     dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     if diagonal:
         dirs += [(1, 1), (-1, -1), (1, -1), (-1, 1)]
     for dx, dy in dirs:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < width and 0 <= ny < height:
-            yield nx, ny
+        nx_, ny_ = x + dx, y + dy
+        if 0 <= nx_ < width and 0 <= ny_ < height:
+            yield nx_, ny_
 
 
 def reachable_tiles(x, y, points, grid):
-
+    """
+    Retourne les cases atteignables depuis (x, y) avec un budget de points donné.
+    Utilise un tas de priorité (Dijkstra simplifié).
+    """
     reachable = {}
     pq = [(0, x, y)]
 
@@ -45,10 +49,15 @@ def reachable_tiles(x, y, points, grid):
         for nx_, ny_ in neighbors(cx, cy, grid.width, grid.height):
             tile_cost = grid.weights[(nx_, ny_)]
             heapq.heappush(pq, (cost + tile_cost, nx_, ny_))
+
     return reachable
 
 
 def reachable_tiles_nx(unit, grid, units):
+    """
+    Retourne les cases atteignables par une unité avec ses points d'action restants.
+    Utilise NetworkX pour le calcul Dijkstra, en excluant les alliés occupant des cases.
+    """
     G = grid.graph.copy()
     if unit.diagonal:
         G.add_edges_from(grid.diagonal_edges)
@@ -71,12 +80,15 @@ def shortest_path(
     diagonals=False,
     diagonal_edges=(),
 ):
+    """
+    Calcule le chemin le plus court entre start et target sur le graphe,
+    en excluant les positions bloquées. Retourne une liste de cases (hors départ).
+    """
     G = graph.copy()
     if diagonals:
         G.add_edges_from(diagonal_edges)
     print(G.nodes)
     print(blocked_positions)
-
     start = (start[0], start[1])
     target = (target[0], target[1])
     if start not in G or target not in G:
@@ -88,8 +100,6 @@ def shortest_path(
             except nx.NetworkXError:
                 pass
     try:
-        print(G.nodes)
-        print(G)
         path = nx.shortest_path(
             G, (start[0], start[1]), (target[0], target[1]), weight="weight"
         )
@@ -98,30 +108,8 @@ def shortest_path(
     return path[1:]
 
 
-terrains = {
-    "dirt": {"weight": 1, "img": ""},
-    "mud": {"weight": 2, "img": ""},
-    "water": {"weight": 3, "img": ""},
-    "stone": {"weight": float("inf"), "img": ""},
-}
-
-
-def weight_to_color(weight):
-    return {
-        1: (50, 180, 50),
-        2: (160, 120, 60),
-        3: (150, 100, 0),
-        4: (128, 128, 128),
-    }.get(weight, (100, 100, 100))
-    # return terrains[weight]["weight"] if weight in terrains else ""
-
-
 def closest_enemy(unit, enemies, grid, units):
-    enemies = [e for e in enemies if e in units]
-
-    if not enemies:
-        return None
-
+    """Retourne l'ennemi le plus proche atteignable par l'unité."""
     blocked = [(u.x, u.y) for u in units if u is not unit and u not in enemies]
     closest = None
     dist = float("inf")
@@ -146,14 +134,18 @@ def closest_enemy(unit, enemies, grid, units):
     return closest
 
 
-def mouse_over(unit):
-    mouse = pygame.mouse.get_pos()
-    if not unit.rect.collidepoint(mouse):
-        return False
-    return unit.mask.get_at((mouse[0] - unit.rect.x, mouse[1] - unit.rect.y))
+def weight_to_color(weight):
+    """Convertit un poids de case (1–4) en couleur RGB."""
+    return {
+        1: (50, 180, 50),
+        2: (160, 120, 60),
+        3: (150, 100, 0),
+        4: (128, 128, 128),
+    }.get(weight, (100, 100, 100))
 
 
 def generate_tiles(base_color, tile_size):
+    """Génère 16 variantes de tuiles teintées pour un masque de bitmask (0–15)."""
     tiles = []
     for mask in range(16):
         surf = pygame.Surface((tile_size, tile_size))
@@ -166,13 +158,3 @@ def generate_tiles(base_color, tile_size):
         surf.fill(color)
         tiles.append(surf)
     return tiles
-
-
-def fill(surface, color):
-    w, h = surface.get_size()
-    r, g, b, _ = color
-    for x in range(w):
-        for y in range(h):
-            a = surface.get_at((x, y))[3]
-            surface.set_at((x, y), pygame.Color(r, g, b, a))
-    return surface

@@ -1,8 +1,7 @@
 import pygame
 from exploration.battle_controller import BattleController
 from exploration.battle_model import BattleModel
-from exploration.battle_renderer import BattleRenderer
-from exploration.Griddy import Sidebar
+from exploration.battle_renderer import BattleRenderer, Sidebar
 
 from .State import State
 

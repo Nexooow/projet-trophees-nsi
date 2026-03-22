@@ -1,17 +1,43 @@
 # Rise of the Anthill
 
-DESCRIPTION RAPIDE ICI
+**Rise of the Anthill** est un jeu de gestion et de simulation dans lequel vous guidez une colonie de fourmis depuis ses premiers instants jusqu'à en faire une fourmilière prospère. Creusez des galeries, assignez des rôles à vos fourmis, gérez vos ressources et envoyez des expéditions explorer le monde extérieur.
 
 ---
 
+## Sommaire
+
+├─ [Fonctionnalités](#fonctionnalites)  
+├─ [Installation & Démarrage](#installation)  
+├─ [Structure du projet](#structure)  
+├─ [Auteurs](#auteurs)  
+└─ [Documentation](/docs/introduction.md)
+
+---
+
+<a id="fonctionnalites"></a>
+## Fonctionnalités
+
+- **Gestion de colonie** : Construisez et agrandissez votre fourmilière en creusant des salles spécialisées (nurserie, dépôt...).
+- **Système de tâches intelligent** : Un gestionnaire de tâches (`TaskManager`) distribue automatiquement les rôles aux fourmis disponibles (ouvrières, guerrières, nourrices, etc.).
+- **Phase d'exploration** : Partez en expedition pour récupérer des ressources dans un mini jeu stratégique.
+- **Sauvegarde** : L'état de la partie peut être sauvegardé et rechargé grâce au `SaveManager`.
+- **Interface utilisateur sur mesure** : Tous les menus et éléments d'interface sont développés manuellement par-dessus `pygame-ce`, sans framework UI externe.
+
+---
+
+<a id="installation"></a>
 ## Installation, démarrage et prérequis
 
-### Prérequis
+### Prérequis & versions
 
-- **Python 3.8+**: Le projet est testé pour fonctionner sur cette version, mais il est **fortement recommandé** d'utiliser la dernière version stable de Python.
-- pip (pour l'installation des dépendances, comme vu ci-dessous)
+- **Python 3.8+** : Le projet est testé pour fonctionner sur cette version, mais il est **fortement recommandé** d'utiliser la dernière version stable de Python.
+- **pip** : Pour l'installation des dépendances (inclus lors de l'installation de Python).
+- [**pygame-ce**](https://pyga.me/) : La version communautaire de pygame, utilisée comme moteur de rendu. *Version utilisée : `pygame-ce@2.5.6`.*
+- **networkx** : Bibliothèque de gestion de graphes, utilisée pour le module d'expédition. *Version utilisée : `networkx@3.4.2`.*
 
-### Installation 
+### Installation
+
+Si vous installez le projet via git :
 
 ```bash
 git clone https://github.com/Nexooow/projet-trophees-nsi.git
@@ -19,42 +45,57 @@ cd projet-trophees-nsi
 pip install -r "requirements.txt"
 ```
 
-## Démarrer le jeu
+Sinon, vous pouvez simplement ouvrir le répertoire ou se situe ce projet et executer la commande suivante;
 
 ```bash
-python3 src/main.py
+pip install -r "requirements.txt"
 ```
 
-## Développé avec
+### Démarrer le jeu
 
-- PyCharm / Visual Studio Code
-- Assets réalisés avec Pixel Studio (via Steam)
-
-## Versions
-
-A faire
+```bash
+python3 sources/main.py
+```
 
 ---
 
-## Auteurs
+<a id="structure"></a>
+## Structure du projet
 
-- SCHLEICHER Nikolaï
-- DISCAZEAUX Pierre
+```
+├── sources/
+│   ├── main.py               # Point d'entrée du jeu
+│   ├── constants.py          # Constantes globales
+│   ├── core/                 # Moteur central
+│   ├── colony/               # Logique de la fourmilière
+│   └── exploration/          # Module qui gère le minijeu d'exploraiton
+│
+├── docs/                     # Documentation
+├── tests/                    # Tests automatisés (pytest)
+├── data/                     # Ressources (sprites, sons, polices et sauvegardes)
+└── requirements.txt
+```
 
-## Licence
+---
 
-Apache License 2.0 - Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+<a id="auteurs"></a>
+## 👥 Auteurs
 
---- 
+- **SCHLEICHER Nikolaï** — Architecture du moteur, UI Manager, cycle jour/nuit, système de sauvegarde
+- **DISCAZEAUX Pierre** — Module d'exploration, gestion des graphes, algorithmes de combat, gestion des unités
 
-## Crédits
+### Licence
 
-### Polices d'écriture
+Ce projet est sous licence **Apache License 2.0** — Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
-m5x7, par Daniel Linssen (https://managore.itch.io/):
-- https://managore.itch.io/m5x7
+---
 
-### Sons ambients
+### Crédits
 
-Evening Nature with Crickets, Birds and Distant Dogs – Part 2, par Eryliaa:
-- https://pixabay.com/sound-effects/nature-evening-nature-with-crickets-birds-and-distant-dogs-part-2-445150/
+#### Police d'écriture
+
+[*m5x7*, par Daniel Linssen](https://managore.itch.io/m5x7)
+
+#### Sons ambients
+
+[*Evening Nature with Crickets, Birds and Distant Dogs – Part 2*, par Eryliaa](https://pixabay.com/sound-effects/nature-evening-nature-with-crickets-birds-and-distant-dogs-part-2-445150/)

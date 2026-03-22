@@ -1,6 +1,7 @@
 import pygame
 from exploration.ExpeditionMap import ExpeditionMap
 from lib.perlin import Perlin
+from lib.utils import use_font
 
 from .State import State
 
@@ -19,7 +20,6 @@ class ExpeditionState(State):
         self.expedition_map = ExpeditionMap(seed=12345)
         self.cam_x = 600
         self.cam_y = 400
-        self.camera_zoom = 1.0
         self.screen = self.game.screen
 
         self.cam_world = pygame.Surface((1000, 700), pygame.SRCALPHA | pygame.HWSURFACE)
@@ -91,7 +91,7 @@ class ExpeditionState(State):
                         self.selected_node = clicked_node
                         self.state = "node_menu"
                     else:
-                        font = pygame.font.Font(None, 24)
+                        font = use_font(24)
                         text = font.render(
                             "Preceding node must be cleared first",
                             True,
@@ -105,18 +105,18 @@ class ExpeditionState(State):
                         self.screen.blit(text, text_rect)
         keys = pygame.key.get_pressed()
         speed = 10
-        if keys[pygame.K_z]:
-            self.camera_zoom = min(self.camera_zoom + 0.1, 2.0)
-        if keys[pygame.K_w]:
-            self.camera_zoom = min(self.camera_zoom - 0.1, 2.0)
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] or keys[pygame.K_z]:
             self.cam_y -= speed
-        if keys[pygame.K_DOWN]:
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.cam_y += speed
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or keys[pygame.K_q]:
             self.cam_x -= speed
-        if keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.cam_x += speed
+
+        if keys[pygame.K_r]:
+            self.cam_x = 600
+            self.cam_y = 400
 
     def draw_map_state(self):
         chunk_pixel = CHUNK_SIZE * CELL_SIZE
@@ -137,9 +137,7 @@ class ExpeditionState(State):
                 or abs(cy - start_cy) > MAX_CHUNK_DIST
             ):
                 del self.chunks[(cx, cy)]
-        self.expedition_map.draw(
-            self.screen, self.cam_x, self.cam_y
-        )  # TODO: Foutre une cam+zoom
+        self.expedition_map.draw(self.screen, self.cam_x, self.cam_y)
         pygame.display.flip()
 
     def draw_node_menu(self):
@@ -152,7 +150,7 @@ class ExpeditionState(State):
         menu_rect = pygame.Rect(menu_x, menu_y, width, height)
         pygame.draw.rect(self.screen, (40, 40, 40), menu_rect)
         pygame.draw.rect(self.screen, (255, 255, 255), menu_rect, 2)
-        font = pygame.font.Font(None, 24)
+        font = use_font(24)
         manual_rect = pygame.Rect(menu_x + 10, menu_y + 20, 160, 30)
         auto_rect = pygame.Rect(menu_x + 10, menu_y + 60, 160, 30)
         pygame.draw.rect(self.screen, (70, 70, 70), manual_rect)
