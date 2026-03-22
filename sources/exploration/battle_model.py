@@ -183,8 +183,12 @@ class BattleModel:
         self.perlin = perlin
         cell_x = int(world_pos[0] // CELL_SIZE)
         cell_y = int(world_pos[1] // CELL_SIZE)
+        """
         self.grid_w = 20 + difficulty * 2
         self.grid_h = 14 + difficulty
+        """
+        self.grid_w = 20
+        self.grid_h = 14 
         self.grid = Grid(self.grid_w, self.grid_h, cell_x, cell_y, perlin)
 
         self.units = []
@@ -258,11 +262,6 @@ class BattleModel:
         if not self.units:
             self.active_unit = None
             return
-        """
-        assert (
-            self.active_unit is not None
-        )  # indication pour l'IDE car ici active_unit n'est jamais None
-        """
         if self.active_unit in self.units:
 
             self.active_unit.reset_turn()
