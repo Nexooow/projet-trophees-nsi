@@ -50,9 +50,9 @@ class ExpeditionState(State):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.stateManager.set_state("colony")
+                    self.state_manager.set_state("colony")
         if self.waiting_for_battle_result:
-            battle_state = self.stateManager.states_managers.get("battle")
+            battle_state = self.state_manager.states_managers.get("battle")
             if battle_state and battle_state.model.battle_won is not None:
                 if battle_state.model.battle_won:
                     # On marque la node comme conquise
@@ -62,7 +62,7 @@ class ExpeditionState(State):
                         self.selected_node = None
                 self.waiting_for_battle_result = False
                 # On retire le BattleState (pour préparer le suivant)CELL_SIZE
-                self.stateManager.states_managers["battle"] = None
+                self.state_manager.states_managers["battle"] = None
                 self.state = "map"
                 return
         if self.state == "map":
@@ -81,7 +81,7 @@ class ExpeditionState(State):
 
         for event in events:
             if event.type == pygame.QUIT:
-                self.stateManager.game.running = False
+                self.state_manager.game.running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 world_x, world_y = event.pos[0] + self.cam_x, event.pos[1] + self.cam_y
                 clicked_node = self.expedition_map.get_node_at_pos(world_x, world_y)
@@ -180,7 +180,7 @@ class ExpeditionState(State):
 
     def start_battle(self):
         current_node = self.selected_node
-        self.stateManager.start_battle(
+        self.state_manager.start_battle(
             current_node.difficulty,
             colony=[],
             auto=self.auto,

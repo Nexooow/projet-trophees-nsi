@@ -31,7 +31,7 @@ class BattleState(State):
         #How can we make it so that the overlap problem is fixed, when they move onto an enemy their turn ends but the enemy doesn't die?
 
         if self.model.battle_won is not None:
-            self.stateManager.set_state("expedition")
+            self.state_manager.set_state("expedition")
             return
         active=self.model.active_unit
         if active is None:

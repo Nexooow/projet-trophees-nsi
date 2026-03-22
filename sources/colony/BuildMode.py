@@ -297,8 +297,18 @@ class BuildMode:
             h_px = config["height"] * 8
 
             # aperçu
+            # On aligne le coin haut gauche sur la grille de 8 pixels
+            raw_x = mouse_world[0] - w_px // 2
+            raw_y = mouse_world[1] - h_px // 2 - COLONY_UNDERGROUND_START
+
+            snapped_x = round(raw_x / 8) * 8
+            snapped_y = round(raw_y / 8) * 8
+
             self.room_current_rect = pygame.Rect(
-                mouse_world[0] - w_px // 2, mouse_world[1] - h_px // 2, w_px, h_px
+                snapped_x,
+                snapped_y + COLONY_UNDERGROUND_START,
+                w_px,
+                h_px,
             )
 
     def sync_ui(self):
