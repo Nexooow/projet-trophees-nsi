@@ -82,17 +82,18 @@ def shortest_path(
     if start not in G or target not in G:
         return []
     for x, y in blocked_positions:
-        try:
-            G.remove_node((x, y))
-        except nx.NetworkXError:
-            pass
+        if (x, y) != start and (x, y) != target:
+            try:
+                G.remove_node((x, y))
+            except nx.NetworkXError:
+                pass
     try:
         print(G.nodes)
         print(G)
         path = nx.shortest_path(
             G, (start[0], start[1]), (target[0], target[1]), weight="weight"
         )
-    except nx.NetworkXNoPath:
+    except (nx.NetworkXNoPath,nx.NodeNotFound):
         return []
     return path[1:]
 
@@ -116,10 +117,20 @@ def weight_to_color(weight):
 
 
 def closest_enemy(unit, enemies, grid, units):
+    enemies = [e for e in enemies if e in units]
+
+    if not enemies:
+        return None
+
     blocked = [(u.x, u.y) for u in units if u is not unit and u not in enemies]
     closest = None
     dist = float("inf")
     for enemy in enemies:
+
+        if enemy not in units:
+            continue
+        if enemy.tile() not in grid.graph:
+            continue
         path = shortest_path(
             unit.tile(),
             enemy.tile(),
