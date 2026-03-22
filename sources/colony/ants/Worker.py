@@ -58,7 +58,6 @@ class Worker(Ant):
         else:
             neighbors = self.colony.grid.get_neighbors(*target_cell)
             if not neighbors:
-                # aucune case adjacente accessible
                 self.finish_task()
                 return
             # premier voisin le plus accessible
@@ -139,6 +138,11 @@ class Worker(Ant):
         assert current_task is not None
 
         if self.task_phase == _PHASE_GO_PICKUP:
+            if current_task.type == "bring_food_queen":
+                if self.colony.food < 200:
+                    return
+                self.colony.food -= 200
+
             self.task_phase = _PHASE_GO_DELIVER
             assert self.task_pos is not None
             delivery_cell = self.colony.grid.pixel_to_cell(
@@ -146,9 +150,6 @@ class Worker(Ant):
                 int(self.task_pos[1]) - self.colony.grid.start_y,
             )
             self.moving = True
-
-            if current_task.type == "bring_food_queen":
-                self.colony.food -= 200
 
             if not self.move_to(delivery_cell[0], delivery_cell[1]):
                 self.finish_task()

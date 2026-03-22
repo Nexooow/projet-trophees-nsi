@@ -8,6 +8,7 @@ RESSOURCES = ["nom"]
 IMG = {
     "grass": import_asset("icons", "grass.png"),
     "rock": import_asset("icons", "rock.png"),
+    "bomb": import_asset("icons", "bomb.png"),
 }
 TILE_SIZE = 50
 
@@ -162,7 +163,9 @@ class BattleRenderer:
                 tile_img = self.tiles[weight][mask]
                 self.game_surface.blit(tile_img, rect)
                 if (x, y) in self.model.bomb_tiles:
-                    pygame.draw.rect(self.game_surface, (200, 50, 50), rect)
+                    img = IMG["bomb"]
+                    dest = img.get_rect(center=rect.center)
+                    self.game_surface.blit(img, dest)
 
         # Overlay semi-transparent des lignes de grille (pré-calculé)
         self.game_surface.blit(self.grid_overlay, (ox, oy))

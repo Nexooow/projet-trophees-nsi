@@ -264,21 +264,19 @@ class BattleModel:
         )  # indication pour l'IDE car ici active_unit n'est jamais None
         """
         if self.active_unit in self.units:
-
             self.active_unit.reset_turn()
         self.turn_index %= len(self.units)
         self.active_unit = self.units[self.turn_index]
-        
+
         self.turn_index = (self.turn_index + 1) % len(self.units)
 
     def remove_unit(self, unit):
         if unit not in self.units:
             return
-        index=self.units.index(unit)
+        index = self.units.index(unit)
         self.units.remove(unit)
         if index < self.turn_index:
             self.turn_index -= 1
-        
 
         if unit in self.friendlies:
             self.friendlies.remove(unit)

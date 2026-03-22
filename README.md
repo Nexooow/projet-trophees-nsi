@@ -30,6 +30,8 @@
 
 ### Prérequis & versions
 
+*A noter que ci-dessous ne sont listés que les modules nécessaire au fonctionnement unique du code. Ainsi, pour executer les tests, merci de vous référer à la séction "Tests"*
+
 - **Python 3.8+** : Le projet est testé pour fonctionner sur cette version, mais il est **fortement recommandé** d'utiliser la dernière version stable de Python.
 - **pip** : Pour l'installation des dépendances (inclus lors de l'installation de Python).
 - [**pygame-ce**](https://pyga.me/) : La version communautaire de pygame, utilisée comme moteur de rendu. *Version utilisée : `pygame-ce@2.5.6`.*
@@ -58,6 +60,11 @@ python3 sources/main.py
 ```
 
 ---
+
+## Tests
+
+A compléter;
+- indiquer dépendances pour les tests
 
 <a id="structure"></a>
 ## Structure du projet

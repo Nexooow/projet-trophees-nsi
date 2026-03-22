@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class State:
     def __init__(self, state_manager: "StateManager", name: str, flags: list):
-        self.stateManager: "StateManager" = state_manager
+        self.state_manager: "StateManager" = state_manager
         self.game: "GameManager" = state_manager.game
         self.ui: "UIManager" = state_manager.game.ui
         self.name = name

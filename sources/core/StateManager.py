@@ -3,6 +3,7 @@ import typing
 from states.BattleState import BattleState
 from states.ColonyState import ColonyState
 from states.ExpeditionState import ExpeditionState
+from states.GameOverState import GameOverState
 from states.MenuState import MenuState
 from states.State import State
 
@@ -20,6 +21,7 @@ class StateManager:
             "colony": ColonyState(self),
             "expedition": ExpeditionState(self),
             "battle": None,  # sera créé dynamiquement lors d'une bataille
+            "game_over": GameOverState(self),
         }
         self.last_state = None
         self.current_state: str = "menu"
@@ -58,3 +60,7 @@ class StateManager:
             self, difficulty, colony, auto, world_pos, perlin
         )
         self.set_state("battle")
+
+    def trigger_game_over(self, stats: dict):
+        self.states_managers["game_over"].set_stats(stats)
+        self.set_state("game_over")

@@ -121,15 +121,10 @@ class Grid:
         center_y = y + radius
         radius_sq = radius * radius
 
-        # Bounding box du cercle pour déterminer quelles cellules vérifier
         x2 = x + size
         y2 = y + size
-
-        # Convertir en coordonnées de cellules (bounding box)
         cell_x1, cell_y1 = self.pixel_to_cell(x, y)
         cell_x2, cell_y2 = self.pixel_to_cell(x2, y2)
-
-        # parcourir toutes les cellules touchées par la bounding box
         for cell_y in range(cell_y1, cell_y2 + 1):
             for cell_x in range(cell_x1, cell_x2 + 1):
                 if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
@@ -143,14 +138,11 @@ class Grid:
         """
         cell = self.grid[cell_y][cell_x]
 
-        # Si déjà vide, rien à faire
         if cell["state"] == "empty":
             return
 
-        # Coordonnées pixel de la cellule (coin haut gauche)
         cell_px, cell_py = self.cell_to_pixel(cell_x, cell_y)
 
-        # si 4 coins dans le cercle; la rendre vide
         corners = [
             (cell_px, cell_py),
             (cell_px + self.CELL_SIZE, cell_py),
@@ -158,16 +150,15 @@ class Grid:
             (cell_px + self.CELL_SIZE, cell_py + self.CELL_SIZE),
         ]
 
-        corners_inside = 0
+        corners_inclus = 0
         for c_x, c_y in corners:
             if (c_x - cx) ** 2 + (c_y - cy) ** 2 <= r_sq:
-                corners_inside += 1
+                corners_inclus += 1
 
-        if corners_inside == 4:
+        if corners_inclus == 4:
             self.set_cell_state(cell_x, cell_y, "empty", None)
             return
 
-        # Sinon, créer ou mettre à jour le bitmap
         if cell["state"] == "full":
             bitmap = [
                 [True for _ in range(self.CELL_SIZE)] for _ in range(self.CELL_SIZE)
@@ -192,8 +183,8 @@ class Grid:
                     bitmap[py][px] = False
 
         # Vérifier si la cellule est maintenant vide ou partielle
-        is_filled = any(any(row) for row in bitmap)
-        if not is_filled:
+        est_pleine = any(any(row) for row in bitmap)
+        if not est_pleine:
             self.set_cell_state(cell_x, cell_y, "empty", None)
         else:
             self.set_cell_state(cell_x, cell_y, "partial", bitmap)
@@ -226,7 +217,6 @@ class Grid:
 
         for dx, dy in directions:
             nx, ny = cell_x + dx, cell_y + dy
-            # Vérifier que le voisin est dans la grille
             if 0 <= nx < self.width and 0 <= ny < self.height:
                 # vérifier que la cellule est un chemin valide
                 if self.is_cell_passable(nx, ny):
@@ -268,33 +258,26 @@ class Grid:
         if not (0 <= goal[0] < self.width and 0 <= goal[1] < self.height):
             return None
 
-        # Vérifier que start et goal sont passables
         if not self.is_cell_passable(start[0], start[1]) or not self.is_cell_passable(
             goal[0], goal[1]
         ):
             return None
 
-        # file de priorité
         counter = 0
         open_set = [(0.0, counter, start)]
         counter += 1
 
-        # Dictionnaire des scores g (coût depuis le départ)
         g_score = {start: 0.0}
-        # Dictionnaire des scores f (g + distance)
         f_score = {start: self.heuristic(start, goal)}
-        # Dictionnaire pour reconstruire le chemin
         came_from = {}
-        # Ensemble des positions déjà visitées
         visites = set()
 
         while open_set:
             # Récupérer le nœud avec le plus petit f_score
             current_f, _, current = heapq.heappop(open_set)
 
-            # Si on a atteint le goal
             if current == goal:
-                # Reconstruire le chemin
+                # reconstruire le chemin
                 chemin = []
                 while current in came_from:
                     chemin.append(current)
@@ -303,7 +286,7 @@ class Grid:
                 chemin.reverse()
                 return chemin
 
-            # Marquer comme visité
+            # marquer comme visité
             visites.add(current)
 
             # Explorer les voisins
@@ -318,7 +301,6 @@ class Grid:
 
                 tentative_g_score = g_score[current] + move_cost
 
-                # Si ce chemin vers le voisin est meilleur
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     # enregistrer chemin
                     came_from[neighbor] = current
@@ -327,9 +309,7 @@ class Grid:
                         neighbor, goal
                     )
 
-                    # Ajouter à la file de priorité
                     heapq.heappush(open_set, (f_score[neighbor], counter, neighbor))
                     counter += 1
 
-        # Aucun chemin trouvé
         return None

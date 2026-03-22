@@ -1,3 +1,4 @@
+
 import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
@@ -30,6 +31,11 @@ from .State import State
 _leaf_image = import_asset("icons", "leaf.png")
 _hammer_image = import_asset("icons", "hammer.png")
 _grass_tile = pygame.transform.scale(import_asset("tiles", "grass_tile.png"), (120, 64))
+_anthill_raw = import_asset("anthill.png")
+_anthill_image = pygame.transform.scale(
+    _anthill_raw,
+    (_anthill_raw.get_width() * 4, _anthill_raw.get_height() * 4),
+)
 
 
 class ColonyState(State):
@@ -305,7 +311,7 @@ class ColonyState(State):
 
     def start_exploration(self):
         self.save()
-        self.stateManager.set_state("expedition")
+        self.state_manager.set_state("expedition")
 
     def disable(self):
         """Supprime les éléments UI de la colonie."""
@@ -435,6 +441,16 @@ class ColonyState(State):
 
         for ant in self.ants:
             ant.update()
+
+        # Vérification de la mort de la reine
+        queen_alive = False
+        for room in self.rooms:
+            if room.name == "queen":
+                queen_alive = True
+                break
+
+        if not queen_alive:
+            self.game.trigger_game_over("La reine est morte")
 
         for room in self.rooms:
             room.update(events)
@@ -748,6 +764,27 @@ class ColonyState(State):
                 COLONY_UNDERGROUND_START - COLONY_GRASS_START,
             ),
         )
+
+        depot = self.get_room("depot")
+        if depot is not None:
+            center_x = depot.get_center()[0]
+
+            # Galerie verticale entre la fourmilière et le dépôt (sous l'herbe)
+            gallery_w = COLONY_BRUSH_SIZE
+            pygame.draw.rect(
+                self.world,
+                pygame.Color(GALERY_COLOR),
+                (
+                    center_x - gallery_w // 2,
+                    COLONY_GRASS_START,
+                    gallery_w,
+                    COLONY_UNDERGROUND_START - COLONY_GRASS_START,
+                ),
+            )
+
+            anthill_x = center_x - _anthill_image.get_width() // 2
+            anthill_y = COLONY_GRASS_START - 24 - _anthill_image.get_height()
+            self.world.blit(_anthill_image, (anthill_x, anthill_y))
 
         for i in range(COLONY_WIDTH // 120 + 1):
             self.world.blit(_grass_tile, (i * 120, COLONY_GRASS_START - 24))

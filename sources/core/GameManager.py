@@ -93,4 +93,14 @@ class GameManager:
         return success
 
     def trigger_game_over(self, reason: str):
-        pass  # TODO: gérer la fin du jeu
+        stats = {
+            "Raison": reason,
+            "Temps de jeu": f"{int(self.time.time // 60 // 24)} jours",
+        }
+
+        colony_state = self.state.states_managers.get("colony")
+        if colony_state:
+            stats["Population"] = len(colony_state.ants)
+            stats["Nourriture"] = int(colony_state.food)
+
+        self.state.trigger_game_over(stats)
