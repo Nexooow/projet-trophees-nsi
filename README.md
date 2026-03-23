@@ -64,6 +64,7 @@ python3 sources/main.py
 ## Tests
 
 Les tests sont écrits à l'aide de `pytest` et se trouvent dans le répertoire `tests/`. Pour les exécuter, utilisez la commande suivante depuis la racine du projet :
+
 ``` bash
 python -m pytest tests/
 ```
@@ -71,7 +72,6 @@ ou simplement
 ``` bash
 pytest tests/
 ```
-```bash
 
 <a id="structure"></a>
 ## Structure du projet
