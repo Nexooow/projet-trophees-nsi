@@ -15,6 +15,7 @@ TILE_SIZE = 50
 SIDEBAR_WIDTH = 50
 
 img_fourmi = import_asset("ant.png")
+
 img_scarab = import_asset("scarab.png")
 
 
@@ -205,7 +206,7 @@ class BattleModel:
         self.init_battle(colony)
 
     def init_battle(self, colony):
-
+        img_fourmi_noir=import_asset("ant.png")
         positions_of_ressources = sample(
             list(product(range(self.grid_w), range(int(self.grid_h)))),
             randint(1, 5),
@@ -232,7 +233,7 @@ class BattleModel:
         )
         pos2 = sample(ally_pos, min(len(fourmis_nwar), len(ally_pos)))
         self.friendlies = [
-            Unit(x, y, img_fourmi, "noir") for ant, (x, y) in zip(fourmis_nwar, pos2)
+            Unit(x, y, img_fourmi_noir, "noir") for ant, (x, y) in zip(fourmis_nwar, pos2)
         ]
         nb_enemies = 2 + self.difficulty * 2
         positions = list(product(range(self.grid_w), range(int(self.grid_h * 4 / 14))))
