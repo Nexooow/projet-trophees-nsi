@@ -1,6 +1,7 @@
 import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
+from colony.Room import Room
 from colony.rooms.Depot import Depot
 from colony.rooms.Nursery import Nursery
 from colony.rooms.Queen import Queen
@@ -19,7 +20,7 @@ from constants import (
     QUEEN_LARVAS,
     UIColors,
 )
-from lib.grid import Grid
+from colony.Grid import Grid
 from lib.sidebar import Sidebar
 from lib.ui import Label
 from lib.ui.progress_bar import ProgressBar
@@ -72,7 +73,7 @@ class ColonyState(State):
         self.ants = []
         # self.ennemies = []
 
-        self.food = 2000
+        self.food = 200000
         self.food_capacity = INITIAL_FOOD_CAPACITY
         self.science = 0.0
 
@@ -354,7 +355,17 @@ class ColonyState(State):
         if self.inventory[name] <= 0:
             del self.inventory[name]
 
-    def get_room(self, room_name):
+
+    def in_room(self, pos, room_name):
+        """
+        Vérifie si une fourmi/élément est dans une salle
+        """
+        room = self.get_room(room_name)
+        if room is not None:
+            return room.rect.collidepoint(pos)
+        return False
+
+    def get_room(self, room_name) -> Room:
         """
         Renvoie les coordonnées d'une pièce
         """
@@ -460,8 +471,8 @@ class ColonyState(State):
         self.tasks.update()
 
         for ant in self.ants:
+            print(ant.type)
             ant.update()
-
         for room in self.rooms:
             room.update(events)
 

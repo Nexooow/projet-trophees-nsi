@@ -167,6 +167,8 @@ class SaveManager:
         for room in colony.rooms:
             if room.name == "queen":
                 rooms_data["queen"] = self.serialize_queen(room)
+            else:
+                pass #rooms_data[room.type] = self.serizalize_room(room)
         return rooms_data
 
     def serialize_queen(self, queen) -> dict:
@@ -365,6 +367,8 @@ class SaveManager:
         for room in colony.rooms:
             if room.name == "queen" and "queen" in rooms_data:
                 self.restore_queen(room, rooms_data["queen"])
+            if room.name == "laboratory" and "laboratory" in rooms_data:
+                pass
 
     def restore_queen(self, queen, data: dict):
         from constants import QUEEN_MAX_LARVAE, QUEEN_UPGRADES
@@ -392,10 +396,12 @@ class SaveManager:
     def restore_ants(self, colony, ants_data: list):
         from colony.ants.Nurse import Nurse
         from colony.ants.Worker import Worker
+        from colony.ants.Scientist import Scientist
 
         _ANT_CLASS_MAP = {
             "worker": Worker,
             "nurse": Nurse,
+            "scientist": Scientist
         }
 
         colony.ants.clear()

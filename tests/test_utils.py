@@ -5,7 +5,7 @@ Tests pour les classes / fonctions utilitaires.
 import pygame
 
 from sources.lib.file import File
-from sources.lib.grid import Grid
+from sources.colony.Grid import Grid
 from sources.lib.utils import distance, lerp, lerp_color, normalize_rect, parse_color
 
 

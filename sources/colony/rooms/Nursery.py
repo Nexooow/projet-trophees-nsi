@@ -1,5 +1,6 @@
 from colony.ants.Nurse import Nurse
 from colony.ants.Worker import Worker
+from colony.ants.Scientist import Scientist
 from colony.Room import Room
 from constants import QUEEN_LARVAS, UIColors
 from lib.ui import Label, ProgressBar
@@ -79,7 +80,7 @@ class Nursery(Room):
 
         self.larvaes = remaining
         for ant_type in hatched:
-            ANT_CLASS_MAP = {"nurse": Nurse, "worker": Worker}
+            ANT_CLASS_MAP = {"nurse": Nurse, "worker": Worker, "scientist": Scientist}
             ant_class = ANT_CLASS_MAP.get(ant_type, Worker)
             entry = self.get_passable_entry() or self.get_entry()
             data = {"power": 1, "xp": 0}

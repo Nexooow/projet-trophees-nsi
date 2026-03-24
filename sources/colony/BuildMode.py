@@ -1,6 +1,5 @@
 import math
 import typing
-from tabnanny import NannyNag
 
 import pygame
 from constants import (
@@ -14,6 +13,11 @@ from constants import (
 )
 from lib.ui import Button, Label, UIColors
 from lib.utils import distance
+
+from colony.rooms.Depot import Depot
+from colony.rooms.Dormitory import Dormitory
+from colony.rooms.Laboratory import Laboratory
+from colony.rooms.Nursery import Nursery
 
 if typing.TYPE_CHECKING:
     from states.ColonyState import ColonyState
@@ -269,6 +273,7 @@ class BuildMode:
                         self.validate_selections()
 
         if not self.selected_room_type:
+
             if pygame.mouse.get_pressed()[2]:
                 mouse_pos = pygame.mouse.get_pos()
                 mouse_pos = (
@@ -287,7 +292,9 @@ class BuildMode:
 
                     self.selections.add((brush_x, brush_y))
                     self.validate_selections()
+
         elif self.selected_room_type:
+
             mouse_pos = pygame.mouse.get_pos()
             mouse_world = (
                 mouse_pos[0] - self.colony.camera_x,
@@ -464,6 +471,12 @@ class BuildMode:
         # Si des salles ont été placées, on les ajoute à la liste des salles
         if self.placed_rooms:
             for rect, room_type in self.placed_rooms:
+                _ROOMS_CLASSES = {
+                    "depot": Depot,
+                    "dormitory": Dormitory,
+                    "laboratory": Laboratory,
+                    "nursery": Nursery
+                }
                 config = ROOMS_CONFIG[room_type]
                 room_data = {
                     "x": rect.x // 8,
@@ -471,8 +484,8 @@ class BuildMode:
                     "width": config["width"],
                     "height": config["height"],
                 }
-
-                # TODO: lancer la construction de la salle
+                new_room = _ROOMS_CLASSES[room_type](self.colony, room_data)
+                self.colony.rooms.append(new_room)
 
         # retire les séléctions qui vont être construites (aka celles qui sont valides)
         for built in ordered_builds:

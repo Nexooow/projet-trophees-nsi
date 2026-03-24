@@ -122,7 +122,7 @@ QUEEN_LARVAS: dict = {
     "scientist": {
         "label": "Scientifique",
         "cost": 4000,
-        "time": 90,
+        "time": 9,
     },
     "explorer": {
         "label": "Exploratrice",
@@ -205,4 +205,12 @@ ROOMS_CONFIG = {
         "height": 6,
         "entry_offset": (0.5, 1.0),
     },
+}
+
+SCIENCE_UPGRADES = {
+    "demineur": {
+        "label": "Démineur",
+        "description": "Lors de la résolution automatique de l'exploration, vos fourmis évitent les bombes.",
+        "cost": 500 # coût en science
+    }
 }

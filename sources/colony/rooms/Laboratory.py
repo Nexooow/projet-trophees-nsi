@@ -19,9 +19,18 @@ class Laboratory(Room):
         self.current_research = None
 
     def update_self(self, events):
+        self.scientists_assigned = 0
+        for ant in self.colony.ants:
+            if ant.type == "scientist":
+                self.scientists_assigned += 1
+
         if self.scientists_assigned > 0:
-            # Génère de la science si des scientifiques sont présents
             self.colony.science += 0.01 * self.scientists_assigned
+
+        if self.current_research is not None:
+            self.research_progress += 0.01
+            if self.research_progress >= 1:
+                pass # TODO: finir la recherche
 
     def interact(self):
         sidebar = self.colony.sidebar
@@ -67,13 +76,7 @@ class Laboratory(Room):
             .set_align("center", "center")
         )
 
-        root.add_child(  # exemple, à modifier
-            ui.button(
-                "research_mining",
-                "Vitesse de minage (+10%)",
-                (PADDING, y_research + 40, inner_w, 40),
-            )
-        )
-
+        # AJOUTER TOUTES LES AMELIORATIONS
+        
         sidebar.set_content(root)
         sidebar.show()
