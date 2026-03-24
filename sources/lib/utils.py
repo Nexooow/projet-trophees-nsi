@@ -73,4 +73,11 @@ def mouse_over(unit):
     mouse = pygame.mouse.get_pos()
     if not unit.rect.collidepoint(mouse):
         return False
-    return unit.mask.get_at((mouse[0] - unit.rect.x, mouse[1] - unit.rect.y))
+    rel_x = mouse[0] - unit.rect.x
+    rel_y = mouse[1] - unit.rect.y
+    mask_w, mask_h = unit.mask.get_size()
+
+    if 0 <= rel_x < mask_w and 0 <= rel_y < mask_h:
+        return unit.mask.get_at((rel_x, rel_y))
+
+    return False

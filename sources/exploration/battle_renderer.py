@@ -69,26 +69,38 @@ class BattleRenderer:
         self.ui_surface = pygame.Surface(
             (250, screen.get_height()),
         )
-        self.tile_size = self.model.grid.tile
+        available_width = screen.get_width() - 250
+        available_height = screen.get_height()
+        
         self.base_colors = {
             1: (210, 180, 120),
             2: (80, 160, 80),
             3: (130, 90, 60),
             4: (120, 120, 120),
         }
-        self.tiles = {
-            weight: self.generate_autotiles(color)
-            for weight, color in self.base_colors.items()
-        }
 
         # Calcul de l'offset pour centrer la grille dans la zone de jeu
         grid = self.model.grid
+        tile_w = available_width // grid.width
+        tile_h = available_height // grid.height
+        self.tile_size = min(tile_w, tile_h)
+        self.model.grid.tile = self.tile_size
+        for unit in self.model.units:
+            unit.update_tile_size(self.tile_size)
+        self.bomb_img = pygame.transform.scale(
+            IMG["bomb"], (self.tile_size, self.tile_size)
+        )
         grid_px_w = grid.width * self.tile_size
         grid_px_h = grid.height * self.tile_size
         self.grid_offset_x = max(0, (self.game_surface.get_width() - grid_px_w) // 2)
         self.grid_offset_y = max(0, (self.game_surface.get_height() - grid_px_h) // 2)
 
         # Pré-calcul de l'overlay des lignes de grille (semi-transparent, une seule fois)
+        
+        self.tiles = {
+            weight: self.generate_autotiles(color)
+            for weight, color in self.base_colors.items()
+        }
         self.grid_overlay = pygame.Surface((grid_px_w, grid_px_h), pygame.SRCALPHA)
         for x in range(grid.width):
             for y in range(grid.height):
@@ -163,7 +175,7 @@ class BattleRenderer:
                 tile_img = self.tiles[weight][mask]
                 self.game_surface.blit(tile_img, rect)
                 if (x, y) in self.model.bomb_tiles:
-                    img = IMG["bomb"]
+                    img = self.bomb_img
                     dest = img.get_rect(center=rect.center)
                     self.game_surface.blit(img, dest)
 
@@ -188,7 +200,10 @@ class BattleRenderer:
     def draw_resources(self):
         ox, oy = self.grid_offset_x, self.grid_offset_y
         for res in self.model.resources_obj:
-            img = RESSOURCES_IMAGES[res.resource]
+            img = pygame.transform.scale(
+                RESSOURCES_IMAGES[res.resource],
+                (self.tile_size // 2, self.tile_size // 2)
+            )
             img_w, img_h = img.get_size()
             float_offset = res.draw_offset()
             # Centrage horizontal et vertical dans la cellule, avec l'effet de flottement
@@ -204,8 +219,8 @@ class BattleRenderer:
     def draw_useless_obj(self):
         ox, oy = self.grid_offset_x, self.grid_offset_y
         for (x, y), obj in self.model.grid.objects.items():
-            screen_x = x * TILE_SIZE + ox
-            screen_y = y * TILE_SIZE + oy
+            screen_x = x * self.tile_size + ox
+            screen_y = y * self.tile_size + oy
 
             if obj == "tree":
                 self.game_surface.blit(IMG["tree"], (screen_x, screen_y))

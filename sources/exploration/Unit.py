@@ -8,11 +8,12 @@ class Unit:
     Représente les unités dans la battle grid
     """
 
-    def __init__(self, x, y, image, team, power=1, points=5, diagonal=False):
+    def __init__(self, x, y, image, team, power=1, points=5, diagonal=False, tile_size=50):
+        self.tile_size=tile_size
         self.x = x
         self.y = y
-        self.screen_x: float = x * 50
-        self.screen_y: float = y * 50
+        self.screen_x: float = x * self.tile_size
+        self.screen_y: float = y * self.tile_size
         self.team = team
         self.image = image
         self.points_max = points
@@ -51,10 +52,12 @@ class Unit:
                 temp_img = spritesheet.subsurface(
                     i * self.size[0], y * self.size[1], self.size[0], self.size[1]
                 )
+                """
                 temp_img = pygame.transform.scale(
                     temp_img,
                     (self.size[0] * self.image_scale, self.size[1] * self.image_scale),
                 )
+                """
                 temp += [temp_img]
             frames += [temp]
         return frames
@@ -82,14 +85,18 @@ class Unit:
         print(f"Coords in move to:{self.x, self.y, self.destination}")
 
         self.static_state = False
-        self.target_screen_x, self.target_screen_y = x * 50, y * 50
+        self.target_screen_x, self.target_screen_y = x * self.tile_size, y * self.tile_size
         print(f"Coord in move to:{self.x, self.y}")
 
     def draw(self, screen, offset_x=0, offset_y=0, tile_size=50):
         self.update()
         img = pygame.transform.flip(self.image, not self.orientation, False)
 
-        self.mask = pygame.mask.from_surface(self.image)
+        scale_factor = tile_size / (self.size[1])
+        new_w = int(img.get_width() * scale_factor)
+        new_h = int(img.get_height() * scale_factor)
+        img = pygame.transform.smoothscale(img, (new_w, new_h))
+        self.mask = pygame.mask.from_surface(img)
         img_w, img_h = img.get_size()
         draw_x = self.screen_x + (tile_size - img_w) // 2 + offset_x
         draw_y = self.screen_y + (tile_size - img_h) // 2 + offset_y
@@ -124,3 +131,10 @@ class Unit:
             if self.frame_index >= len(self.frames[0]):
                 self.frame_index = 0
             self.image = self.frames[0][self.frame_index]
+    def update_tile_size(self, tile_size):
+        self.tile_size = tile_size
+        self.screen_x = self.x * tile_size
+        self.screen_y = self.y * tile_size
+        if self.destination:
+            self.target_screen_x = self.destination[0] * tile_size
+            self.target_screen_y = self.destination[1] * tile_size
