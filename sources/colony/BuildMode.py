@@ -138,6 +138,8 @@ class BuildMode:
             y_offset += 25
 
             for room_id, config in ROOMS_CONFIG.items():
+                if config["cost"] <= 0:
+                    continue
 
                 def select_room(rid=room_id):
                     if self.selected_room_type == rid:
@@ -354,18 +356,29 @@ class BuildMode:
 
         # aperçu
         for rect, room_type in self.placed_rooms:
-            entry_x = rect.centerx
-            entry_y = rect.centery
+            config = ROOMS_CONFIG[room_type]
+            offset_ratio = config.get("entry_offset", (0.5, 0.5))
+            entry_x = rect.x + int(rect.width * offset_ratio[0])
+            entry_y = rect.y + int(rect.height * offset_ratio[1])
+
             is_valid = self.is_linked_gallery(entry_x, entry_y)
             color = (0, 255, 0) if is_valid else (255, 0, 0)
 
             pygame.draw.rect(self.colony.world, color, rect, 3)
             pygame.draw.rect(self.colony.world, (*color, 80), rect, 3)
+            pygame.draw.circle(self.colony.world, color, (entry_x, entry_y), 4)
 
-        if self.room_current_rect:
-            # Vérifier si l'entrée (centre) est proche d'une galerie
-            entry_x = self.room_current_rect.centerx
-            entry_y = self.room_current_rect.centery
+        if self.room_current_rect and self.selected_room_type:
+            # Vérifier si l'entrée est proche d'une galerie
+            config = ROOMS_CONFIG[self.selected_room_type]
+            offset_ratio = config.get("entry_offset", (0.5, 0.5))
+            entry_x = self.room_current_rect.x + int(
+                self.room_current_rect.width * offset_ratio[0]
+            )
+            entry_y = self.room_current_rect.y + int(
+                self.room_current_rect.height * offset_ratio[1]
+            )
+
             is_valid = self.is_linked_gallery(entry_x, entry_y)
 
             color = (0, 255, 0) if is_valid else (255, 0, 0)
@@ -373,6 +386,7 @@ class BuildMode:
             # Dessiner le rectangle de la salle
             pygame.draw.rect(self.colony.world, color, self.room_current_rect, 3)
             pygame.draw.rect(self.colony.world, (*color, 60), self.room_current_rect, 3)
+            pygame.draw.circle(self.colony.world, color, (entry_x, entry_y), 4)
 
         if (
             not self.selected_room_type
@@ -426,10 +440,24 @@ class BuildMode:
 
         # créer les tâches
         total = len(ordered_builds)
+
+        room_pixels = set()
+        for rect, _ in self.placed_rooms:
+            for rx in range(rect.left, rect.right, COLONY_BRUSH_SIZE):
+                for ry in range(rect.top, rect.bottom, COLONY_BRUSH_SIZE):
+                    room_pixels.add((rx, ry))
+
         for i, pos in enumerate(ordered_builds):
             # priorité décroissante pour que les ouvrières commencent par le début
             prio = max(1, 100 - int((i / total) * 90))
-            self.colony.pending_builds.append({"pos": pos, "priority": prio})
+
+            task_type = "dig"
+            if pos in room_pixels:
+                task_type = "build_room"
+
+            self.colony.pending_builds.append(
+                {"pos": pos, "priority": prio, "type": task_type}
+            )
 
         self.colony.check_pending_builds()
 

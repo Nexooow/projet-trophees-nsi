@@ -188,7 +188,7 @@ class BattleModel:
         self.grid_h = 14 + difficulty
         """
         self.grid_w = 20
-        self.grid_h = 14 
+        self.grid_h = 14
         self.grid = Grid(self.grid_w, self.grid_h, cell_x, cell_y, perlin)
 
         self.units = []
@@ -198,6 +198,7 @@ class BattleModel:
         self.bomb_tiles = set()
         self.resources_obj = []
         self.resources_dispos = {}
+        self.collected_resources = 0
 
         self.turn_index = 0
         self.active_unit: typing.Optional[Unit] = None
@@ -281,3 +282,9 @@ class BattleModel:
             self.friendlies.remove(unit)
         if unit in self.enemies:
             self.enemies.remove(unit)
+
+    def collect_resource(self, x, y):
+        if (x, y) in self.resources_dispos:
+            del self.resources_dispos[(x, y)]
+            self.resources_obj = [r for r in self.resources_obj if (r.x, r.y) != (x, y)]
+            self.collected_resources += 100

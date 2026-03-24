@@ -17,7 +17,6 @@ class BattleController:
         if key == pygame.K_LEFT or key == pygame.K_q:
             active.orientation = True
             dx = -1
-
         elif key == pygame.K_RIGHT or key == pygame.K_d:
             active.orientation = False
             dx = 1
@@ -146,6 +145,12 @@ class BattleController:
     def resolve(self):
         self.resolve_bombs()
         self.resolve_combat()
+        self.resolve_resources()
+
+    def resolve_resources(self):
+        active = self.model.active_unit
+        if active in self.model.friendlies:
+            self.model.collect_resource(active.x, active.y)
 
     def resolve_bombs(self):
 

@@ -7,7 +7,10 @@ import os
 GAME_NAME = "Rise of the Anthill"
 SAVES_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "saves"])
 
-FONTS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets", "fonts"])
+ASSETS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets"])
+ROOMS_PATH = os.sep.join([ASSETS_PATH, "rooms"])
+
+FONTS_PATH = os.sep.join([ASSETS_PATH, "fonts"])
 FONT_M5X7 = os.sep.join([FONTS_PATH, "m5x7.ttf"])
 
 DAY_START = 6 * 60
@@ -140,7 +143,7 @@ QUEEN_UPGRADES: dict = {
         ],
     },
     "science": {
-        "label": "Science",
+        "label": "Progrès scientifique",
         "description": "Débloque les technologies scientifiques",
         "cost": 7000,
         "levels": [],
@@ -154,12 +157,21 @@ ITEMS = {}
 
 # Configuration des salles constructibles
 ROOMS_CONFIG = {
+    "queen": {
+        "label": "Reine",
+        "description": "Le cœur de la colonie.",
+        "cost": 0,
+        "width": 12,
+        "height": 12,
+        "entry_offset": (0.0, 0.75),
+    },
     "depot": {
         "label": "Dépôt",
-        "description": "Stocke la nourriture de la colonie.",
-        "cost": 1000,
+        "description": "Stockage de nourriture.",
+        "cost": 0,
         "width": 13,
         "height": 8,
+        "entry_offset": (0.5, 1.0),
     },
     "nursery": {
         "label": "Nurserie",
@@ -167,6 +179,7 @@ ROOMS_CONFIG = {
         "cost": 1500,
         "width": 15,
         "height": 7,
+        "entry_offset": (1.0, 0.75),
     },
     "laboratory": {
         "label": "Laboratoire",
@@ -174,6 +187,7 @@ ROOMS_CONFIG = {
         "cost": 3000,
         "width": 12,
         "height": 10,
+        "entry_offset": (0.0, 0.5),
     },
     "dormitory": {
         "label": "Dortoir",
@@ -181,6 +195,7 @@ ROOMS_CONFIG = {
         "cost": 1200,
         "width": 10,
         "height": 7,
+        "entry_offset": (0.5, 1.0),
     },
     "waste_yard": {
         "label": "Dépotoir",
@@ -188,5 +203,6 @@ ROOMS_CONFIG = {
         "cost": 800,
         "width": 8,
         "height": 6,
+        "entry_offset": (0.5, 1.0),
     },
 }

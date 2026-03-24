@@ -12,20 +12,11 @@ class Dormitory(Room):
     Salle permettant aux fourmis de récupérer leur énergie plus rapidement.
     """
 
-    ENTRY_OFFSET_X_RATIO = 0.5
-    ENTRY_OFFSET_Y_RATIO = 1.0
-
     def __init__(self, colony, data):
-        width_px = data["width"] * 8
-        height_px = data["height"] * 8
-        entry_offset = (
-            int(width_px * self.ENTRY_OFFSET_X_RATIO),
-            int(height_px * self.ENTRY_OFFSET_Y_RATIO),
-        )
         super().__init__(
             colony,
             "dormitory",
-            {**data, "walkable": [], "entry_offset": entry_offset},
+            {**data, "walkable": []},
         )
         self.level = 1
 
@@ -72,24 +63,15 @@ class WasteYard(Room):
     Salle où les déchets sont entreposés pour limiter la propagation des maladies.
     """
 
-    ENTRY_OFFSET_X_RATIO = 0.5
-    ENTRY_OFFSET_Y_RATIO = 1.0
-
     def __init__(self, colony, data):
-        width_px = data["width"] * 8
-        height_px = data["height"] * 8
-        entry_offset = (
-            int(width_px * self.ENTRY_OFFSET_X_RATIO),
-            int(height_px * self.ENTRY_OFFSET_Y_RATIO),
-        )
         super().__init__(
             colony,
             "waste_yard",
-            {**data, "walkable": [], "entry_offset": entry_offset},
+            {**data, "walkable": []},
         )
 
     def update_self(self, events):
-        pass  # TODO: voir ce que cela fait
+        pass
 
     def interact(self):
         sidebar = self.colony.sidebar

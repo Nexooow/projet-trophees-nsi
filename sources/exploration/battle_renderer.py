@@ -6,8 +6,6 @@ from lib.utils import import_asset, mouse_over, use_font
 RESSOURCES_IMAGES = {"nom": import_asset("icons", "leaf.png")}
 RESSOURCES = ["nom"]
 IMG = {
-    "grass": import_asset("icons", "grass.png"),
-    "rock": import_asset("icons", "rock.png"),
     "bomb": import_asset("icons", "bomb.png"),
 }
 TILE_SIZE = 50
@@ -23,33 +21,21 @@ class Sidebar:
         self.width = width
         self.height = height
 
-    def draw(self, screen, units, active, colony, ressources):
+    def draw(self, screen, units, active, colony, collected_resources):
         screen.fill((30, 30, 30))
         font = use_font(28)
         friendlies = len([u for u in units if u.team == "noir"])
         enemies = len([u for u in units if u.team == "rouge"])
-        if colony is None:
-            lines = [
-                f"Active Team: {active.team}",
-                f"Action Points: {active.points}",
-                "",
-                f"Friendlies: {friendlies}",
-                f"Enemies: {enemies}",
-                "",
-                "Resources:",
-                # TODO: Montrer les ressources récupérées / disponibles
-            ]
-        else:
-            lines = [
-                f"Active Team: {active.team}",
-                f"Action Points: {active.points}",
-                "",
-                f"Friendlies: {friendlies}",
-                f"Enemies: {enemies}",
-                "",
-                f"Resources: {len(colony.ressources)}/{ressources}",
-                # TODO: Montrer les ressources récupérées / disponibles
-            ]
+
+        lines = [
+            f"Active Team: {active.team}",
+            f"Action Points: {active.points}",
+            "",
+            f"Friendlies: {friendlies}",
+            f"Enemies: {enemies}",
+            "",
+            f"Resources: {collected_resources}",
+        ]
         y = 20
         for line in lines:
             text = font.render(line, True, (255, 255, 255))
@@ -238,5 +224,5 @@ class BattleRenderer:
             self.model.units,
             self.model.active_unit,
             None,
-            len(self.model.resources_obj),
+            self.model.collected_resources,
         )

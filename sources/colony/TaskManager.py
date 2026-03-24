@@ -71,6 +71,8 @@ class TaskManager:
         }
 
     def get_task(self, task_id: uuid.UUID):
+        if task_id not in self.tasks:
+            return None
         return self.tasks[task_id]
 
     def add_task(
@@ -117,7 +119,6 @@ class TaskManager:
                 task.expire()
 
         for ant_type, file in self.files.items():
-            # On récupère les fourmis disponibles pour ce type
             available_ants = self.find_available_ants(ant_type)
             if not available_ants:
                 continue
@@ -129,11 +130,10 @@ class TaskManager:
                     continue
 
                 task = self.tasks[task_id]
-                # Si la tâche est déjà assignée ou expirée, on passe à la suivante
+
                 if task.is_assigned() or task.is_expired():
                     continue
 
-                # On prend la première fourmi disponible
                 ant = available_ants.pop(0)
                 task.start(ant.id)
                 ant.add_task(task)

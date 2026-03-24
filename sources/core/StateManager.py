@@ -15,6 +15,10 @@ class StateManager:
 
     def __init__(self, game):
         self.game = game
+        # Flags dynamiques gérées au niveau du StateManager (ex: 'pause')
+        # Ces flags peuvent être définis/retirés via `set_flag` et sont prises
+        # en compte par `is_flag_active`.
+        self.active_flags = set()
 
         self.states_managers: dict = {
             "menu": MenuState(self),
@@ -53,7 +57,30 @@ class StateManager:
         self.get_current_state().draw()
 
     def is_flag_active(self, flag: str) -> bool:
-        return flag in self.get_current_state().flags
+        """
+        Retourne True si le flag est actif soit au niveau de l'état courant
+        (déclaré dans state.flags), soit via un flag dynamique défini sur le
+        StateManager (self.active_flags).
+        """
+        # Flags définis dynamiquement (ex: 'pause' via UI)
+        if flag in getattr(self, "active_flags", set()):
+            return True
+
+        # Flags statiques définis par l'état courant
+        current = self.get_current_state()
+        return flag in getattr(current, "flags", [])
+
+    def set_flag(self, flag: str, value: bool):
+        """
+        Définit ou retire un flag dynamique global au StateManager, ex: 'pause'.
+        value=True -> active, value=False -> désactive.
+        """
+        if not hasattr(self, "active_flags"):
+            self.active_flags = set()
+        if value:
+            self.active_flags.add(flag)
+        else:
+            self.active_flags.discard(flag)
 
     def start_battle(self, difficulty, colony, auto, world_pos, perlin):
         self.states_managers["battle"] = BattleState(

@@ -16,14 +16,24 @@ class TimeManager:
     def is_paused(self):
         """
         Renvoie si le temps est actuellement en pause ou non.
+        L'état de pause est géré globalement via StateManager (flag 'pause').
+        On garde une rétrocompatibilité locale si le state manager n'est pas disponible.
         """
-        return self.paused or self.game.state.is_flag_active("pause")
+        try:
+            return self.game.state.is_flag_active("pause")
+        except Exception:
+            return self.paused
 
     def set_pause(self, paused: bool):
         """
         Définit si le temps est en pause ou non.
+        Utilise StateManager.set_flag('pause', paused) pour propager le flag globalement.
+        En cas d'échec, on met à jour l'attribut local pour compatibilité.
         """
-        self.paused = paused
+        try:
+            self.game.state.set_flag("pause", paused)
+        except Exception:
+            self.paused = paused
 
     def get_time(self, offset=0):
         """
@@ -73,14 +83,20 @@ class TimeManager:
     def add_frame(self):
         """
         Met à jour le temps.
+        Sauvegarde automatiquement la partie toutes les heures en jeu.
         """
-        if not self.paused:
+        if not self.is_paused():
             add = 1 * ACCEL
             self.time_since_start += add
             self.sub_frame_count += add
             if self.sub_frame_count >= 60:
                 self.time += 1
                 self.sub_frame_count = 0
+                if self.time % 60 == 0:
+                    try:
+                        self.game.sauvegarder()
+                    except Exception:
+                        pass
             h, _ = self.get_time()
             if h >= 24:
                 self.time = 0
