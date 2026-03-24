@@ -1,8 +1,16 @@
 import math
+import os
 import typing
 
 import pygame
-from constants import COLONY_UNDERGROUND_START
+from constants import (
+    COLONY_UNDERGROUND_START,
+    DARK_DIRT_COLOR,
+    DIRT_COLOR,
+    ROOMS_CONFIG,
+    ROOMS_PATH,
+)
+from lib.utils import lerp_color
 
 if typing.TYPE_CHECKING:
     from core.GameManager import GameManager
@@ -24,6 +32,12 @@ class Room(pygame.sprite.Sprite):
         raw = config.get("entry_offset")
         if raw is not None:
             self.entry_offset: typing.Tuple[int, int] = (int(raw[0]), int(raw[1]))
+        elif name in ROOMS_CONFIG and "entry_offset" in ROOMS_CONFIG[name]:
+            ratio = ROOMS_CONFIG[name]["entry_offset"]
+            self.entry_offset = (
+                int(self.width * ratio[0]),
+                int(self.height * ratio[1]),
+            )
         else:
             self.entry_offset = (self.width // 2, self.height // 2)
 
@@ -34,9 +48,29 @@ class Room(pygame.sprite.Sprite):
                 else:
                     self.colony.grid.set_cell_state(x, y, "occupied")
 
+        c = pygame.Color(DIRT_COLOR)
+        light_dirt_rgb = (c.r, c.g, c.b)
+
         self.image = pygame.Surface((self.width, self.height))
+
+        # remplissage avec dégradé
+        for y in range(self.height):
+            current_cell_y = config["y"] + (y / 8.0)
+            ratio = current_cell_y / self.colony.grid.height
+            bg_color = lerp_color(light_dirt_rgb, DARK_DIRT_COLOR, ratio)
+            pygame.draw.line(self.image, bg_color, (0, y), (self.width, y))
+
+        image_path = os.sep.join([ROOMS_PATH, f"{self.name}.png"])
+        if os.path.exists(image_path):
+            img = pygame.image.load(image_path).convert_alpha()
+            if img.get_size() != (self.width, self.height):
+                img = pygame.transform.scale(img, (self.width, self.height))
+
+            self.image.blit(img, (0, 0))
+        else:
+            pygame.draw.rect(self.image, (255, 0, 0), (0, 0, self.width, self.height))
+
         self.rect = self.image.get_rect(topleft=(self.x, self.y))
-        pygame.draw.rect(self.image, (255, 0, 0), self.rect)
 
     def get_pos(self):
         return (self.x, self.y)
@@ -60,7 +94,7 @@ class Room(pygame.sprite.Sprite):
         grid = self.colony.grid
         entry_x, entry_y = self.get_entry()
 
-        # Convertir l'entrée en coordonnées de cellule (hors offset start_y)
+        # Convertir l'entrée en coordonnées de cellule
         cell_x = entry_x // grid.CELL_SIZE
         cell_y = (entry_y - grid.start_y) // grid.CELL_SIZE
 
@@ -80,7 +114,7 @@ class Room(pygame.sprite.Sprite):
                     nx, ny = cell_x + dx, cell_y + dy
                     if not (0 <= nx < grid.width and 0 <= ny < grid.height):
                         continue
-                    # Exclure les cellules appartenant à la salle
+                    # Exclure les cellules de la salle
                     if (
                         room_cell_x1 <= nx <= room_cell_x2
                         and room_cell_y1 <= ny <= room_cell_y2

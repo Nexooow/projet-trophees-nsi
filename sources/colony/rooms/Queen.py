@@ -29,20 +29,11 @@ BTN_WIDTH = 110
 
 
 class Queen(Room):
-    ENTRY_OFFSET_X_RATIO = 0.0
-    ENTRY_OFFSET_Y_RATIO = 0.5
-
     def __init__(self, colony, data: dict):
-        width_px = data["width"] * 8
-        height_px = data["height"] * 8
-        entry_offset = (
-            int(width_px * self.ENTRY_OFFSET_X_RATIO),
-            int(height_px * self.ENTRY_OFFSET_Y_RATIO),
-        )
         super().__init__(
             colony,
             "queen",
-            {**data, "walkable": [], "entry_offset": entry_offset},
+            {**data, "walkable": []},
         )
 
         self.max_hp: int = QUEEN_MAX_HP
@@ -144,9 +135,12 @@ class Queen(Room):
 
         print("fourmi envoyée")
 
-        queen_entry = self.get_passable_entry()
-        nursery_entry = nursery.get_passable_entry()
+        # On privilégie les entrées 'passables' (cases adjacentes accessibles),
+        # sinon on tombe en dernier ressort sur l'entrée de la salle.
+        queen_entry = self.get_passable_entry() or self.get_entry()
+        nursery_entry = nursery.get_passable_entry() or nursery.get_entry()
 
+        # Si l'une des positions est encore None, on ne peut pas créer la tâche
         if queen_entry is None or nursery_entry is None:
             return
 
@@ -588,6 +582,7 @@ class Queen(Room):
 
         self.colony.food -= cost
         self.born_queue.enfiler(ant_type)
+
         self.interact()
 
     def buy_upgrade(self, upg_id: str):

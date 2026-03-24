@@ -32,6 +32,8 @@ class Worker(Ant):
             self.start_feed_queen(task)
         elif task.type == "dig":
             self.start_dig(task)
+        elif task.type == "build_room":
+            self.start_build_room(task)
 
     def start_dig(self, task: "Task"):
         data = task.data or {}
@@ -67,6 +69,40 @@ class Worker(Ant):
         if not self.move_to(*dest_cell):
             self.finish_task()
 
+    def start_build_room(self, task: "Task"):
+        data = task.data or {}
+        build_pos = data.get("pos")
+
+        if build_pos is None:
+            self.finish_task()
+            return
+
+        self.task_pos = build_pos
+        self.task_phase = _PHASE_GO
+
+        center_x = build_pos[0] + COLONY_BRUSH_SIZE / 2
+        center_y = build_pos[1] + COLONY_BRUSH_SIZE / 2
+
+        target_cell = self.colony.grid.pixel_to_cell(
+            int(center_x), int(center_y) - self.colony.grid.start_y
+        )
+
+        # Pour construire, on peut se déplacer sur la case cible si elle est accessible
+        # Sinon, on cherche une case adjacente accessible
+        if self.colony.grid.is_cell_passable(*target_cell):
+            dest_cell = target_cell
+        else:
+            neighbors = self.colony.grid.get_neighbors(*target_cell)
+            if not neighbors:
+                self.finish_task()
+                return
+            # premier voisin le plus accessible
+            dest_cell = neighbors[0]
+
+        self.moving = True
+        if not self.move_to(*dest_cell):
+            self.finish_task()
+
     def start_feed_queen(self, task: "Task"):
         data = task.data or {}
         pickup_pos = data.get("pickup_pos")
@@ -84,8 +120,20 @@ class Worker(Ant):
             int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
         )
 
+        # Si la case cible n'est pas passable, chercher un voisin accessible
+        if not self.colony.grid.is_cell_passable(*pickup_cell):
+            neighbors = self.colony.grid.get_neighbors(*pickup_cell)
+            if neighbors:
+                dest_cell = neighbors[0]
+            else:
+                # Aucune destination possible -> annuler la tâche
+                self.finish_task()
+                return
+        else:
+            dest_cell = pickup_cell
+
         self.moving = True
-        if not self.move_to(pickup_cell[0], pickup_cell[1]):
+        if not self.move_to(dest_cell[0], dest_cell[1]):
             self.finish_task()
 
     def start_deliver_larva(self, task: "Task"):
@@ -110,8 +158,19 @@ class Worker(Ant):
             int(pickup_pos[0]), int(pickup_pos[1]) - self.colony.grid.start_y
         )
 
+        # Si la cellule de prise n'est pas passable, chercher un voisin praticable
+        if not self.colony.grid.is_cell_passable(*pickup_cell):
+            neighbors = self.colony.grid.get_neighbors(*pickup_cell)
+            if neighbors:
+                dest_cell = neighbors[0]
+            else:
+                self.finish_task()
+                return
+        else:
+            dest_cell = pickup_cell
+
         self.moving = True
-        if not self.move_to(pickup_cell[0], pickup_cell[1]):
+        if not self.move_to(dest_cell[0], dest_cell[1]):
             self.finish_task()
 
     def update(self):
@@ -139,9 +198,9 @@ class Worker(Ant):
 
         if self.task_phase == _PHASE_GO_PICKUP:
             if current_task.type == "bring_food_queen":
-                if self.colony.food < 200:
+                if self.colony.food < 100:
                     return
-                self.colony.food -= 200
+                self.colony.food -= 100
 
             self.task_phase = _PHASE_GO_DELIVER
             assert self.task_pos is not None
@@ -149,9 +208,21 @@ class Worker(Ant):
                 int(self.task_pos[0]),
                 int(self.task_pos[1]) - self.colony.grid.start_y,
             )
+
+            # Si la cellule de livraison est bloquée, choisir un voisin praticable
+            if not self.colony.grid.is_cell_passable(*delivery_cell):
+                neighbors = self.colony.grid.get_neighbors(*delivery_cell)
+                if neighbors:
+                    dest_cell = neighbors[0]
+                else:
+                    self.finish_task()
+                    return
+            else:
+                dest_cell = delivery_cell
+
             self.moving = True
 
-            if not self.move_to(delivery_cell[0], delivery_cell[1]):
+            if not self.move_to(dest_cell[0], dest_cell[1]):
                 self.finish_task()
                 return
 
@@ -161,7 +232,9 @@ class Worker(Ant):
             if current_task.type == "bring_food_queen":
                 pass  # La nourriture est considérée livrée à l'arrivée
             elif current_task.type == "deliver_larva":
-                pass  # TODO: faire apparaitre la nouvelle fourmi
+                nursery = self.colony.get_room("nursery")
+                if nursery is not None and self.task_data is not None:
+                    nursery.assign_larvae(self.task_data)
 
             self.finish_task()
 
@@ -172,6 +245,14 @@ class Worker(Ant):
                 self.colony.grid.supprimer_cellules(
                     self.task_pos[0],
                     self.task_pos[1],
+                    COLONY_BRUSH_SIZE,
+                )
+                self.finish_task()
+            elif current_task.type == "build_room" and self.task_pos:
+                self.colony.grid.build_room(
+                    self.task_pos[0],
+                    self.task_pos[1],
+                    COLONY_BRUSH_SIZE,
                     COLONY_BRUSH_SIZE,
                 )
                 self.finish_task()

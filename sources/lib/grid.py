@@ -196,7 +196,26 @@ class Grid:
         cell = self.get_cell(cell_x, cell_y)
         if cell is None:
             return False
-        return cell["state"] == "empty" or cell["state"] == "occupied_walkable"
+        return (
+            cell["state"] == "empty"
+            or cell["state"] == "occupied_walkable"
+            or cell["state"] == "room"
+        )
+
+    def build_room(self, x, y, width, height):
+        """
+        Construit une salle (met les cellules en état "room").
+        x, y : coin haut gauche en pixels
+        width, height : dimensions en pixels
+        """
+        y -= self.start_y
+        cell_x1, cell_y1 = self.pixel_to_cell(x, y)
+        cell_x2, cell_y2 = self.pixel_to_cell(x + width, y + height)
+
+        for cell_y in range(cell_y1, cell_y2):
+            for cell_x in range(cell_x1, cell_x2):
+                if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
+                    self.set_cell_state(cell_x, cell_y, "room", None)
 
     def get_neighbors(self, cell_x, cell_y):
         """

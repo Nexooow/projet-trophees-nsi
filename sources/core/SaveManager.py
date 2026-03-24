@@ -8,6 +8,9 @@ import uuid
 
 from constants import SAVES_PATH
 
+from exploration.ExpeditionMap import ExpeditionMap
+from exploration.Node import Node
+
 CURRENT_SAVE_VERSION = 1
 
 CELL_STATES = {
@@ -113,6 +116,7 @@ class SaveManager:
                 "sub_frame_count": time_mgr.sub_frame_count,
             },
             "colony": colony_data,
+            "expedition": self.serialize_expedition(),
         }
 
     def get_colony(self):
@@ -130,18 +134,19 @@ class SaveManager:
             for x in range(grid.width):
                 cell = grid.grid[y][x]
                 state = cell["state"]
-                variant = cell.get("variant", 0)
                 bitmap = cell.get("bitmap")
-                if state == "full" and variant == 0:
-                    row.append(CELL_STATES["full_v1"])
-                elif state == "full":
-                    row.append(CELL_STATES[f"full_v{variant}"])
+                # Only keep variant for 'full' cells; other states must have variant 0
+                variant = cell.get("variant", 0) if state == "full" else 0
+                if state == "full":
+                    # store variant as full_v{variant+1} so full_v1 represents variant 0
+                    code_key = f"full_v{variant + 1}"
+                    row.append(CELL_STATES.get(code_key, CELL_STATES["full_v1"]))
                 elif state == "empty":
                     row.append(CELL_STATES["empty"])
                 elif state == "occupied":
                     row.append(CELL_STATES["occupied"])
                 elif state == "occupied_walkable":
-                    row.append(CELL_STATES["occupied_wallkable"])
+                    row.append(CELL_STATES["occupied_walkable"])
                 elif state == "partial" and bitmap is not None:
                     # Compresser le bitmap en liste d'entiers (1 entier = 1 ligne de 8 bits)
                     compressed = [
@@ -208,6 +213,37 @@ class SaveManager:
             )
         return ants_list
 
+    def serialize_expedition(self):
+        """
+        Sérialise l'état de l'expédition (carte, noeuds, caméra).
+        """
+        state_mgr = self.game.state
+        expedition_state = state_mgr.states_managers.get("expedition")
+        if not expedition_state:
+            return None
+        emap = expedition_state.expedition_map
+        nodes = []
+        for node in emap.all_nodes:
+            nodes.append(
+                {
+                    "node_id": node.node_id,
+                    "parent_id": node.parent.node_id if node.parent else None,
+                    "depth": node.depth,
+                    "is_cleared": node.is_cleared,
+                    "is_discovered": node.is_discovered,
+                    "is_visible": node.is_visible,
+                    "seed": node.seed,
+                    "position": node.position,
+                }
+            )
+        return {
+            "seed": emap.seed,
+            "current_node_id": emap.current.node_id if emap.current else None,
+            "all_nodes": nodes,
+            "cam_x": expedition_state.cam_x,
+            "cam_y": expedition_state.cam_y,
+        }
+
     def restaurer(self, save_id: typing.Optional[str] = None) -> bool:
         """
         Charge une sauvegarde JSON et restaure l'état du jeu.
@@ -267,6 +303,11 @@ class SaveManager:
         ants_data = colony_data.get("ants", [])
         self.restore_ants(colony, ants_data)
 
+        # Restaurer l'état de l'expédition (carte / progression)
+        expedition_data = data.get("expedition")
+        if expedition_data:
+            self.restore_expedition(expedition_data)
+
         # Re-render toute la grille
         for y in range(colony.grid.height):
             for x in range(colony.grid.width):
@@ -282,13 +323,14 @@ class SaveManager:
         INT_TO_STATE: dict = {}
         for key, code in CELL_STATES.items():
             if key.startswith("full_v"):
-                variant = int(key[len("full_v") :])
+                # stored full_vN corresponds to variant N-1 (full_v1 -> variant 0)
+                variant = int(key[len("full_v") :]) - 1
                 INT_TO_STATE[code] = ("full", variant)
             elif key == "empty":
                 INT_TO_STATE[code] = ("empty", 0)
             elif key == "occupied":
                 INT_TO_STATE[code] = ("occupied", 0)
-            elif key == "occupied_wallkable":  # conserve la coquille du dict source
+            elif key == "occupied_walkable":
                 INT_TO_STATE[code] = ("occupied_walkable", 0)
 
         for y, row in enumerate(rows):
@@ -363,3 +405,56 @@ class SaveManager:
             pos = tuple(ant_data.get("pos", [0, 0]))
             ant = ant_class(colony, ant_data.get("data", {"power": 1, "xp": 0}), pos)
             colony.ants.append(ant)
+
+    def restore_expedition(self, data: dict):
+        """
+        Reconstruit l'état de l'expédition à partir des données sauvegardées.
+        """
+
+        expedition_state = self.game.state.states_managers.get("expedition")
+        if not expedition_state:
+            return
+
+        all_nodes_data = data.get("all_nodes", [])
+        node_map = {}
+        emap = ExpeditionMap(seed=data.get("seed"))
+        emap.all_nodes = []
+
+        # Créer les noeuds sans parents
+        for nd in all_nodes_data:
+            node = Node(
+                node_id=nd["node_id"],
+                parent=None,
+                depth=nd.get("depth", 0),
+                seed=nd.get("seed"),
+            )
+            node.is_cleared = nd.get("is_cleared", False)
+            node.is_discovered = nd.get("is_discovered", False)
+            node.is_visible = nd.get("is_visible", False)
+            node.position = tuple(nd.get("position", node.position))
+            node.children = []
+            node.num_children = node.child_count()
+            node_map[node.node_id] = node
+            emap.all_nodes.append(node)
+
+        # Assigner parents et enfants
+        for nd in all_nodes_data:
+            node = node_map.get(nd["node_id"])
+            parent_id = nd.get("parent_id")
+            if parent_id is not None:
+                parent = node_map.get(parent_id)
+                if parent:
+                    node.parent = parent
+                    parent.children.append(node)
+
+        emap.root_node = next((n for n in emap.all_nodes if n.parent is None), None)
+        if emap.root_node is None and emap.all_nodes:
+            emap.root_node = emap.all_nodes[0]
+        emap.current = node_map.get(data.get("current_node_id"), emap.root_node)
+        expedition_state.expedition_map = emap
+        expedition_state.cam_x = data.get(
+            "cam_x", getattr(expedition_state, "cam_x", 600)
+        )
+        expedition_state.cam_y = data.get(
+            "cam_y", getattr(expedition_state, "cam_y", 400)
+        )

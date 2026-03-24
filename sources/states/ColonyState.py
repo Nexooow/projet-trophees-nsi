@@ -1,4 +1,3 @@
-
 import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
@@ -29,6 +28,7 @@ from lib.utils import import_asset, lerp_color
 from .State import State
 
 _leaf_image = import_asset("icons", "leaf.png")
+_expedition_image = import_asset("icons", "expedition.png")
 _hammer_image = import_asset("icons", "hammer.png")
 _grass_tile = pygame.transform.scale(import_asset("tiles", "grass_tile.png"), (120, 64))
 _anthill_raw = import_asset("anthill.png")
@@ -36,6 +36,7 @@ _anthill_image = pygame.transform.scale(
     _anthill_raw,
     (_anthill_raw.get_width() * 4, _anthill_raw.get_height() * 4),
 )
+_ant_image = pygame.transform.scale(import_asset("ant.png"), (32, 32))
 
 
 class ColonyState(State):
@@ -57,6 +58,11 @@ class ColonyState(State):
         self.grid = Grid(self.grid_surface.get_size(), COLONY_UNDERGROUND_START)
         grid_x_center = self.grid.width // 2
 
+        light_dirt = pygame.Color(DIRT_COLOR)
+        self.light_dirt_rgb = (light_dirt.r, light_dirt.g, light_dirt.b)
+        light_gal = pygame.Color(GALERY_COLOR)
+        self.light_gal_rgb = (light_gal.r, light_gal.g, light_gal.b)
+
         self.rooms = [
             Depot(self, {"x": grid_x_center, "y": 0, "width": 13, "height": 8}),
             Queen(self, {"x": grid_x_center + 42, "y": 67, "width": 12, "height": 12}),
@@ -71,11 +77,6 @@ class ColonyState(State):
         self.science = 0.0
 
         self.inventory = {}
-
-        light_dirt = pygame.Color(DIRT_COLOR)
-        self.light_dirt_rgb = (light_dirt.r, light_dirt.g, light_dirt.b)
-        light_gal = pygame.Color(GALERY_COLOR)
-        self.light_gal_rgb = (light_gal.r, light_gal.g, light_gal.b)
 
         self.init_default_paths()
 
@@ -92,11 +93,10 @@ class ColonyState(State):
         self.is_sleeping = False
         self.sleep_timer = 0
 
-        # Ciel & Ambiance
         self.sky = Sky(self.game)
         self.clock_surface = pygame.Surface((100, 130 - 4), pygame.SRCALPHA)
 
-        # Vignette pour l'effet claustrophobique
+        # Vignette pour renforcer l'effet de profondeur
         self.vignette = self.create_vignette(self.game.screen.get_size())
 
         self.pending_builds = []
@@ -116,6 +116,7 @@ class ColonyState(State):
 
             pos = build_data["pos"]
             priority = build_data["priority"]
+            task_type = build_data.get("type", "dig")
 
             # Vérification de l'accessibilité
             cx = pos[0] + COLONY_BRUSH_SIZE / 2
@@ -134,9 +135,15 @@ class ColonyState(State):
                     is_accessible = True
 
             if is_accessible:
+                task_data = {"priority": priority}
+                if task_type == "dig":
+                    task_data["dig_pos"] = pos
+                else:
+                    task_data["pos"] = pos
+
                 self.tasks.add_task(
-                    "dig",
-                    {"dig_pos": pos, "priority": priority},
+                    task_type,
+                    task_data,
                     on_complete=self.check_pending_builds,
                 )
                 added_count += 1
@@ -146,12 +153,9 @@ class ColonyState(State):
         self.pending_builds = still_pending
 
     def create_vignette(self, size):
-        w, h = size
-        # On travaille sur une petite surface pour optimiser
         vw, vh = 200, 150
         small = pygame.Surface((vw, vh), pygame.SRCALPHA)
 
-        # Largeur des bandes (15% environ)
         edge_w = int(vw * 0.15)
         edge_h = int(vh * 0.15)
 
@@ -210,6 +214,22 @@ class ColonyState(State):
             .set_font("assets/fonts/m5x7.ttf", 32)
             .set_text_color(UIColors.TEXT)
             .set_align("center", "center")
+            .set_z_index(11)
+        ).add_child(
+            self.ui.image(
+                "colony_ant_icon",
+                _ant_image,
+                (120, 50, 32, 32),
+            ).set_z_index(11)
+        ).add_child(
+            self.ui.label(
+                "colony_ant_count",
+                f"{len(self.ants)}",
+                (160, 50, 100, 32),
+            )
+            .set_font("assets/fonts/m5x7.ttf", 32)
+            .set_text_color(UIColors.TEXT)
+            .set_align("left", "center")
             .set_z_index(11)
         )
 
@@ -290,7 +310,7 @@ class ColonyState(State):
         ).on("click", self.start_exploration).set_z_index(10).add_child(
             self.ui.image(
                 "colony_btn_expedition_icon",
-                _leaf_image,  # TODO: changer l'icone
+                _expedition_image,
                 (
                     (menu_btn_size - menu_icon_size) // 2,
                     (menu_btn_size - menu_icon_size) // 2,
@@ -442,16 +462,6 @@ class ColonyState(State):
         for ant in self.ants:
             ant.update()
 
-        # Vérification de la mort de la reine
-        queen_alive = False
-        for room in self.rooms:
-            if room.name == "queen":
-                queen_alive = True
-                break
-
-        if not queen_alive:
-            self.game.trigger_game_over("La reine est morte")
-
         for room in self.rooms:
             room.update(events)
 
@@ -498,6 +508,10 @@ class ColonyState(State):
         time_label = self.ui.get("colony_time")
         if isinstance(time_label, Label):
             time_label.set_text(self.game.time.format())
+
+        ant_label = self.ui.get("colony_ant_count")
+        if isinstance(ant_label, Label):
+            ant_label.set_text(f"{len(self.ants)}")
 
         self.sky.draw_clock(self.clock_surface)
 
@@ -610,7 +624,7 @@ class ColonyState(State):
         current_dirt_rgb = lerp_color(self.light_dirt_rgb, DARK_DIRT_COLOR, depth_ratio)
         dirt_r, dirt_g, dirt_b = current_dirt_rgb
 
-        if state == "empty":
+        if state == "empty" or state == "room":
             pygame.draw.rect(
                 self.grid_surface,
                 self.light_gal_rgb,
@@ -666,7 +680,7 @@ class ColonyState(State):
                 neighbor = self.grid.get_cell(nx, ny)
                 draw_shadow = False
                 if neighbor:
-                    if neighbor["state"] == "empty":
+                    if neighbor["state"] == "empty" or neighbor["state"] == "room":
                         draw_shadow = True
                     elif neighbor["state"] == "partial":
                         # vérifier si les pixels adjacents dans la cellule partielle sont vides
@@ -747,10 +761,14 @@ class ColonyState(State):
                                     self.grid_surface, shadow_color, (gx, gy, 1, 1)
                                 )
 
+        elif state.startswith("occupied"):
+            pygame.draw.rect(
+                self.grid_surface,
+                self.light_gal_rgb,
+                (pixel_x, pixel_y, cell_size, cell_size),
+            )
+
     def draw(self):
-        """
-        TODO
-        """
         self.sky.draw(self.world)
 
         # Remplissage de la terre sous l'herbe jusqu'au début du quadrillage souterrain
@@ -769,7 +787,7 @@ class ColonyState(State):
         if depot is not None:
             center_x = depot.get_center()[0]
 
-            # Galerie verticale entre la fourmilière et le dépôt (sous l'herbe)
+            # Galerie verticale entre la fourmilière et le dépôt
             gallery_w = COLONY_BRUSH_SIZE
             pygame.draw.rect(
                 self.world,
@@ -794,14 +812,14 @@ class ColonyState(State):
         if self.build_mode.enabled:
             self.build_mode.draw()
 
-        for ant in self.ants:
-            ant.draw()
         for room in self.rooms:
             room.draw()
+            
+        for ant in self.ants:
+            ant.draw()
 
         self.game.screen.blit(self.world, (self.camera_x, self.camera_y))
 
-        # Vignette (active seulement sous la surface)
         if -self.camera_y > COLONY_GRASS_START - 200:
             fade_start = COLONY_GRASS_START - 200
             depth = -self.camera_y - fade_start
