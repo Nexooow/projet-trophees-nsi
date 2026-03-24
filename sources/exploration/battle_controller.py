@@ -82,10 +82,8 @@ class BattleController:
             )
             for u in units
         )
-        print(len(tiles))
         if len(tiles) <= 1 and not enemies_present:
             active.points = 0
-            print("ça marche? v2")
             return True
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -93,10 +91,8 @@ class BattleController:
                     active.points = 0
                     return True
                 tiles = reachable_tiles_nx(active, grid, units)
-                print(len(tiles))
                 if len(tiles) <= 1 and not enemies_present:
                     active.points = 0
-                    print("ça marche?")
                     return True
                 moved = self.try_move(active, event.key, tiles)
                 if moved:
@@ -119,6 +115,8 @@ class BattleController:
             for u in self.model.units
             if u is not active and u.team == active.team
         ]
+        if active.bomb_expert:
+            blocked+=list(self.model.bomb_tiles)
 
         target = closest_enemy(active, enemies, self.model.grid, self.model.units)
         if not target:

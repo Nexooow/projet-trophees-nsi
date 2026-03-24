@@ -8,8 +8,10 @@ class Unit:
     Représente les unités dans la battle grid
     """
 
-    def __init__(self, x, y, image, team, power=1, points=5, diagonal=False, tile_size=50):
-        self.tile_size=tile_size
+    def __init__(self, x, y, image, team, power=1, points=5, diagonal=False, tile_size=50, demineur=False, items={}):
+        self.bomb_expert = demineur
+        self.items = items
+        self.tile_size = tile_size
         self.x = x
         self.y = y
         self.screen_x: float = x * self.tile_size
@@ -82,12 +84,9 @@ class Unit:
             if self.destination[0] < self.x
             else self.orientation
         )
-        print(f"Coords in move to:{self.x, self.y, self.destination}")
 
         self.static_state = False
         self.target_screen_x, self.target_screen_y = x * self.tile_size, y * self.tile_size
-        print(f"Coord in move to:{self.x, self.y}")
-
     def draw(self, screen, offset_x=0, offset_y=0, tile_size=50):
         self.update()
         img = pygame.transform.flip(self.image, not self.orientation, False)

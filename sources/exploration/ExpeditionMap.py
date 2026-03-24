@@ -32,7 +32,6 @@ class ExpeditionMap:
         return visible
 
     def clear(self, node):
-        print(node.is_cleared)
         if node.is_cleared:
             return
         node.is_cleared = True

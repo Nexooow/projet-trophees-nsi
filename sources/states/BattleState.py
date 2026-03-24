@@ -1,6 +1,6 @@
 import pygame
 from exploration.battle_controller import BattleController
-from exploration.battle_model import BattleModel
+from exploration.battle_model import BattleModel, Bomb
 from exploration.battle_renderer import BattleRenderer, Sidebar
 
 from .State import State
@@ -39,13 +39,31 @@ class BattleState(State):
         active = self.model.active_unit
         if active is None:
             return
-        print(f"Active unit: {active} with {active.points} points")
+        if 'match' in active.items.keys():
+            if active.items["match"]>=1:
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        for bomb_pos in self.model.bomb_tiles:
+                            
+                            ox, oy = self.renderer.grid_offset_x, self.renderer.grid_offset_y
+                            print(f"clicked_at:{event.pos}")
+                            bomb_screen = (bomb_pos[0] * self.renderer.tile_size + ox, bomb_pos[1] * self.renderer.tile_size + oy)
+                            print(f"bomb_pos:{bomb_screen}")
+                            distance = ((event.pos[0] - bomb_screen[0]) ** 2 + (event.pos[1] - bomb_screen[1]) ** 2) ** 0.5
+                            print(distance)
+                            if distance <= self.renderer.tile_size :
+                                print("distance is good")
+                                bomb = Bomb(*bomb_pos)
+                                dead_units = bomb.explode(self.model.units)
+
+                                for u in dead_units:
+                                    self.model.remove_unit(u)
+
+                                self.model.bomb_tiles.remove(bomb_pos)
+                                active.items["match"]-=1
+                                break
         self.controller.take_turn(events)
-        print(
-            f"After processing turn: Active unit: {active} with {active.points} points"
-        )
         self.controller.resolve()
-        print(f"After turn: Active unit: {active} with {active.points} points")
         if active not in self.model.units:
             self.model.next_turn()
             return
