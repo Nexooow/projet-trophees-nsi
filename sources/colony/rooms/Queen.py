@@ -8,7 +8,9 @@ from constants import (
     UIColors,
 )
 from lib.file import File
+from lib.ui import Label
 from lib.ui.button import Button
+from lib.ui.progress_bar import ProgressBar
 
 QUEEN_MAX_HP = 100
 QUEEN_LOW_FOOD_THRESHOLD = 20
@@ -123,6 +125,45 @@ class Queen(Room):
             # Reconstruire le menu si la sidebar est ouverte sur la reine
             if self.colony.sidebar and self.colony.sidebar.main_panel.visible:
                 self.interact()
+
+    def sync_ui(self):
+        """
+        Met à jour les éléments UI relatifs à la reine (progression de larve, temps restant...).
+        Doit être appelée depuis le ColonyState.sync_ui (ou équivalent) pour garder l'UI en temps réel.
+        """
+        ui = self.colony.ui
+
+        # Mise à jour en temps réel de la barre de progression de la larve en cours
+        if not self.born_queue.est_vide():
+            ant_type = self.born_queue.sommet()
+            ant_data = QUEEN_LARVAS.get(ant_type, {})
+            total_seconds = ant_data.get("time", 30)
+            birth_speed_lvl = self.upgrade_levels.get("birth_speed", 0)
+            if birth_speed_lvl > 0:
+                reduction = 1.0 - 0.10 * birth_speed_lvl
+                total_seconds = max(1, int(total_seconds * reduction))
+            total_frames = total_seconds * 60
+
+            progress = (
+                min(1.0, self.larvae_timer / total_frames) if total_frames > 0 else 0.0
+            )
+            remaining_s = max(0, total_frames - self.larvae_timer) // 60
+
+            bar = ui.get("queen_larva_bar_0")
+            if isinstance(bar, ProgressBar):
+                bar.set_value(progress)
+
+            time_lbl = ui.get("queen_larva_time_0")
+            if isinstance(time_lbl, Label):
+                time_lbl.set_text(f"{remaining_s} s")
+        else:
+            # Pas de larve en production -> afficher 0/vider label
+            bar = ui.get("queen_larva_bar_0")
+            if isinstance(bar, ProgressBar):
+                bar.set_value(0.0)
+            time_lbl = ui.get("queen_larva_time_0")
+            if isinstance(time_lbl, Label):
+                time_lbl.set_text("")
 
     def spawn_ant(self, ant_type: str):
         """
@@ -620,6 +661,59 @@ class Queen(Room):
         if upg_id == "larvae_slots":
             self.max_larvae += 1
         # D'autres effets pourront être ajoutés ici selon l'upg_id
+
+    def serialize(self) -> dict:
+        """
+        Sérialise l'état de la reine en dictionnaire.
+        Equivalent à l'ancien SaveManager.serialize_queen mais placé sur l'instance de la salle.
+        """
+        # File de larves : liste des types en attente
+        born_queue_list = [item for (item, _) in self.born_queue.content]
+
+        # Séparation améliorations avec niveaux / sans niveaux (débloquées)
+        upgrade_levels = {}
+        unlocked_upgrades = []
+        for upg_id, level in self.upgrade_levels.items():
+            if level > 0:
+                upg_data = QUEEN_UPGRADES.get(upg_id, {})
+                if upg_data.get("levels"):
+                    upgrade_levels[upg_id] = level
+                else:
+                    unlocked_upgrades.append(upg_id)
+
+        return {
+            "hp": self.hp,
+            "upgrade_levels": upgrade_levels,
+            "unlocked_upgrades": unlocked_upgrades,
+            "max_larvae": self.max_larvae,
+            "born_queue": born_queue_list,
+            "larvae_timer": self.larvae_timer,
+        }
+
+    def restore_from_dict(self, data: dict):
+        """
+        Reconstruit l'état de la reine à partir d'un dictionnaire (inverse de serialize()).
+        """
+        from constants import QUEEN_UPGRADES  # re-import local constant to be explicit
+
+        self.hp = data.get("hp", self.max_hp)
+        self.max_larvae = data.get("max_larvae", QUEEN_MAX_LARVAE)
+        self.larvae_timer = data.get("larvae_timer", 0)
+
+        # Reconstruire upgrade_levels
+        upgrade_levels = {k: 0 for k in QUEEN_UPGRADES}
+        for upg_id, lvl in data.get("upgrade_levels", {}).items():
+            if upg_id in upgrade_levels:
+                upgrade_levels[upg_id] = lvl
+        for upg_id in data.get("unlocked_upgrades", []):
+            if upg_id in upgrade_levels:
+                upgrade_levels[upg_id] = 1  # débloquée = niveau 1
+        self.upgrade_levels = upgrade_levels
+
+        # Reconstruire la file de larves
+        self.born_queue = File()
+        for ant_type in data.get("born_queue", []):
+            self.born_queue.enfiler(ant_type)
 
     def on_feed_task_done(self):
         """

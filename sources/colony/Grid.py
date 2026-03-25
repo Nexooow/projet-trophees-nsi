@@ -2,11 +2,19 @@ import heapq
 import math
 import random
 
+import pygame
+from constants import CELL_STATES, DARK_DIRT_COLOR
+from lib.utils import lerp_color
+
 
 class Grid:
     CELL_SIZE = 8  # Taille d'une cellule en pixels
 
     def __init__(self, screen_size, start_y):
+        """
+        screen_size: tuple (pixel_width, pixel_height) de la surface de la grille (en pixels)
+        start_y: position Y (en pixels) du début de la zone de grille dans le monde (utile si on convertit global->local)
+        """
         self.start_y = start_y
         self.pixel_width = math.floor(screen_size[0])
         self.pixel_height = math.floor(screen_size[1])
@@ -41,7 +49,7 @@ class Grid:
 
                 row.append(
                     {
-                        "state": "full",  # "full", "empty", "partial"
+                        "state": "full",  # "full", "empty", "partial", "room", "occupied_*"
                         "bitmap": None,  # Matrice 8x8 pour les cellules partielles
                         "variant": variant,
                     }
@@ -56,14 +64,14 @@ class Grid:
                 yield grid_x, grid_y, self.grid[grid_y][grid_x]
 
     def get_cell(self, cell_x, cell_y):
-        """Retourne une cellule de la grille"""
+        """Retourne une cellule de la grille (ou None si hors limites)"""
         if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
             return self.grid[cell_y][cell_x]
         return None
 
     def set_cell_state(self, cell_x, cell_y, state, bitmap=None):
         """
-        Change l'état d'une cellule
+        Change l'état d'une cellule et marque la cellule (et ses voisines) comme 'dirty' pour redessin.
         """
         if 0 <= cell_x < self.width and 0 <= cell_y < self.height:
             self.grid[cell_y][cell_x]["state"] = state
@@ -79,7 +87,7 @@ class Grid:
 
     def get_cell_center(self, x, y):
         """
-        Retourne les coordonnées du centre d'une cellule
+        Retourne les coordonnées du centre d'une cellule (en pixels relatifs à la grille)
         """
         cell = self.pixel_to_cell(x, y)
         return cell[0] * self.CELL_SIZE + (self.CELL_SIZE // 2), cell[
@@ -87,13 +95,13 @@ class Grid:
         ] * self.CELL_SIZE + (self.CELL_SIZE // 2)
 
     def pixel_to_cell(self, pixel_x, pixel_y):
-        """Convertit des coordonnées pixel en coordonnées cellule"""
+        """Convertit des coordonnées pixel en coordonnées cellule (relatives à la grille)"""
         cell_x = pixel_x // self.CELL_SIZE
         cell_y = pixel_y // self.CELL_SIZE
         return math.floor(cell_x), math.floor(cell_y)
 
     def cell_to_pixel(self, cell_x, cell_y):
-        """Convertit des coordonnées cellule en coordonnées pixel"""
+        """Convertit des coordonnées cellule en coordonnées pixel (coin haut-gauche de la cellule)"""
         pixel_x = cell_x * self.CELL_SIZE
         pixel_y = cell_y * self.CELL_SIZE
         return pixel_x, pixel_y
@@ -110,9 +118,10 @@ class Grid:
     def supprimer_cellules(self, x, y, size):
         """
         Supprime les cellules dans un cercle.
-        x, y : coin haut gauche du carré englobant le cercle
+        x, y : coin haut gauche du carré englobant le cercle (coordonnées relatives à la grille)
         size : diamètre du cercle
         """
+        # x,y sont attendus relatifs à la surface de la grille (i.e. 0..pixel_width)
         y -= self.start_y
 
         # Centre et rayon du cercle
@@ -205,7 +214,7 @@ class Grid:
     def build_room(self, x, y, width, height):
         """
         Construit une salle (met les cellules en état "room").
-        x, y : coin haut gauche en pixels
+        x, y : coin haut gauche en pixels (relatifs à la grille)
         width, height : dimensions en pixels
         """
         y -= self.start_y
@@ -332,3 +341,276 @@ class Grid:
                     counter += 1
 
         return None
+
+    def is_solid_pixel(self, gx, gy):
+        """
+        Vérifie si un pixel (coordonnées relatives à la grille) est solide.
+        """
+        if not (0 <= gx < self.pixel_width and 0 <= gy < self.pixel_height):
+            return True
+
+        cx, cy = self.pixel_to_cell(gx, gy)
+        cell = self.get_cell(cx, cy)
+        if not cell:
+            return True
+
+        if cell["state"] == "full":
+            return True
+        elif cell["state"] == "empty":
+            return False
+        elif cell["state"] == "partial":
+            px, py = gx % self.CELL_SIZE, gy % self.CELL_SIZE
+            bmp = cell.get("bitmap")
+            if not bmp:
+                return True
+            return bmp[py][px]
+        return True
+
+    def render_dirty_cells(self, surface, light_dirt_rgb, light_gal_rgb):
+        """
+        Dessine uniquement les cellules marquées comme 'dirty'. (pour optimisation)
+        """
+        while self.dirty_cells:
+            cell_x, cell_y = self.dirty_cells.pop()
+            cell = self.get_cell(cell_x, cell_y)
+            if cell:
+                self.render_cell(
+                    surface, cell_x, cell_y, cell, light_dirt_rgb, light_gal_rgb
+                )
+
+    def render_cell(self, surface, cell_x, cell_y, cell, light_dirt_rgb, light_gal_rgb):
+        """
+        Dessine une cellule sur la surface fournie.
+        """
+        state = cell["state"]
+        pixel_x, pixel_y = self.cell_to_pixel(cell_x, cell_y)
+        cell_size = self.CELL_SIZE
+
+        # Calcul de la couleur de la terre en fonction de la profondeur
+        depth_ratio = cell_y / max(1, self.height)
+
+        # Interpolation vers une couleur de fond plus sombre
+        current_dirt_rgb = lerp_color(light_dirt_rgb, DARK_DIRT_COLOR, depth_ratio)
+        dirt_r, dirt_g, dirt_b = current_dirt_rgb
+
+        if state == "empty" or state == "room":
+            pygame.draw.rect(
+                surface,
+                light_gal_rgb,
+                (pixel_x, pixel_y, cell_size, cell_size),
+            )
+        elif state == "full":
+            pygame.draw.rect(
+                surface,
+                current_dirt_rgb,
+                (pixel_x, pixel_y, cell_size, cell_size),
+            )
+            # Variation visuelle aléatoire (cailloux/bruit)
+            if cell.get("variant", 0) == 1:
+                pygame.draw.rect(
+                    surface,
+                    (
+                        max(0, dirt_r - 30),
+                        max(0, dirt_g - 30),
+                        max(0, dirt_b - 30),
+                    ),
+                    (pixel_x + 2, pixel_y + 2, 2, 2),
+                )
+            elif cell.get("variant", 0) == 2:
+                pygame.draw.rect(
+                    surface,
+                    (
+                        min(255, dirt_r + 25),
+                        min(255, dirt_g + 25),
+                        min(255, dirt_b + 25),
+                    ),
+                    (pixel_x + 5, pixel_y + 1, 2, 2),
+                )
+            elif cell.get("variant", 0) == 3:
+                pygame.draw.rect(
+                    surface,
+                    "#abafb9",
+                    (pixel_x + 3, pixel_y + 3, 1, 1),
+                )
+            # "Autotiling" : ombres le long des bords où la cellule rencontre du vide
+            neighbors = [
+                (0, -1, (0, 0, cell_size, 1)),  # Haut
+                (0, 1, (0, cell_size - 1, cell_size, 1)),  # Bas
+                (-1, 0, (0, 0, 1, cell_size)),  # Gauche
+                (1, 0, (cell_size - 1, 0, 1, cell_size)),  # Droite
+            ]
+            shadow_color = (
+                max(0, current_dirt_rgb[0] - 40),
+                max(0, current_dirt_rgb[1] - 40),
+                max(0, current_dirt_rgb[2] - 40),
+            )
+            for dx, dy, rect in neighbors:
+                nx, ny = cell_x + dx, cell_y + dy
+                neighbor = self.get_cell(nx, ny)
+                draw_shadow = False
+                if neighbor:
+                    if neighbor["state"] == "empty" or neighbor["state"] == "room":
+                        draw_shadow = True
+                    elif neighbor["state"] == "partial":
+                        # vérifier si les pixels adjacents dans la cellule partielle sont vides
+                        bitmap = neighbor.get("bitmap")
+                        if bitmap:
+                            has_dirt_contact = False
+                            if dy == -1:
+                                has_dirt_contact = any(
+                                    bitmap[cell_size - 1][x] for x in range(cell_size)
+                                )
+                            elif dy == 1:
+                                has_dirt_contact = any(
+                                    bitmap[0][x] for x in range(cell_size)
+                                )
+                            elif dx == -1:
+                                has_dirt_contact = any(
+                                    bitmap[y][cell_size - 1] for y in range(cell_size)
+                                )
+                            elif dx == 1:
+                                has_dirt_contact = any(
+                                    bitmap[y][0] for y in range(cell_size)
+                                )
+                            if not has_dirt_contact:
+                                draw_shadow = True
+                        else:
+                            draw_shadow = True
+
+                if draw_shadow:
+                    pygame.draw.rect(
+                        surface,
+                        shadow_color,
+                        (
+                            pixel_x + rect[0],
+                            pixel_y + rect[1],
+                            rect[2],
+                            rect[3],
+                        ),
+                    )
+
+        elif state == "partial":
+            # Fond galerie (on considère que light_gal_rgb correspond à la couleur des galeries)
+            pygame.draw.rect(
+                surface,
+                light_gal_rgb,
+                (pixel_x, pixel_y, cell_size, cell_size),
+            )
+
+            bitmap = cell.get("bitmap")
+            if bitmap:
+                shadow_color = (
+                    max(0, dirt_r - 50),
+                    max(0, dirt_g - 50),
+                    max(0, dirt_b - 50),
+                )
+                highlight_color = (
+                    min(255, dirt_r + 30),
+                    min(255, dirt_g + 30),
+                    min(255, dirt_b + 30),
+                )
+
+                for py in range(cell_size):
+                    for px in range(cell_size):
+                        if bitmap[py][px]:
+                            gx = pixel_x + px
+                            gy = pixel_y + py
+
+                            pygame.draw.rect(surface, current_dirt_rgb, (gx, gy, 1, 1))
+
+                            # détecter les bords pour ajouter ombrage
+                            if not self.is_solid_pixel(gx, gy - 1):
+                                pygame.draw.rect(
+                                    surface, highlight_color, (gx, gy, 1, 1)
+                                )
+                            elif not self.is_solid_pixel(gx, gy + 1):
+                                pygame.draw.rect(surface, shadow_color, (gx, gy, 1, 1))
+
+        elif state.startswith("occupied"):
+            pygame.draw.rect(
+                surface,
+                light_gal_rgb,
+                (pixel_x, pixel_y, cell_size, cell_size),
+            )
+
+    def serialize(self) -> list:
+        """
+        Sérialise la grille
+        """
+        rows = []
+        for y in range(self.height):
+            row = []
+            for x in range(self.width):
+                cell = self.grid[y][x]
+                state = cell["state"]
+                bitmap = cell.get("bitmap")
+                # Only keep variant for 'full' cells; other states must have variant 0
+                variant = cell.get("variant", 0) if state == "full" else 0
+                if state == "full":
+                    # store variant as full_v{variant+1} so full_v1 represents variant 0
+                    code_key = f"full_v{variant + 1}"
+                    row.append(CELL_STATES.get(code_key, CELL_STATES["full_v1"]))
+                elif state == "empty":
+                    row.append(CELL_STATES["empty"])
+                elif state == "occupied":
+                    row.append(CELL_STATES["occupied"])
+                elif state == "occupied_walkable":
+                    row.append(CELL_STATES["occupied_walkable"])
+                elif state == "partial" and bitmap is not None:
+                    # Compresser le bitmap en liste d'entiers (1 entier = 1 ligne de 8 bits)
+                    compressed = [
+                        int("".join("1" if px else "0" for px in row_bmp), 2)
+                        for row_bmp in bitmap
+                    ]
+                    row.append([compressed, variant])
+                else:
+                    row.append(None)
+            rows.append(row)
+        return rows
+
+    def restore(self, rows: list):
+        """
+        Restaure la grille à partir de la sauvegarde.
+        """
+        self.cached_paths = {}
+
+        INT_TO_STATE: dict = {}
+        for key, code in CELL_STATES.items():
+            if key.startswith("full_v"):
+                # stored full_vN corresponds to variant N-1 (full_v1 -> variant 0)
+                variant = int(key[len("full_v") :]) - 1
+                INT_TO_STATE[code] = ("full", variant)
+            elif key == "empty":
+                INT_TO_STATE[code] = ("empty", 0)
+            elif key == "occupied":
+                INT_TO_STATE[code] = ("occupied", 0)
+            elif key == "occupied_walkable":
+                INT_TO_STATE[code] = ("occupied_walkable", 0)
+
+        for y, row in enumerate(rows):
+            if y >= self.height:
+                break
+            for x, cell_data in enumerate(row):
+                if x >= self.width:
+                    break
+                if isinstance(cell_data, int):
+                    # État simple encodé comme un entier
+                    state, variant = INT_TO_STATE.get(cell_data, ("full", 0))
+                    bitmap = None
+                elif isinstance(cell_data, list):
+                    # Cellule partielle : [compressed_bitmap, variant]
+                    compressed, variant = cell_data[0], cell_data[1]
+                    state = "partial"
+                    bitmap = []
+                    for row_int in compressed:
+                        brow = []
+                        for bit in range(7, -1, -1):
+                            brow.append(bool((row_int >> bit) & 1))
+                        bitmap.append(brow)
+                else:
+                    state, variant, bitmap = "full", 0, None
+
+                self.grid[y][x]["state"] = state
+                self.grid[y][x]["bitmap"] = bitmap
+                self.grid[y][x]["variant"] = variant
+                self.dirty_cells.add((x, y))

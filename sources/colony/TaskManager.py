@@ -137,3 +137,64 @@ class TaskManager:
                 ant = available_ants.pop(0)
                 task.start(ant.id)
                 ant.add_task(task)
+
+    def serialize(self) -> dict:
+        """
+        Sérialise le TaskManager : tâches et files.
+        """
+        tasks_out = {}
+        for tid, task in self.tasks.items():
+            tasks_out[str(tid)] = {
+                "type": task.type,
+                "data": task.data,
+                "assigned_to": str(task.assigned_to) if task.assigned_to else None,
+                "priority": task.priority,
+                "deadline": task.deadline,
+            }
+
+        files_out = {}
+        for ant_type, file in self.files.items():
+            files_out[ant_type] = [str(item) for (item, _) in file.content]
+
+        return {"tasks": tasks_out, "files": files_out}
+
+    def restore(self, data: dict):
+        """
+        Restaure les tâches et les files.
+        """
+        self.tasks.clear()
+        for key in self.files:
+            self.files[key].content = []
+
+        tasks_data = data.get("tasks", {})
+        for tid_str, tdata in tasks_data.items():
+            try:
+                task_id = uuid.UUID(tid_str)
+                task = Task(
+                    self,
+                    type=tdata["type"],
+                    data=tdata["data"],
+                )
+                task.id = task_id
+                task.priority = tdata.get("priority", task.priority)
+                task.deadline = tdata.get("deadline", task.deadline)
+
+                assigned_to_str = tdata.get("assigned_to")
+                if assigned_to_str:
+                    task.assigned_to = uuid.UUID(assigned_to_str)
+
+                self.tasks[task_id] = task
+            except Exception:
+                continue
+
+        files_data = data.get("files", {})
+        for ant_type, items in files_data.items():
+            if ant_type in self.files:
+                for tid_str in items:
+                    try:
+                        tid = uuid.UUID(tid_str)
+                        if tid in self.tasks:
+                            task = self.tasks[tid]
+                            self.files[ant_type].enfiler(tid, task.priority)
+                    except Exception:
+                        pass

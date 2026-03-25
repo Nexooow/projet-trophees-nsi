@@ -6,32 +6,25 @@ import time
 import typing
 import uuid
 
-from constants import SAVES_PATH
-
+from colony.ants.Nurse import Nurse
+from colony.ants.Scientist import Scientist
+from colony.ants.Worker import Worker
+from constants import CURRENT_SAVE_VERSION, SAVES_PATH
 from exploration.ExpeditionMap import ExpeditionMap
-from exploration.Node import Node
 
-CURRENT_SAVE_VERSION = 1
-
-CELL_STATES = {
-    "empty": 0,
-    "full_v1": 1,
-    "full_v2": 2,
-    "full_v3": 3,
-    "full_v4": 4,
-    "occupied": 10,
-    "occupied_walkable": 11,
-}
+if typing.TYPE_CHECKING:
+    from core.GameManager import GameManager
 
 
 class SaveManager:
     """
-    Gestionnaire des sauvegardes.
+    Gestionnaire de sauvegarde et de chargement.
     """
 
-    def __init__(self, game):
-        self.game = game
-        os.makedirs(SAVES_PATH, exist_ok=True)
+    def __init__(self, game_manager: "GameManager"):
+        self.game = game_manager
+        if not os.path.exists(SAVES_PATH):
+            os.makedirs(SAVES_PATH)
 
     def save_path(self, save_id: str) -> str:
         return os.path.join(SAVES_PATH, f"{save_id}.json")
@@ -41,6 +34,9 @@ class SaveManager:
         Retourne la liste des sauvegardes disponibles
         """
         saves = []
+        if not os.path.exists(SAVES_PATH):
+            return []
+
         for file_name in os.listdir(SAVES_PATH):
             if not file_name.endswith(".json"):
                 continue
@@ -83,6 +79,7 @@ class SaveManager:
         data = self.save_dict(save_id)
         path = self.save_path(save_id)
 
+        # Écrire de manière atomique si possible (écriture simple ici)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
 
@@ -96,12 +93,44 @@ class SaveManager:
         time_mgr = game.time
 
         colony = self.get_colony()
-        colony_data: dict = {"food": colony.food, "science": colony.science}
+        colony_data: dict = {
+            "food": colony.food,
+            "science": colony.science,
+            "food_capacity": colony.food_capacity,
+            "camera_x": colony.camera_x,
+            "camera_y": colony.camera_y,
+            "pending_builds": colony.pending_builds,
+        }
 
         colony_data["inventory"] = colony.inventory
-        colony_data["grid"] = self.serialize_grid(colony)
-        colony_data["rooms"] = self.serialize_rooms(colony)
-        colony_data["ants"] = self.serialize_ants(colony)
+
+        # Délégation aux sous-systèmes
+        colony_data["grid"] = colony.grid.serialize()
+
+        colony_data["rooms"] = {}
+        for room in colony.rooms:
+            # On suppose que toutes les salles ont une méthode serialize ou on gère le None
+            if hasattr(room, "serialize"):
+                colony_data["rooms"][room.name] = room.serialize()
+            else:
+                colony_data["rooms"][room.name] = None
+
+        colony_data["ants"] = []
+        for ant in colony.ants:
+            colony_data["ants"].append(ant.serialize())
+
+        colony_data["tasks"] = colony.tasks.serialize()
+
+        # Expedition serialization
+        expedition_data = None
+        expedition_state = self.game.state.states_managers.get("expedition")
+        if expedition_state and expedition_state.expedition_map:
+            exp_map_data = expedition_state.expedition_map.serialize()
+            if exp_map_data:
+                # Ajout des données caméra qui sont dans l'état, pas dans la map
+                exp_map_data["cam_x"] = expedition_state.cam_x
+                exp_map_data["cam_y"] = expedition_state.cam_y
+                expedition_data = exp_map_data
 
         return {
             "version": CURRENT_SAVE_VERSION,
@@ -116,135 +145,11 @@ class SaveManager:
                 "sub_frame_count": time_mgr.sub_frame_count,
             },
             "colony": colony_data,
-            "expedition": self.serialize_expedition(),
+            "expedition": expedition_data,
         }
 
     def get_colony(self):
-        """Retourne l'état ColonyState actuel."""
         return self.game.state.states_managers["colony"]
-
-    def serialize_grid(self, colony) -> list:
-        """
-        Sérialise la grille
-        """
-        grid = colony.grid
-        rows = []
-        for y in range(grid.height):
-            row = []
-            for x in range(grid.width):
-                cell = grid.grid[y][x]
-                state = cell["state"]
-                bitmap = cell.get("bitmap")
-                # Only keep variant for 'full' cells; other states must have variant 0
-                variant = cell.get("variant", 0) if state == "full" else 0
-                if state == "full":
-                    # store variant as full_v{variant+1} so full_v1 represents variant 0
-                    code_key = f"full_v{variant + 1}"
-                    row.append(CELL_STATES.get(code_key, CELL_STATES["full_v1"]))
-                elif state == "empty":
-                    row.append(CELL_STATES["empty"])
-                elif state == "occupied":
-                    row.append(CELL_STATES["occupied"])
-                elif state == "occupied_walkable":
-                    row.append(CELL_STATES["occupied_walkable"])
-                elif state == "partial" and bitmap is not None:
-                    # Compresser le bitmap en liste d'entiers (1 entier = 1 ligne de 8 bits)
-                    compressed = [
-                        int("".join("1" if px else "0" for px in row_bmp), 2)
-                        for row_bmp in bitmap
-                    ]
-                    row.append([compressed, variant])
-                else:
-                    row.append(None)
-            rows.append(row)
-        return rows
-
-    def serialize_rooms(self, colony) -> dict:
-        """
-        Sérialise les données des salles de la colonie.
-        """
-        rooms_data: dict = {}
-        for room in colony.rooms:
-            if room.name == "queen":
-                rooms_data["queen"] = self.serialize_queen(room)
-            else:
-                pass #rooms_data[room.type] = self.serizalize_room(room)
-        return rooms_data
-
-    def serialize_queen(self, queen) -> dict:
-        """
-        Sérialise les données de la reine.
-        """
-        # File de larves : liste des types en attente
-        born_queue_list = [item for (item, _) in queen.born_queue.content]
-
-        # Séparation améliorations avec niveaux / sans niveaux (débloquées)
-        upgrade_levels = {}
-        unlocked_upgrades = []
-        for upg_id, level in queen.upgrade_levels.items():
-            if level > 0:
-                from constants import QUEEN_UPGRADES
-
-                upg_data = QUEEN_UPGRADES.get(upg_id, {})
-                if upg_data.get("levels"):
-                    upgrade_levels[upg_id] = level
-                else:
-                    unlocked_upgrades.append(upg_id)
-
-        return {
-            "hp": queen.hp,
-            "upgrade_levels": upgrade_levels,
-            "unlocked_upgrades": unlocked_upgrades,
-            "max_larvae": queen.max_larvae,
-            "born_queue": born_queue_list,
-            "larvae_timer": queen.larvae_timer,
-        }
-
-    def serialize_ants(self, colony) -> list:
-        """
-        Sérialise la liste des fourmis de la colonie.
-        """
-        ants_list = []
-        for ant in colony.ants:
-            ants_list.append(
-                {
-                    "type": ant.type,
-                    "data": {"power": ant.power, "xp": ant.xp},
-                    "pos": [ant.pos.x, ant.pos.y],
-                }
-            )
-        return ants_list
-
-    def serialize_expedition(self):
-        """
-        Sérialise l'état de l'expédition (carte, noeuds, caméra).
-        """
-        state_mgr = self.game.state
-        expedition_state = state_mgr.states_managers.get("expedition")
-        if not expedition_state:
-            return None
-        emap = expedition_state.expedition_map
-        nodes = []
-        for node in emap.all_nodes:
-            nodes.append(
-                {
-                    "node_id": node.node_id,
-                    "parent_id": node.parent.node_id if node.parent else None,
-                    "depth": node.depth,
-                    "is_cleared": node.is_cleared,
-                    "is_discovered": node.is_discovered,
-                    "is_visible": node.is_visible,
-                    "seed": node.seed,
-                    "position": node.position,
-                }
-            )
-        return {
-            "seed": emap.seed,
-            "current_node_id": emap.current.node_id if emap.current else None,
-            "all_nodes": nodes,
-            "cam_x": expedition_state.cam_x,
-            "cam_y": expedition_state.cam_y,
-        }
 
     def restaurer(self, save_id: typing.Optional[str] = None) -> bool:
         """
@@ -258,7 +163,6 @@ class SaveManager:
                 return False
             save_id = latest["save_id"]
 
-        assert save_id is not None
         path = self.save_path(save_id)
         if not os.path.exists(path):
             return False
@@ -292,175 +196,64 @@ class SaveManager:
         colony = self.get_colony()
         colony.food = colony_data.get("food", 0)
         colony.science = colony_data.get("science", 0)
+        colony.food_capacity = colony_data.get("food_capacity", colony.food_capacity)
+        colony.camera_x = colony_data.get("camera_x", colony.camera_x)
+        colony.camera_y = colony_data.get("camera_y", colony.camera_y)
+        colony.pending_builds = colony_data.get("pending_builds", [])
         colony.inventory = colony_data.get("inventory", {})
 
+        # Grid
         grid_data = colony_data.get("grid")
         if grid_data:
-            self.restore_grid(colony, grid_data)
+            colony.grid.restore(grid_data)
 
+        # Rooms
         rooms_data = colony_data.get("rooms", {})
-        self.restore_rooms(colony, rooms_data)
+        for room in colony.rooms:
+            rdata = rooms_data.get(room.name)
+            if rdata and hasattr(room, "restore"):
+                room.restore(rdata)
 
         # Fourmis
         ants_data = colony_data.get("ants", [])
-        self.restore_ants(colony, ants_data)
-
-        # Restaurer l'état de l'expédition (carte / progression)
-        expedition_data = data.get("expedition")
-        if expedition_data:
-            self.restore_expedition(expedition_data)
-
-        # Re-render toute la grille
-        for y in range(colony.grid.height):
-            for x in range(colony.grid.width):
-                colony.grid.dirty_cells.add((x, y))
-
-    def restore_grid(self, colony, rows: list):
-        """
-        Restaure la grille à partir de la sauvegarde.
-        """
-        grid = colony.grid
-        grid.cached_paths = {}
-
-        INT_TO_STATE: dict = {}
-        for key, code in CELL_STATES.items():
-            if key.startswith("full_v"):
-                # stored full_vN corresponds to variant N-1 (full_v1 -> variant 0)
-                variant = int(key[len("full_v") :]) - 1
-                INT_TO_STATE[code] = ("full", variant)
-            elif key == "empty":
-                INT_TO_STATE[code] = ("empty", 0)
-            elif key == "occupied":
-                INT_TO_STATE[code] = ("occupied", 0)
-            elif key == "occupied_walkable":
-                INT_TO_STATE[code] = ("occupied_walkable", 0)
-
-        for y, row in enumerate(rows):
-            if y >= grid.height:
-                break
-            for x, cell_data in enumerate(row):
-                if x >= grid.width:
-                    break
-                if isinstance(cell_data, int):
-                    # État simple encodé comme un entier
-                    state, variant = INT_TO_STATE.get(cell_data, ("full", 0))
-                    bitmap = None
-                elif isinstance(cell_data, list):
-                    # Cellule partielle : [compressed_bitmap, variant]
-                    compressed, variant = cell_data[0], cell_data[1]
-                    state = "partial"
-                    bitmap = []
-                    for row_int in compressed:
-                        brow = []
-                        for bit in range(7, -1, -1):
-                            brow.append(bool((row_int >> bit) & 1))
-                        bitmap.append(brow)
-                else:
-                    state, variant, bitmap = "full", 0, None
-
-                grid.grid[y][x]["state"] = state
-                grid.grid[y][x]["bitmap"] = bitmap
-                grid.grid[y][x]["variant"] = variant
-                grid.dirty_cells.add((x, y))
-
-    def restore_rooms(self, colony, rooms_data: dict):
-        for room in colony.rooms:
-            if room.name == "queen" and "queen" in rooms_data:
-                self.restore_queen(room, rooms_data["queen"])
-            if room.name == "laboratory" and "laboratory" in rooms_data:
-                pass
-
-    def restore_queen(self, queen, data: dict):
-        from constants import QUEEN_MAX_LARVAE, QUEEN_UPGRADES
-        from lib.file import File
-
-        queen.hp = data.get("hp", queen.max_hp)
-        queen.max_larvae = data.get("max_larvae", QUEEN_MAX_LARVAE)
-        queen.larvae_timer = data.get("larvae_timer", 0)
-
-        # Reconstruire upgrade_levels
-        upgrade_levels = {k: 0 for k in QUEEN_UPGRADES}
-        for upg_id, lvl in data.get("upgrade_levels", {}).items():
-            if upg_id in upgrade_levels:
-                upgrade_levels[upg_id] = lvl
-        for upg_id in data.get("unlocked_upgrades", []):
-            if upg_id in upgrade_levels:
-                upgrade_levels[upg_id] = 1  # débloquée = niveau 1
-        queen.upgrade_levels = upgrade_levels
-
-        # Reconstruire la file de larves
-        queen.born_queue = File()
-        for ant_type in data.get("born_queue", []):
-            queen.born_queue.enfiler(ant_type)
-
-    def restore_ants(self, colony, ants_data: list):
-        from colony.ants.Nurse import Nurse
-        from colony.ants.Worker import Worker
-        from colony.ants.Scientist import Scientist
-
-        _ANT_CLASS_MAP = {
-            "worker": Worker,
-            "nurse": Nurse,
-            "scientist": Scientist
-        }
-
         colony.ants.clear()
+        _ANT_CLASS_MAP = {"worker": Worker, "nurse": Nurse, "scientist": Scientist}
+
         for ant_data in ants_data:
             ant_type = ant_data.get("type", "worker")
             ant_class = _ANT_CLASS_MAP.get(ant_type, Worker)
             pos = tuple(ant_data.get("pos", [0, 0]))
+
             ant = ant_class(colony, ant_data.get("data", {"power": 1, "xp": 0}), pos)
+            ant.restore_from_dict(ant_data)
             colony.ants.append(ant)
 
-    def restore_expedition(self, data: dict):
-        """
-        Reconstruit l'état de l'expédition à partir des données sauvegardées.
-        """
+        # Tâches
+        tasks_blob = colony_data.get("tasks")
+        if tasks_blob:
+            colony.tasks.restore(tasks_blob)
 
-        expedition_state = self.game.state.states_managers.get("expedition")
-        if not expedition_state:
-            return
+        # Expedition
+        expedition_data = data.get("expedition")
+        if expedition_data:
+            expedition_state = self.game.state.states_managers.get("expedition")
+            if expedition_state:
+                if not expedition_state.expedition_map:
+                    expedition_state.expedition_map = ExpeditionMap(
+                        seed=expedition_data.get("seed")
+                    )
 
-        all_nodes_data = data.get("all_nodes", [])
-        node_map = {}
-        emap = ExpeditionMap(seed=data.get("seed"))
-        emap.all_nodes = []
+                expedition_state.expedition_map.restore(expedition_data)
 
-        # Créer les noeuds sans parents
-        for nd in all_nodes_data:
-            node = Node(
-                node_id=nd["node_id"],
-                parent=None,
-                depth=nd.get("depth", 0),
-                seed=nd.get("seed"),
-            )
-            node.is_cleared = nd.get("is_cleared", False)
-            node.is_discovered = nd.get("is_discovered", False)
-            node.is_visible = nd.get("is_visible", False)
-            node.position = tuple(nd.get("position", node.position))
-            node.children = []
-            node.num_children = node.child_count()
-            node_map[node.node_id] = node
-            emap.all_nodes.append(node)
+                # Restaurer la caméra
+                expedition_state.cam_x = expedition_data.get(
+                    "cam_x", getattr(expedition_state, "cam_x", 600)
+                )
+                expedition_state.cam_y = expedition_data.get(
+                    "cam_y", getattr(expedition_state, "cam_y", 400)
+                )
 
-        # Assigner parents et enfants
-        for nd in all_nodes_data:
-            node = node_map.get(nd["node_id"])
-            parent_id = nd.get("parent_id")
-            if parent_id is not None:
-                parent = node_map.get(parent_id)
-                if parent:
-                    node.parent = parent
-                    parent.children.append(node)
-
-        emap.root_node = next((n for n in emap.all_nodes if n.parent is None), None)
-        if emap.root_node is None and emap.all_nodes:
-            emap.root_node = emap.all_nodes[0]
-        emap.current = node_map.get(data.get("current_node_id"), emap.root_node)
-        expedition_state.expedition_map = emap
-        expedition_state.cam_x = data.get(
-            "cam_x", getattr(expedition_state, "cam_x", 600)
-        )
-        expedition_state.cam_y = data.get(
-            "cam_y", getattr(expedition_state, "cam_y", 400)
-        )
+        # Re-render toute la grille (nécessaire après restore grid)
+        for y in range(colony.grid.height):
+            for x in range(colony.grid.width):
+                colony.grid.dirty_cells.add((x, y))
