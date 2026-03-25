@@ -6,7 +6,7 @@ from states.ExpeditionState import ExpeditionState
 from states.GameOverState import GameOverState
 from states.MenuState import MenuState
 from states.State import State
-
+from states.ExpeditionMenuState import ExpeditionMenuState
 
 class StateManager:
     """
@@ -24,6 +24,7 @@ class StateManager:
             "menu": MenuState(self),
             "colony": ColonyState(self),
             "expedition": ExpeditionState(self),
+            "expedition_menu": ExpeditionMenuState(self),
             "battle": None,  # sera créé dynamiquement lors d'une bataille
             "game_over": GameOverState(self),
         }
@@ -91,3 +92,6 @@ class StateManager:
     def trigger_game_over(self, stats: dict):
         self.states_managers["game_over"].set_stats(stats)
         self.set_state("game_over")
+
+    def get_state(self, name: str):
+        return self.states_managers.get(name)

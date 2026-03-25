@@ -21,7 +21,7 @@ class ExpeditionState(State):
         self.cam_x = 600
         self.cam_y = 400
         self.screen = self.game.screen
-
+        self.ants=[]
         self.cam_world = pygame.Surface((1000, 700), pygame.SRCALPHA | pygame.HWSURFACE)
         self.clock = pygame.time.Clock()
         self.state = "map"
@@ -34,7 +34,7 @@ class ExpeditionState(State):
         self.pygame_surf = pygame.Surface((self.screen_sizes[0], self.screen_sizes[1]))
         self.chunks = {}
         self.noise = self.perlin.noise_map(CELL_SIZE, CELL_SIZE)
-
+        self.collected_resources = 0
         self.base_colors = {
             1: (210, 180, 120),
             2: (80, 160, 80),
@@ -50,7 +50,8 @@ class ExpeditionState(State):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.state_manager.set_state("colony")
+                    self.return_to_colony()
+                    #self.state_manager.set_state("colony")
         if self.waiting_for_battle_result:
             battle_state = self.state_manager.states_managers.get("battle")
             if battle_state and battle_state.model.battle_won is not None:
@@ -182,7 +183,7 @@ class ExpeditionState(State):
         current_node = self.selected_node
         self.state_manager.start_battle(
             current_node.difficulty,
-            colony=[],
+            colony=self.ants,
             auto=self.auto,
             world_pos=current_node.position,
             perlin=self.perlin,
@@ -260,3 +261,15 @@ class ExpeditionState(State):
             self.chunks[(cx, cy)] = self.generate_chunk(cx, cy)
 
         return self.chunks[(cx, cy)]
+    def enable(self):
+        self.ants = getattr(self.state_manager, "expedition_ants", [])
+    def return_to_colony(self):
+        print("Ici?")
+        colony = self.state_manager.get_state("colony")
+        colony.food += self.collected_resources
+        colony.ants.extend(self.ants)
+        self.collected_resources = 0
+        self.ants = []
+        print("Ou la?")
+        self.state_manager.expedition_ants = []
+        self.state_manager.set_state("colony")
