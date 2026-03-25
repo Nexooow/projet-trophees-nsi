@@ -58,7 +58,7 @@ class Ant(pygame.sprite.Sprite):
         self.current_task_id: typing.Optional[uuid.UUID] = None
 
         # Système de déplacement
-        self.speed = 2.0 
+        self.speed = 2.0
         self.path = File()
         self.next_cell = None
         self.target_pos = None
@@ -236,6 +236,102 @@ class Ant(pygame.sprite.Sprite):
     def stop(self):
         """Arrête le mouvement de la fourmi"""
         self.path = File()
+        self.next_cell = None
+        self.target_pos = None
+        self.direction = pygame.Vector2(0, 0)
+
+    def serialize(self) -> dict:
+        """
+        Sérialise l'état courant de la fourmi en dictionnaire.
+        Utilisé par le SaveManager pour sauvegarder les fourmis individuellement.
+        """
+        # Sérialiser le chemin (File.content contient des tuples (data, priority))
+        path_list = [item for (item, _) in self.path.content]
+
+        return {
+            "id": str(self.id) if self.id is not None else None,
+            "type": self.type,
+            "data": {
+                "power": self.power,
+                "xp": getattr(self, "xp", 0),
+                "level": getattr(self, "level", 0),
+            },
+            "pos": [float(self.pos.x), float(self.pos.y)],
+            "energy": float(getattr(self, "energy", 0)),
+            "max_energy": float(getattr(self, "max_energy", 0)),
+            "current_task_id": str(self.current_task_id)
+            if self.current_task_id
+            else None,
+            "task_phase": getattr(self, "task_phase", None),
+            "task_data": getattr(self, "task_data", None),
+            "task_pos": list(self.task_pos)
+            if getattr(self, "task_pos", None)
+            else None,
+            "path": path_list,
+        }
+
+    def restore_from_dict(self, data: dict):
+        """
+        Restaure l'état de la fourmi depuis un dictionnaire produit par `serialize`.
+        Cette méthode tente de rétablir l'identifiant, la position, l'énergie,
+        le chemin et la tâche en cours si présents.
+        """
+        if not data:
+            return
+
+        # Identifiant
+        if "id" in data:
+            try:
+                self.id = uuid.UUID(data["id"])
+            except ValueError:
+                pass
+
+        # Type (ne devrait pas changer souvent)
+        if "type" in data:
+            self.type = data["type"]
+
+        # Données de base (power, xp, level)
+        d = data.get("data", {})
+        self.power = d.get("power", getattr(self, "power", 0))
+        self.xp = d.get("xp", getattr(self, "xp", 0))
+        self.level = d.get("level", getattr(self, "level", 0))
+
+        # Position
+        pos = data.get("pos")
+        if pos and len(pos) >= 2:
+            self.pos = pygame.Vector2(float(pos[0]), float(pos[1]))
+            if self.rect:
+                self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+        # Énergie
+        self.energy = float(data.get("energy", self.energy))
+        self.max_energy = float(data.get("max_energy", self.max_energy))
+
+        # Tâche
+        ct = data.get("current_task_id")
+        if ct:
+            try:
+                self.current_task_id = uuid.UUID(ct)
+            except ValueError:
+                self.current_task_id = None
+        else:
+            self.current_task_id = None
+
+        self.task_phase = data.get("task_phase")
+        self.task_data = data.get("task_data")
+
+        tp = data.get("task_pos")
+        if tp and len(tp) >= 2:
+            self.task_pos = (int(tp[0]), int(tp[1]))
+        else:
+            self.task_pos = None
+
+        # Chemin
+        self.path = File()
+        for node in data.get("path", []):
+            self.path.enfiler(node, 0)
+
+        # Réinitialisation déplacement
         self.next_cell = None
         self.target_pos = None
         self.direction = pygame.Vector2(0, 0)

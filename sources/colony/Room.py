@@ -156,3 +156,16 @@ class Room(pygame.sprite.Sprite):
     def draw(self):
         if self.image:
             self.colony.world.blit(self.image, (self.x, self.y))
+
+    def serialize(self):
+        """
+        Retourne l'état de la salle sous forme de dictionnaire.
+        Par défaut, retourne None (pas d'état spécifique).
+        """
+        return None
+
+    def restore(self, data):
+        """
+        Restaure l'état de la salle.
+        """
+        pass

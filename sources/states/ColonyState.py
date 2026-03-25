@@ -1,6 +1,9 @@
+import typing
+
 import pygame
 from colony.ants.Worker import Worker
 from colony.BuildMode import BuildMode
+from colony.Grid import Grid
 from colony.Room import Room
 from colony.rooms.Depot import Depot
 from colony.rooms.Nursery import Nursery
@@ -13,18 +16,14 @@ from constants import (
     COLONY_HEIGHT,
     COLONY_UNDERGROUND_START,
     COLONY_WIDTH,
-    DARK_DIRT_COLOR,
     DIRT_COLOR,
     GALERY_COLOR,
     INITIAL_FOOD_CAPACITY,
-    QUEEN_LARVAS,
     UIColors,
 )
-from colony.Grid import Grid
 from lib.sidebar import Sidebar
 from lib.ui import Label
-from lib.ui.progress_bar import ProgressBar
-from lib.utils import import_asset, lerp_color
+from lib.utils import import_asset
 
 from .State import State
 
@@ -71,9 +70,8 @@ class ColonyState(State):
         ]
 
         self.ants = []
-        # self.ennemies = []
 
-        self.food = 200000
+        self.food = 2000
         self.food_capacity = INITIAL_FOOD_CAPACITY
         self.science = 0.0
 
@@ -83,9 +81,12 @@ class ColonyState(State):
 
         queen_room = self.get_room("queen")
         assert queen_room is not None
+
         spawn_pos = queen_room.get_passable_entry() or queen_room.get_entry()
         self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(3)]
-        self.render_dirty_cells()
+        self.grid.render_dirty_cells(
+            self.grid_surface, self.light_dirt_rgb, self.light_gal_rgb
+        )
 
         self.paused = False
         self.night_overlay = pygame.Surface(
@@ -355,17 +356,16 @@ class ColonyState(State):
         if self.inventory[name] <= 0:
             del self.inventory[name]
 
-
-    def in_room(self, pos, room_name):
+    def in_room(self, pos, room_name) -> bool:
         """
         Vérifie si une fourmi/élément est dans une salle
         """
         room = self.get_room(room_name)
-        if room is not None:
+        if room is not None and room.rect is not None:
             return room.rect.collidepoint(pos)
         return False
 
-    def get_room(self, room_name) -> Room:
+    def get_room(self, room_name) -> typing.Optional[Room]:
         """
         Renvoie les coordonnées d'une pièce
         """
@@ -476,7 +476,9 @@ class ColonyState(State):
         for room in self.rooms:
             room.update(events)
 
-        self.render_dirty_cells()
+        self.grid.render_dirty_cells(
+            self.grid_surface, self.light_dirt_rgb, self.light_gal_rgb
+        )
         self.sync_ui()
 
     def update_day_cycle(self):
@@ -526,30 +528,17 @@ class ColonyState(State):
 
         self.sky.draw_clock(self.clock_surface)
 
-        # Mise à jour en temps réel de la barre de progression de la larve en cours
+        # Délégation de la mise à jour UI spécifique à la reine
         queen = self.get_room("queen")
-        if queen is not None and not queen.born_queue.est_vide():
-            ant_type = queen.born_queue.sommet()
-            ant_data = QUEEN_LARVAS.get(ant_type, {})
-            total_seconds = ant_data.get("time", 30)
-            birth_speed_lvl = queen.upgrade_levels.get("birth_speed", 0)
-            if birth_speed_lvl > 0:
-                reduction = 1.0 - 0.10 * birth_speed_lvl
-                total_seconds = max(1, int(total_seconds * reduction))
-            total_frames = total_seconds * 60
-
-            progress = (
-                min(1.0, queen.larvae_timer / total_frames) if total_frames > 0 else 0.0
-            )
-            remaining_s = max(0, total_frames - queen.larvae_timer) // 60
-
-            bar = self.ui.get("queen_larva_bar_0")
-            if isinstance(bar, ProgressBar):
-                bar.set_value(progress)
-
-            time_lbl = self.ui.get("queen_larva_time_0")
-            if isinstance(time_lbl, Label):
-                time_lbl.set_text(f"{remaining_s} s")
+        if (
+            isinstance(queen, Queen)
+            and hasattr(queen, "sync_ui")
+            and callable(getattr(queen, "sync_ui"))
+        ):
+            try:
+                queen.sync_ui()
+            except Exception:
+                pass
 
         night_label = self.ui.get("colony_night_message")
         if isinstance(night_label, Label):
@@ -593,191 +582,6 @@ class ColonyState(State):
                 y = int(y) - COLONY_BRUSH_SIZE // 2
 
                 self.grid.supprimer_cellules(x, y, COLONY_BRUSH_SIZE)
-
-    def is_solid_pixel(self, gx, gy):
-        """Vérifie si un pixel est solide."""
-        if not (0 <= gx < self.grid.pixel_width and 0 <= gy < self.grid.pixel_height):
-            return True
-
-        cx, cy = self.grid.pixel_to_cell(gx, gy)
-        cell = self.grid.get_cell(cx, cy)
-        if not cell:
-            return True
-
-        if cell["state"] == "full":
-            return True
-        elif cell["state"] == "empty":
-            return False
-        elif cell["state"] == "partial":
-            px, py = gx % self.grid.CELL_SIZE, gy % self.grid.CELL_SIZE
-            return cell["bitmap"][py][px]
-        return True
-
-    def render_dirty_cells(self):
-        """
-        Dessine uniquement les cellules marquées comme 'dirty'.
-        """
-        while self.grid.dirty_cells:
-            cell_x, cell_y = self.grid.dirty_cells.pop()
-            cell = self.grid.get_cell(cell_x, cell_y)
-            if cell:
-                self.render_cell(cell_x, cell_y, cell)
-
-    def render_cell(self, cell_x, cell_y, cell):
-        state = cell["state"]
-        pixel_x, pixel_y = self.grid.cell_to_pixel(cell_x, cell_y)
-        cell_size = self.grid.CELL_SIZE
-
-        # Calcul de la couleur de la terre en fonction de la profondeur
-        depth_ratio = cell_y / self.grid.height
-
-        # Interpolation vers une couleur de fond plus sombre
-        current_dirt_rgb = lerp_color(self.light_dirt_rgb, DARK_DIRT_COLOR, depth_ratio)
-        dirt_r, dirt_g, dirt_b = current_dirt_rgb
-
-        if state == "empty" or state == "room":
-            pygame.draw.rect(
-                self.grid_surface,
-                self.light_gal_rgb,
-                (pixel_x, pixel_y, cell_size, cell_size),
-            )
-        elif state == "full":
-            pygame.draw.rect(
-                self.grid_surface,
-                current_dirt_rgb,
-                (pixel_x, pixel_y, cell_size, cell_size),
-            )
-            # Variation visuelle aléatoire (cailloux/bruit)
-            if cell.get("variant", 0) == 1:
-                pygame.draw.rect(
-                    self.grid_surface,
-                    (
-                        max(0, dirt_r - 30),
-                        max(0, dirt_g - 30),
-                        max(0, dirt_b - 30),
-                    ),
-                    (pixel_x + 2, pixel_y + 2, 2, 2),
-                )
-            elif cell.get("variant", 0) == 2:
-                pygame.draw.rect(
-                    self.grid_surface,
-                    (
-                        min(255, dirt_r + 25),
-                        min(255, dirt_g + 25),
-                        min(255, dirt_b + 25),
-                    ),
-                    (pixel_x + 5, pixel_y + 1, 2, 2),
-                )
-            elif cell.get("variant", 0) == 3:
-                pygame.draw.rect(
-                    self.grid_surface,
-                    "#abafb9",
-                    (pixel_x + 3, pixel_y + 3, 1, 1),
-                )
-            # "Autotiling" (https://excaliburjs.com/blog/Autotiling%20Technique/)
-            neighbors = [
-                (0, -1, (0, 0, cell_size, 1)),  # Haut
-                (0, 1, (0, cell_size - 1, cell_size, 1)),  # Bas
-                (-1, 0, (0, 0, 1, cell_size)),  # Gauche
-                (1, 0, (cell_size - 1, 0, 1, cell_size)),  # Droite
-            ]
-            shadow_color = (
-                max(0, current_dirt_rgb[0] - 40),
-                max(0, current_dirt_rgb[1] - 40),
-                max(0, current_dirt_rgb[2] - 40),
-            )
-            for dx, dy, rect in neighbors:
-                nx, ny = cell_x + dx, cell_y + dy
-                neighbor = self.grid.get_cell(nx, ny)
-                draw_shadow = False
-                if neighbor:
-                    if neighbor["state"] == "empty" or neighbor["state"] == "room":
-                        draw_shadow = True
-                    elif neighbor["state"] == "partial":
-                        # vérifier si les pixels adjacents dans la cellule partielle sont vides
-                        bitmap = neighbor["bitmap"]
-                        if bitmap:
-                            has_dirt_contact = False
-                            if dy == -1:
-                                has_dirt_contact = any(
-                                    bitmap[7][x] for x in range(cell_size)
-                                )
-                            elif dy == 1:
-                                has_dirt_contact = any(
-                                    bitmap[0][x] for x in range(cell_size)
-                                )
-                            elif dx == -1:
-                                has_dirt_contact = any(
-                                    bitmap[y][7] for y in range(cell_size)
-                                )
-                            elif dx == 1:
-                                has_dirt_contact = any(
-                                    bitmap[y][0] for y in range(cell_size)
-                                )
-                            if not has_dirt_contact:
-                                draw_shadow = True
-                        else:
-                            draw_shadow = True
-
-                if draw_shadow:
-                    pygame.draw.rect(
-                        self.grid_surface,
-                        shadow_color,
-                        (
-                            pixel_x + rect[0],
-                            pixel_y + rect[1],
-                            rect[2],
-                            rect[3],
-                        ),
-                    )
-
-        elif state == "partial":
-            # Fond galerie
-            pygame.draw.rect(
-                self.grid_surface,
-                self.light_gal_rgb,
-                (pixel_x, pixel_y, cell_size, cell_size),
-            )
-
-            bitmap = cell["bitmap"]
-            if bitmap:
-                shadow_color = (
-                    max(0, dirt_r - 50),
-                    max(0, dirt_g - 50),
-                    max(0, dirt_b - 50),
-                )
-                highlight_color = (
-                    min(255, dirt_r + 30),
-                    min(255, dirt_g + 30),
-                    min(255, dirt_b + 30),
-                )
-
-                for py in range(cell_size):
-                    for px in range(cell_size):
-                        if bitmap[py][px]:
-                            gx = pixel_x + px
-                            gy = pixel_y + py
-
-                            pygame.draw.rect(
-                                self.grid_surface, current_dirt_rgb, (gx, gy, 1, 1)
-                            )
-
-                            # détecter les bords pour ajouter ombrage
-                            if not self.is_solid_pixel(gx, gy - 1):
-                                pygame.draw.rect(
-                                    self.grid_surface, highlight_color, (gx, gy, 1, 1)
-                                )
-                            elif not self.is_solid_pixel(gx, gy + 1):
-                                pygame.draw.rect(
-                                    self.grid_surface, shadow_color, (gx, gy, 1, 1)
-                                )
-
-        elif state.startswith("occupied"):
-            pygame.draw.rect(
-                self.grid_surface,
-                self.light_gal_rgb,
-                (pixel_x, pixel_y, cell_size, cell_size),
-            )
 
     def draw(self):
         self.sky.draw(self.world)
@@ -825,7 +629,7 @@ class ColonyState(State):
 
         for room in self.rooms:
             room.draw()
-            
+
         for ant in self.ants:
             ant.draw()
 

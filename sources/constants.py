@@ -7,6 +7,18 @@ import os
 GAME_NAME = "Rise of the Anthill"
 SAVES_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "saves"])
 
+CURRENT_SAVE_VERSION = 1
+
+CELL_STATES = {
+    "empty": 0,
+    "full_v1": 1,
+    "full_v2": 2,
+    "full_v3": 3,
+    "full_v4": 4,
+    "occupied": 10,
+    "occupied_walkable": 11,
+}
+
 ASSETS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets"])
 ROOMS_PATH = os.sep.join([ASSETS_PATH, "rooms"])
 
@@ -211,6 +223,6 @@ SCIENCE_UPGRADES = {
     "demineur": {
         "label": "Démineur",
         "description": "Lors de la résolution automatique de l'exploration, vos fourmis évitent les bombes.",
-        "cost": 500 # coût en science
+        "cost": 500,  # coût en science
     }
 }
