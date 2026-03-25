@@ -57,44 +57,8 @@ class Dormitory(Room):
         sidebar.set_content(root)
         sidebar.show()
 
+    def serialize(self):
+        return {"level": self.level}
 
-class WasteYard(Room):
-    """
-    Salle où les déchets sont entreposés pour limiter la propagation des maladies.
-    """
-
-    def __init__(self, colony, data):
-        super().__init__(
-            colony,
-            "waste_yard",
-            {**data, "walkable": []},
-        )
-
-    def update_self(self, events):
-        pass
-
-    def interact(self):
-        sidebar = self.colony.sidebar
-        assert sidebar is not None
-
-        panel_w = sidebar.width
-        panel_h = sidebar.height
-        inner_w = panel_w - PADDING * 2
-
-        ui = self.colony.ui
-        root = (
-            ui.panel("waste_root", (0, 0, panel_w, panel_h))
-            .set_border(None, 0)
-            .set_bg_color(UIColors.BG_DARK)
-        )
-
-        root.add_child(
-            ui.label(
-                "waste_title", "Dépotoir", (PADDING, PADDING, inner_w, TITLE_HEIGHT)
-            )
-            .set_font_size(TITLE_FONT_SIZE)
-            .set_align("center", "center")
-        )
-
-        sidebar.set_content(root)
-        sidebar.show()
+    def restore(self, data):
+        self.level = data.get("level", 1)

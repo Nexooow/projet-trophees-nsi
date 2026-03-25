@@ -30,7 +30,7 @@ class Laboratory(Room):
         if self.current_research is not None:
             self.research_progress += 0.01
             if self.research_progress >= 1:
-                pass # TODO: finir la recherche
+                pass  # TODO: finir la recherche
 
     def interact(self):
         sidebar = self.colony.sidebar
@@ -77,6 +77,16 @@ class Laboratory(Room):
         )
 
         # AJOUTER TOUTES LES AMELIORATIONS
-        
+
         sidebar.set_content(root)
         sidebar.show()
+
+    def serialize(self):
+        return {
+            "research_progress": self.research_progress,
+            "current_research": self.current_research,
+        }
+
+    def restore(self, data):
+        self.research_progress = data.get("research_progress", 0.0)
+        self.current_research = data.get("current_research", None)

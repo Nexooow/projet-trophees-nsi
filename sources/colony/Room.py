@@ -157,7 +157,7 @@ class Room(pygame.sprite.Sprite):
         if self.image:
             self.colony.world.blit(self.image, (self.x, self.y))
 
-    def serialize(self):
+    def serialize(self) -> typing.Optional[dict]:
         """
         Retourne l'état de la salle sous forme de dictionnaire.
         Par défaut, retourne None (pas d'état spécifique).

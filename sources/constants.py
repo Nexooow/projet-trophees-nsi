@@ -209,14 +209,14 @@ ROOMS_CONFIG = {
         "height": 7,
         "entry_offset": (0.5, 1.0),
     },
-    "waste_yard": {
-        "label": "Dépotoir",
-        "description": "Réduit les maladies en centralisant les déchets.",
-        "cost": 800,
-        "width": 8,
-        "height": 6,
-        "entry_offset": (0.5, 1.0),
-    },
+    #"waste_yard": {
+    #    "label": "Dépotoir",
+    #    "description": "Réduit les maladies en centralisant les déchets.",
+    #    "cost": 800,
+    #    "width": 8,
+    #    "height": 6,
+    #    "entry_offset": (0.5, 1.0),
+    #},
 }
 
 SCIENCE_UPGRADES = {

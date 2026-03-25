@@ -528,18 +528,6 @@ class ColonyState(State):
 
         self.sky.draw_clock(self.clock_surface)
 
-        # Délégation de la mise à jour UI spécifique à la reine
-        queen = self.get_room("queen")
-        if (
-            isinstance(queen, Queen)
-            and hasattr(queen, "sync_ui")
-            and callable(getattr(queen, "sync_ui"))
-        ):
-            try:
-                queen.sync_ui()
-            except Exception:
-                pass
-
         night_label = self.ui.get("colony_night_message")
         if isinstance(night_label, Label):
             if self.is_sleeping:

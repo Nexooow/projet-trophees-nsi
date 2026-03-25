@@ -197,8 +197,6 @@ class SaveManager:
         colony.food = colony_data.get("food", 0)
         colony.science = colony_data.get("science", 0)
         colony.food_capacity = colony_data.get("food_capacity", colony.food_capacity)
-        colony.camera_x = colony_data.get("camera_x", colony.camera_x)
-        colony.camera_y = colony_data.get("camera_y", colony.camera_y)
         colony.pending_builds = colony_data.get("pending_builds", [])
         colony.inventory = colony_data.get("inventory", {})
 
@@ -225,7 +223,7 @@ class SaveManager:
             pos = tuple(ant_data.get("pos", [0, 0]))
 
             ant = ant_class(colony, ant_data.get("data", {"power": 1, "xp": 0}), pos)
-            ant.restore_from_dict(ant_data)
+            ant.restore(ant_data)
             colony.ants.append(ant)
 
         # Tâches

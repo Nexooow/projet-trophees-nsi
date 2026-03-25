@@ -1,7 +1,6 @@
 import typing
 
 from colony.Ant import Ant
-from colony.ants.Nurse import Nurse
 from colony.TaskManager import Task
 from constants import COLONY_BRUSH_SIZE
 
@@ -268,3 +267,12 @@ class Worker(Ant):
         self.task_data = None
         self.task_pos = None
         self.moving = False
+
+    def serialize(self):
+        data = super().serialize()
+        data["moving"] = self.moving
+        return data
+
+    def restore(self, data):
+        super().restore(data)
+        self.moving = data.get("moving", False)

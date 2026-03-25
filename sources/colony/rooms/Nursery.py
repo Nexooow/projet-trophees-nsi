@@ -1,6 +1,6 @@
 from colony.ants.Nurse import Nurse
-from colony.ants.Worker import Worker
 from colony.ants.Scientist import Scientist
+from colony.ants.Worker import Worker
 from colony.Room import Room
 from constants import QUEEN_LARVAS, UIColors
 from lib.ui import Label, ProgressBar
@@ -214,3 +214,19 @@ class Nursery(Room):
 
         sidebar.set_content(root)
         sidebar.show()
+
+    def serialize(self):
+        now = self.colony.game.time.now()
+        # timestamp différent à chaque sauvegarde, on sauvegarde plutôt le temps écoulé
+        larvaes_data = []
+        for ant_type, start_time in self.larvaes:
+            elapsed = now - start_time
+            larvaes_data.append((ant_type, elapsed))
+        return {"larvaes": larvaes_data}
+
+    def restore(self, data):
+        now = self.colony.game.time.now()
+        self.larvaes = []
+        for ant_type, elapsed in data.get("larvaes", []):
+            start_time = now - elapsed
+            self.larvaes.append((ant_type, start_time))

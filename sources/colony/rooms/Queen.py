@@ -65,6 +65,7 @@ class Queen(Room):
         self.feed_task_pending: bool = False
 
     def update_self(self, events):
+        self.sync_ui()
         if (
             self.game.time.every(minutes=self.feed_interval)
             and not self.feed_task_pending
@@ -690,11 +691,10 @@ class Queen(Room):
             "larvae_timer": self.larvae_timer,
         }
 
-    def restore_from_dict(self, data: dict):
+    def restore(self, data: dict):
         """
         Reconstruit l'état de la reine à partir d'un dictionnaire (inverse de serialize()).
         """
-        from constants import QUEEN_UPGRADES  # re-import local constant to be explicit
 
         self.hp = data.get("hp", self.max_hp)
         self.max_larvae = data.get("max_larvae", QUEEN_MAX_LARVAE)
