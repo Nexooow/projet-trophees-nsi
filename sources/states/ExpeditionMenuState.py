@@ -14,13 +14,13 @@ class ExpeditionMenuState(State):
 
         self.ui.panel(
             "expedition_menu",
-            (w//2 - 200, h//2 - 150, 400, 300)
+            (0, 0, w, h)
         ).add_child(
 
             self.ui.label(
                 "title",
                 "Choose ants for expedition",
-                (0, 20, 400, 40)
+                (0, 40, w, 40)
             ).set_align("center", "center")
 
         ).add_child(
@@ -28,31 +28,31 @@ class ExpeditionMenuState(State):
             self.ui.label(
                 "count_label",
                 f"{self.selected_ants}",
-                (150, 100, 100, 50)
+                (w//2 - 50, h//2 - 25, 100, 50)
             ).set_align("center", "center")
 
         ).add_child(
 
             self.ui.button(
-                "minus_btn", "-", (100, 100, 40, 40)
+                "minus_btn", "-", (w//2 - 100, h//2 - 25, 40, 40)
             ).on("click", self.decrease_ants)
 
         ).add_child(
 
             self.ui.button(
-                "plus_btn", "+", (260, 100, 40, 40)
+                "plus_btn", "+", (w//2 + 60, h//2 - 25, 40, 40)
             ).on("click", self.increase_ants)
 
         ).add_child(
 
             self.ui.button(
-                "confirm_btn", "Send", (100, 200, 200, 50)
+                "confirm_btn", "Send", (w//2 - 100, h//2 + 60, 200, 50)
             ).on("click", self.confirm)
 
         ).add_child(
 
             self.ui.button(
-                "cancel_btn", "Cancel", (100, 260, 200, 40)
+                "cancel_btn", "Cancel", (w//2 - 100, h//2 + 120, 200, 40)
             ).on("click", self.cancel)
         )
 

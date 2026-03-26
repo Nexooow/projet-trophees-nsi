@@ -43,6 +43,8 @@ class Items:
         self.hover_height = 5
         self.hover_speed = 0.005
 
+    def tile(self):
+        return (self.x, self.y)
     def draw_offset(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) * self.hover_speed
         return self.hover_height * math.sin(elapsed_time)
@@ -197,12 +199,10 @@ class BattleModel:
         cell_x = int(world_pos[0] // CELL_SIZE)
         cell_y = int(world_pos[1] // CELL_SIZE)
         
-        self.grid_w = 20 + difficulty * 2
-        self.grid_h = 14 + difficulty
-        """
-        self.grid_w = 20
-        self.grid_h = 14
-        """
+        if self.difficulty>5:
+            self.difficulty=5
+        self.grid_w = 20 + self.difficulty * 2
+        self.grid_h = 14 + self.difficulty
         self.grid = Grid(self.grid_w, self.grid_h, cell_x, cell_y, perlin)
 
         self.units = []
