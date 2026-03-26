@@ -126,21 +126,21 @@ QUEEN_LARVAS: dict = {
         "cost": 700,
         "time": 40,
     },
-    "warrior": {
-        "label": "Guerrière",
-        "cost": 1000,
-        "time": 60,
-    },
+    #"warrior": {
+    #    "label": "Guerrière",
+    #    "cost": 1000,
+    #    "time": 60,
+    #},
     "scientist": {
         "label": "Scientifique",
         "cost": 4000,
         "time": 9,
     },
-    "explorer": {
-        "label": "Exploratrice",
-        "cost": 2000,
-        "time": 50,
-    },
+    #"explorer": {
+    #    "label": "Exploratrice",
+    #    "cost": 2000,
+    #    "time": 50,
+    #},
 }
 
 # Améliorations disponibles via la reine pour la colonie
@@ -185,7 +185,7 @@ ROOMS_CONFIG = {
     "depot": {
         "label": "Dépôt",
         "description": "Stockage de nourriture.",
-        "cost": 0,
+        "cost": 100,
         "width": 13,
         "height": 8,
         "entry_offset": (0.5, 1.0),
@@ -214,14 +214,6 @@ ROOMS_CONFIG = {
         "height": 7,
         "entry_offset": (0.5, 1.0),
     },
-    #"waste_yard": {
-    #    "label": "Dépotoir",
-    #    "description": "Réduit les maladies en centralisant les déchets.",
-    #    "cost": 800,
-    #    "width": 8,
-    #    "height": 6,
-    #    "entry_offset": (0.5, 1.0),
-    #},
 }
 
 SCIENCE_UPGRADES = {

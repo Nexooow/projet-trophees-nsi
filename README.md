@@ -19,7 +19,7 @@
 
 - **Gestion de colonie** : Construisez et agrandissez votre fourmilière en creusant des salles spécialisées (nurserie, dépôt...).
 - **Système de tâches intelligent** : Un gestionnaire de tâches (`TaskManager`) distribue automatiquement les rôles aux fourmis disponibles (ouvrières, guerrières, nourrices, etc.).
-- **Phase d'exploration** : Partez en expedition pour récupérer des ressources dans un mini jeu stratégique.
+- **Phase d'exploration** : Partez en expédition pour récupérer des ressources dans un mini-jeu stratégique.
 - **Sauvegarde** : L'état de la partie peut être sauvegardé et rechargé grâce au `SaveManager`.
 - **Interface utilisateur sur mesure** : Tous les menus et éléments d'interface sont développés manuellement par-dessus `pygame-ce`, sans framework UI externe.
 
@@ -30,7 +30,7 @@
 
 ### Prérequis & versions
 
-*A noter que ci-dessous ne sont listés que les modules nécessaire au fonctionnement unique du code. Ainsi, pour executer les tests, merci de vous référer à la séction "Tests"*
+*À noter que ci-dessous ne sont listés que les modules nécessaires au fonctionnement du jeu. Pour exécuter les tests, merci de vous référer à la section "Tests".*
 
 - **Python 3.8+** : Le projet est testé pour fonctionner sur cette version, mais il est **fortement recommandé** d'utiliser la dernière version stable de Python.
 - **pip** : Pour l'installation des dépendances (inclus lors de l'installation de Python).
@@ -47,7 +47,7 @@ cd projet-trophees-nsi
 pip install -r "requirements.txt"
 ```
 
-Sinon, vous pouvez simplement ouvrir le répertoire ou se situe ce projet et executer la commande suivante;
+Sinon, vous pouvez simplement ouvrir le répertoire où se situe ce projet et exécuter la commande suivante :
 
 ```bash
 pip install -r "requirements.txt"
@@ -65,11 +65,11 @@ python3 sources/main.py
 
 Les tests sont écrits à l'aide de `pytest` et se trouvent dans le répertoire `tests/`. Pour les exécuter, utilisez la commande suivante depuis la racine du projet :
 
-``` bash
+```bash
 python -m pytest tests/
 ```
 ou simplement
-``` bash
+```bash
 pytest tests/
 ```
 
@@ -82,7 +82,7 @@ pytest tests/
 │   ├── constants.py          # Constantes globales
 │   ├── core/                 # Moteur central
 │   ├── colony/               # Logique de la fourmilière
-│   └── exploration/          # Module qui gère le minijeu d'exploraiton
+│   └── exploration/          # Module qui gère le mini-jeu d'exploration
 │
 ├── docs/                     # Documentation
 ├── tests/                    # Tests automatisés (pytest)
@@ -110,6 +110,6 @@ Ce projet est sous licence **Apache License 2.0** — Voir le fichier [LICENSE](
 
 [*m5x7*, par Daniel Linssen](https://managore.itch.io/m5x7)
 
-#### Sons ambients
+#### Sons d'ambiance
 
 [*Evening Nature with Crickets, Birds and Distant Dogs – Part 2*, par Eryliaa](https://pixabay.com/sound-effects/nature-evening-nature-with-crickets-birds-and-distant-dogs-part-2-445150/)

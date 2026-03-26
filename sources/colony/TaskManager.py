@@ -15,6 +15,7 @@ class Task:
         on_start=None,
         on_complete=None,
         on_expired=None,
+        on_fail=None,
     ):
         self.manager = manager
         self.id = uuid.uuid4()
@@ -34,6 +35,7 @@ class Task:
         self.on_start = on_start
         self.on_complete = on_complete
         self.on_expired = on_expired
+        self.on_fail = on_fail
 
     def is_assigned(self):
         return self.assigned_to is not None
@@ -51,11 +53,15 @@ class Task:
 
     def complete(self):
         if self.on_complete:
-            self.on_complete()
+            self.on_complete(self.data)
 
     def expire(self):
         if self.on_expired:
             self.on_expired()
+
+    def fail(self):
+        if self.on_fail:
+            self.on_fail(self.data)
 
 
 class TaskManager:
@@ -76,7 +82,13 @@ class TaskManager:
         return self.tasks[task_id]
 
     def add_task(
-        self, type, data=None, on_start=None, on_complete=None, on_expired=None
+        self,
+        type,
+        data=None,
+        on_start=None,
+        on_complete=None,
+        on_expired=None,
+        on_fail=None,
     ):
         task = Task(
             self,
@@ -85,6 +97,7 @@ class TaskManager:
             on_start=on_start,
             on_complete=on_complete,
             on_expired=on_expired,
+            on_fail=on_fail,
         )
         ant_type = TASK_ANT_TYPE.get(type, "worker")
         self.tasks[task.id] = task
@@ -103,6 +116,10 @@ class TaskManager:
 
     def complete_task(self, task_id: uuid.UUID):
         self.tasks[task_id].complete()
+
+    def fail_task(self, task_id: uuid.UUID):
+        if task_id in self.tasks:
+            self.tasks[task_id].fail()
 
     def find_available_ants(self, type: str, pos=None):
         ants = []
@@ -125,16 +142,38 @@ class TaskManager:
 
             # On distribue les tâches en attente aux fourmis disponibles
             while not file.est_vide() and available_ants:
-                task_id = file.defiler()
+                task_id = file.sommet()
                 if task_id not in self.tasks:
+                    file.defiler()
                     continue
 
                 task = self.tasks[task_id]
 
                 if task.is_assigned() or task.is_expired():
+                    file.defiler()
                     continue
 
-                ant = available_ants.pop(0)
+                target_pos = None
+                if task.data:
+                    if task.type == "dig":
+                        target_pos = task.data.get("dig_pos")
+                    elif task.type == "build_room":
+                        target_pos = task.data.get("pos")
+                    elif task.type in ["bring_food_queen", "deliver_larva"]:
+                        target_pos = task.data.get("pickup_pos")
+
+                best_ant_idx = 0
+                if target_pos:
+                    min_dist = float("inf")
+                    for i, ant in enumerate(available_ants):
+                        dist = distance(ant.pos, target_pos)
+                        if dist < min_dist:
+                            min_dist = dist
+                            best_ant_idx = i
+
+                ant = available_ants.pop(best_ant_idx)
+                file.defiler()
+
                 task.start(ant.id)
                 ant.add_task(task)
 

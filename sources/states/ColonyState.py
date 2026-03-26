@@ -107,13 +107,45 @@ class ColonyState(State):
 
         self.pending_builds = []
 
-    def check_pending_builds(self):
+    def check_pending_builds(self, data=None):
+        # Si une tâche vient de se terminer (data est non None), on vérifie si elle a réussi
+        if data:
+            pos = data.get("dig_pos") or data.get("pos")
+            if pos:
+                cx = pos[0] + COLONY_BRUSH_SIZE / 2
+                cy = pos[1] + COLONY_BRUSH_SIZE / 2
+                cell_coords = self.grid.pixel_to_cell(
+                    int(cx), int(cy) - self.grid.start_y
+                )
+
+                # Si la case n'est pas passable (donc le creusage a échoué), on remet la tâche
+                if not self.grid.is_cell_passable(*cell_coords):
+                    build_data = {
+                        "pos": pos,
+                        "priority": data.get("priority", 1),
+                        "type": "dig" if "dig_pos" in data else "build_room",
+                    }
+                    self.pending_builds.insert(0, build_data)
+
         if not self.pending_builds:
+            return
+
+        # On vérifie si des tâches de construction sont déjà en cours
+        active_digs = 0
+        for task in self.tasks.tasks.values():
+            if task.type in ["dig", "build_room"]:
+                active_digs += 1
+
+        # Si on vient d'une callback (data is not None), la tâche courante est encore dans la liste
+        # On considère qu'on peut en lancer une nouvelle si c'est la seule
+        threshold = 1 if data else 0
+
+        if active_digs > threshold:
             return
 
         still_pending = []
         added_count = 0
-        MAX_NEW_TASKS = 5
+        MAX_NEW_TASKS = 1
 
         for build_data in self.pending_builds:
             if added_count >= MAX_NEW_TASKS:
@@ -151,6 +183,7 @@ class ColonyState(State):
                     task_type,
                     task_data,
                     on_complete=self.check_pending_builds,
+                    on_fail=self.check_pending_builds,
                 )
                 added_count += 1
             else:
@@ -237,6 +270,22 @@ class ColonyState(State):
         small_h = 32 + 12
         small_x = info_x + info_w - small_w
         small_y = info_y + info_h + padding
+
+        # Panneau Science
+        self.ui.panel(
+            "colony_science_panel",
+            (info_x, small_y, small_w - padding, small_h),
+        ).set_z_index(10).add_child(
+            self.ui.label(
+                "colony_science_count",
+                f"{int(self.science)}",
+                (padding + 32 + 8, -2, small_w - padding * 2 - 32 - 8, small_h),
+            )
+            .set_font("assets/fonts/m5x7.ttf", 32 + 6)
+            .set_text_color(UIColors.TEXT)
+            .set_align("left", "center")
+            .set_z_index(11)
+        )
 
         self.ui.panel(
             "colony_food_panel",
@@ -515,7 +564,18 @@ class ColonyState(State):
         """Met à jour les valeurs dynamiques des éléments UI."""
         food_label = self.ui.get("colony_food_count")
         if isinstance(food_label, Label):
-            food_label.set_text(f"{self.food}")
+            food_label.set_text(f"{int(self.food)}")
+
+        science_panel = self.ui.get("colony_science_panel")
+        queen = self.get_room("queen")
+        has_science = queen is not None and queen.upgrade_levels.get("science", 0) > 0
+        if science_panel:
+            science_panel.set_visible(has_science)
+
+        science_label = self.ui.get("colony_science_count")
+        if isinstance(science_label, Label):
+            science_label.set_text(f"{int(self.science)}")
+
         time_label = self.ui.get("colony_time")
         if isinstance(time_label, Label):
             time_label.set_text(self.game.time.format())

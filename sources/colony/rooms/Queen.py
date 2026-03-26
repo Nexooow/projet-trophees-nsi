@@ -50,11 +50,7 @@ class Queen(Room):
         # Onglet actif : "production" | "upgrades"
         self.active_tab: str = "production"
 
-        # Niveaux d'amélioration déjà achetés (clé = id amélioration).
-        # Pour les améliorations sans niveaux : 0 = non débloquée, 1 = débloquée.
         self.upgrade_levels: dict = {k: 0 for k in QUEEN_UPGRADES}
-
-        # Nombre max de slots de larves (peut croître avec l'upgrade "larvae_slots")
         self.max_larvae: int = QUEEN_MAX_LARVAE
 
         # Timer de production de larves en frames (60 frames = 1 seconde).
@@ -174,8 +170,6 @@ class Queen(Room):
         nursery = self.colony.get_room("nursery")
         if nursery is None:
             return
-
-        print("fourmi envoyée")
 
         # On privilégie les entrées 'passables' (cases adjacentes accessibles),
         # sinon on tombe en dernier ressort sur l'entrée de la salle.
@@ -622,6 +616,9 @@ class Queen(Room):
         if self.colony.food < cost:
             return
 
+        if ant_type == "scientist" and self.upgrade_levels.get("science", 0) == 0:
+            return
+
         self.colony.food -= cost
         self.born_queue.enfiler(ant_type)
 
@@ -715,7 +712,7 @@ class Queen(Room):
         for ant_type in data.get("born_queue", []):
             self.born_queue.enfiler(ant_type)
 
-    def on_feed_task_done(self):
+    def on_feed_task_done(self, data=None):
         """
         Appelé quand la tâche feed_queen est complétée avec succès.
         """

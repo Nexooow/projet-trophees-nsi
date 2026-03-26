@@ -4,6 +4,7 @@ import typing
 
 import pygame
 from constants import (
+    COLONY_BRUSH_SIZE,
     COLONY_UNDERGROUND_START,
     DARK_DIRT_COLOR,
     DIRT_COLOR,
@@ -160,7 +161,6 @@ class Room(pygame.sprite.Sprite):
     def serialize(self) -> typing.Optional[dict]:
         """
         Retourne l'état de la salle sous forme de dictionnaire.
-        Par défaut, retourne None (pas d'état spécifique).
         """
         return None
 

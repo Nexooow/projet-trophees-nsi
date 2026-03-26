@@ -2,6 +2,10 @@ import math
 import typing
 
 import pygame
+from colony.rooms.Depot import Depot
+from colony.rooms.Dormitory import Dormitory
+from colony.rooms.Laboratory import Laboratory
+from colony.rooms.Nursery import Nursery
 from constants import (
     COLONY_BRUSH_COLOR,
     COLONY_BRUSH_SIZE,
@@ -13,11 +17,6 @@ from constants import (
 )
 from lib.ui import Button, Label, UIColors
 from lib.utils import distance
-
-from colony.rooms.Depot import Depot
-from colony.rooms.Dormitory import Dormitory
-from colony.rooms.Laboratory import Laboratory
-from colony.rooms.Nursery import Nursery
 
 if typing.TYPE_CHECKING:
     from states.ColonyState import ColonyState
@@ -144,6 +143,12 @@ class BuildMode:
             for room_id, config in ROOMS_CONFIG.items():
                 if config["cost"] <= 0:
                     continue
+
+                # Le laboratoire nécessite l'amélioration "science" de la reine
+                if room_id == "laboratory":
+                    queen = self.colony.get_room("queen")
+                    if queen and queen.upgrade_levels.get("science", 0) < 1:
+                        continue
 
                 def select_room(rid=room_id):
                     if self.selected_room_type == rid:
@@ -273,7 +278,6 @@ class BuildMode:
                         self.validate_selections()
 
         if not self.selected_room_type:
-
             if pygame.mouse.get_pressed()[2]:
                 mouse_pos = pygame.mouse.get_pos()
                 mouse_pos = (
@@ -294,7 +298,6 @@ class BuildMode:
                     self.validate_selections()
 
         elif self.selected_room_type:
-
             mouse_pos = pygame.mouse.get_pos()
             mouse_world = (
                 mouse_pos[0] - self.colony.camera_x,
@@ -332,6 +335,10 @@ class BuildMode:
         total_ui = self.colony.ui.get("colony_sidebar_total_price")
         if isinstance(total_ui, Label):
             total_ui.set_text(f"Total : {self.get_price():.1f}")
+
+        start_btn = self.colony.ui.get("colony_sidebar_build_start")
+        if start_btn:
+            start_btn.set_enabled(self.colony.food >= self.get_price())
 
     def draw(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -421,6 +428,12 @@ class BuildMode:
             self.switch()
             return
 
+        total_price = self.get_price()
+        if self.colony.food < total_price:
+            return
+
+        self.colony.food -= total_price
+
         to_build = set(self.valid_selections)
         ordered_builds = []
 
@@ -475,7 +488,7 @@ class BuildMode:
                     "depot": Depot,
                     "dormitory": Dormitory,
                     "laboratory": Laboratory,
-                    "nursery": Nursery
+                    "nursery": Nursery,
                 }
                 config = ROOMS_CONFIG[room_type]
                 room_data = {

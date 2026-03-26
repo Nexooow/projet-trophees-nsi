@@ -39,7 +39,7 @@ class TestTasks:
         on_start.assert_called_once()
 
         task.complete()
-        on_complete.assert_called_once()
+        on_complete.assert_called_once_with(None)
 
     def test_task_expiration(self, mock_colony):
         manager = TaskManager(mock_colony)

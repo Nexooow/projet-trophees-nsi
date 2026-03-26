@@ -87,6 +87,8 @@ class Nursery(Room):
             new_ant = ant_class(self.colony, data, entry)
             self.colony.ants.append(new_ant)
 
+        self.update_ui()
+
     def assign_larvae(self, larvae_type):
         """
         Ajoute une larve à la file d'incubation de la nurserie, avec le timestamp
