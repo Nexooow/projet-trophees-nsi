@@ -86,5 +86,5 @@ class ExpeditionMenuState(State):
     
     def end_expedition(self):
         colony = self.state_manager.get_state("colony")
-        colony.ants.extend(self.ants) # C quoi le bidule pour rajouter des fourmis à la fourmilière
+        colony.ants.extend(self.ants)
         self.state_manager.set_state("colony")

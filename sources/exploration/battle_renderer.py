@@ -5,6 +5,7 @@ from lib.utils import import_asset, mouse_over, use_font
 
 RESSOURCES_IMAGES = {"nom": import_asset("icons", "leaf.png")}
 RESSOURCES = ["nom"]
+ITEMS_IMAGES = {"match": import_asset("icons", "match.png")}
 IMG = {
     "bomb": import_asset("icons", "bomb.png"),
 }
@@ -137,6 +138,7 @@ class BattleRenderer:
         self.draw_grid()
         self.draw_useless_obj()
         self.draw_resources()
+        self.draw_items()
         self.draw_units()
         self.draw_sidebar()
 
@@ -241,3 +243,38 @@ class BattleRenderer:
             None,
             self.model.collected_resources,
         )
+    def draw_items(self):
+        ox, oy = self.grid_offset_x, self.grid_offset_y
+        for unit in self.model.units:
+            for item_name, count in unit.items.items():
+                if count > 0:
+                    img = pygame.transform.scale(
+                        ITEMS_IMAGES[item_name],
+                        (self.tile_size // 3, self.tile_size // 3)
+                    )
+                    img_w, img_h = img.get_size()
+                    draw_x = (
+                        unit.x * self.tile_size + (self.tile_size - img_w) // 2 + ox
+                    )
+                    draw_y = (
+                        unit.y * self.tile_size + (self.tile_size - img_h) // 2 + oy
+                    )
+                    # Décalage pour empiler les items s'il y en a plusieurs
+                    draw_y += list(unit.items.keys()).index(item_name) * (img_h + 2)
+                    self.game_surface.blit(img, (draw_x, draw_y))
+        for item in self.model.items_obj:
+            img = pygame.transform.scale(
+                ITEMS_IMAGES[item.name],
+                (self.tile_size // 1, self.tile_size // 1)
+            )
+            img_w, img_h = img.get_size()
+            float_offset = item.draw_offset()
+            # Centrage horizontal et vertical dans la cellule, avec l'effet de flottement
+            draw_x = item.x * self.tile_size + (self.tile_size - img_w) // 2 + ox
+            draw_y = (
+                item.y * self.tile_size
+                + (self.tile_size - img_h) // 2
+                + float_offset
+                + oy
+            )
+            self.game_surface.blit(img, (draw_x, draw_y))

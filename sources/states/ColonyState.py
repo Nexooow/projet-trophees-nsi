@@ -435,7 +435,7 @@ class ColonyState(State):
                 if event.key == pygame.K_b:
                     self.build_mode.switch()
                 elif event.key == pygame.K_e:
-                    self.start_exploration()
+                    self.state_manager.set_state("expedition_menu")
                 elif event.key == pygame.K_ESCAPE:
                     self.switch_pause_menu()
 
