@@ -196,12 +196,13 @@ class BattleModel:
         self.perlin = perlin
         cell_x = int(world_pos[0] // CELL_SIZE)
         cell_y = int(world_pos[1] // CELL_SIZE)
-        """
+        
         self.grid_w = 20 + difficulty * 2
         self.grid_h = 14 + difficulty
         """
         self.grid_w = 20
         self.grid_h = 14
+        """
         self.grid = Grid(self.grid_w, self.grid_h, cell_x, cell_y, perlin)
 
         self.units = []
@@ -233,16 +234,31 @@ class BattleModel:
             HoveringResource(x, y, res) for (x, y), res in self.resources_dispos.items()
         ]
 
+        positions_of_items = sample(
+            list(product(range(self.grid_w), range(int(self.grid_h)))),
+            1,
+        )
+        self.items_dispos = {
+            (x, y): choice(["match"]) for x, y in positions_of_items
+        }
+        self.items_obj = [
+            Items(x, y, name) for (x, y), name in self.items_dispos.items()
+        ]
+
         bomb_rate = min(0.25, 0.02 * (1.4**self.difficulty))
         for x in range(self.grid_w):
             for y in range(self.grid_h):
                 if random() < bomb_rate:
                     self.bomb_tiles.add((x, y))
-
+        """
         fourmis_nwar = (
             colony.get_ants(ant_type="soldier") if not isinstance(colony, list) else []
         )
         fourmis_nwar += [Unit(0, 0, img_fourmi, None) for _ in range(2)]  # test puppets
+        """
+        fourmis_nwar = [
+            Unit(0, 0, img_fourmi_noir, "noir") for ant in colony
+        ]
         ally_pos = list(
             product(range(self.grid_w), range(int(self.grid_h * 10 / 14), self.grid_h))
         )
@@ -269,7 +285,7 @@ class BattleModel:
         shuffle(self.units)
         self.active_unit = self.units[self.turn_index]
 
-        protected_tiles = set(pos1 + pos2 + list(self.resources_dispos.keys()))
+        protected_tiles = set(pos1 + pos2 + list(self.resources_dispos.keys()) + list(self.items_dispos.keys()))
         self.bomb_tiles = {
             tile for tile in self.bomb_tiles if tile not in protected_tiles
         }
@@ -305,8 +321,8 @@ class BattleModel:
             self.collected_resources += 100
     def collect_item(self, x, y):
         if (x,y) in self.items_dispos:
-            keys= [key for key in self.items_obj if key == (x, y)]
-            self.active_unit.items[self.items_obj[keys[0]]] = self.active_unit.items[self.items_obj[keys[0]]] + 1 if keys[0] in self.active_unit.items.keys() else 1
+            keys= [key for key in self.items_obj if (key.x, key.y) == (x, y)]
+            self.active_unit.items[keys[0].name] = self.active_unit.items[keys[0].name] + 1 if keys[0].name in self.active_unit.items.keys() else 1
             del self.items_dispos[(x,y)]
             self.items_obj = [i for i in self.items_obj if (i.x, i.y) != (x, y)]
             

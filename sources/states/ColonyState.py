@@ -356,7 +356,7 @@ class ColonyState(State):
             "colony_btn_expedition",
             "",
             (btn_x, btn_y, menu_btn_size, menu_btn_size),
-        ).on("click", self.start_exploration).set_z_index(10).add_child(
+        ).on("click", lambda: self.state_manager.set_state("expedition_menu")).set_z_index(10).add_child(
             self.ui.image(
                 "colony_btn_expedition_icon",
                 _expedition_image,
@@ -484,7 +484,7 @@ class ColonyState(State):
                 if event.key == pygame.K_b:
                     self.build_mode.switch()
                 elif event.key == pygame.K_e:
-                    self.start_exploration()
+                    self.state_manager.set_state("expedition_menu")
                 elif event.key == pygame.K_ESCAPE:
                     self.switch_pause_menu()
 
@@ -695,3 +695,11 @@ class ColonyState(State):
             # Teinte de nuit plus sombre/neutre pour le sol
             self.night_overlay.fill((10, 10, 35, darkness))
             self.game.screen.blit(self.night_overlay, (0, 0))
+
+    def send_expedition(self, count):
+        count = min(count, len(self.ants))
+        expedition_ants = self.ants[:count]
+        self.ants = self.ants[count:]
+
+        self.state_manager.expedition_ants = expedition_ants
+    

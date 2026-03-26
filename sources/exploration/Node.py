@@ -11,8 +11,6 @@ class Node:
     """
 
     def __init__(self, node_id, parent=None, depth=0, seed=None):
-        # self.x = x
-        # self.y = y
         self.node_id = node_id
         self.parent = parent
         self.depth = depth

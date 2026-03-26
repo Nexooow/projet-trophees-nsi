@@ -31,9 +31,11 @@ class BattleState(State):
 
     def update(self, events):
         if self.model.battle_won is not None:
+            expedition_state = self.state_manager.get_state("expedition")
+            expedition_state.ants = expedition_state.ants[:len(self.model.friendlies)]
             if self.model.battle_won:
-                colony_state = self.state_manager.states_managers["colony"]
-                colony_state.food += self.model.collected_resources * 100
+                expedition_state = self.state_manager.get_state("expedition")
+                expedition_state.collected_resources += self.model.collected_resources*100
             self.state_manager.set_state("expedition")
             return
         active = self.model.active_unit

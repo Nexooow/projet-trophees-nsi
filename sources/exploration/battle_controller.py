@@ -148,6 +148,7 @@ class BattleController:
     def resolve_resources(self):
         active = self.model.active_unit
         if active in self.model.friendlies:
+            self.model.collect_item(active.x, active.y)
             self.model.collect_resource(active.x, active.y)
 
     def resolve_bombs(self):
