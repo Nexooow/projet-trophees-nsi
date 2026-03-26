@@ -165,7 +165,12 @@ QUEEN_UPGRADES: dict = {
 # TODO: ajouter des items, utilisables dans le système d'exploration/combat
 # Dictionnaires des items disponibles, la clé est l'ID de l'item
 # La valeur doit être un dictionnaire avec les clés "label", "description"
-ITEMS = {}
+ITEMS = {
+    "allumette": {
+        "label": "Match",
+        "description": "Fait exploser la bombe de son choix"
+    }
+}
 
 # Configuration des salles constructibles
 ROOMS_CONFIG = {

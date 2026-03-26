@@ -46,13 +46,13 @@ class BattleState(State):
                         for bomb_pos in self.model.bomb_tiles:
                             
                             ox, oy = self.renderer.grid_offset_x, self.renderer.grid_offset_y
-                            print(f"clicked_at:{event.pos}")
+                            
                             bomb_screen = (bomb_pos[0] * self.renderer.tile_size + ox, bomb_pos[1] * self.renderer.tile_size + oy)
-                            print(f"bomb_pos:{bomb_screen}")
+                            
                             distance = ((event.pos[0] - bomb_screen[0]) ** 2 + (event.pos[1] - bomb_screen[1]) ** 2) ** 0.5
                             print(distance)
                             if distance <= self.renderer.tile_size :
-                                print("distance is good")
+                                
                                 bomb = Bomb(*bomb_pos)
                                 dead_units = bomb.explode(self.model.units)
 
