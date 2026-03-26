@@ -19,6 +19,7 @@ from constants import (
     DIRT_COLOR,
     GALERY_COLOR,
     INITIAL_FOOD_CAPACITY,
+    SCIENCE_UPGRADES,
     UIColors,
 )
 from lib.sidebar import Sidebar
@@ -74,6 +75,9 @@ class ColonyState(State):
         self.food = 2000
         self.food_capacity = INITIAL_FOOD_CAPACITY
         self.science = 0.0
+        self.science_upgrades = {}
+        for id in SCIENCE_UPGRADES.keys():
+            self.science_upgrades[id] = False
 
         self.inventory = {}
 
@@ -83,7 +87,7 @@ class ColonyState(State):
         assert queen_room is not None
 
         spawn_pos = queen_room.get_passable_entry() or queen_room.get_entry()
-        self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(3)]
+        self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(100)]
         self.grid.render_dirty_cells(
             self.grid_surface, self.light_dirt_rgb, self.light_gal_rgb
         )
@@ -218,16 +222,10 @@ class ColonyState(State):
             .set_align("center", "center")
             .set_z_index(11)
         ).add_child(
-            self.ui.image(
-                "colony_ant_icon",
-                _ant_image,
-                (120, 50, 32, 32),
-            ).set_z_index(11)
-        ).add_child(
             self.ui.label(
                 "colony_ant_count",
-                f"{len(self.ants)}",
-                (160, 50, 100, 32),
+                f"{len(self.ants)} fourmis",
+                (120, 50, 100, 32),
             )
             .set_font("assets/fonts/m5x7.ttf", 32)
             .set_text_color(UIColors.TEXT)
@@ -524,21 +522,9 @@ class ColonyState(State):
 
         ant_label = self.ui.get("colony_ant_count")
         if isinstance(ant_label, Label):
-            ant_label.set_text(f"{len(self.ants)}")
+            ant_label.set_text(f"{len(self.ants)} fourmis")
 
         self.sky.draw_clock(self.clock_surface)
-
-        # Délégation de la mise à jour UI spécifique à la reine
-        queen = self.get_room("queen")
-        if (
-            isinstance(queen, Queen)
-            and hasattr(queen, "sync_ui")
-            and callable(getattr(queen, "sync_ui"))
-        ):
-            try:
-                queen.sync_ui()
-            except Exception:
-                pass
 
         night_label = self.ui.get("colony_night_message")
         if isinstance(night_label, Label):

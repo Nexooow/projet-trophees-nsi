@@ -32,8 +32,20 @@ class HoveringResource:
     def draw_offset(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) * self.hover_speed
         return self.hover_height * math.sin(elapsed_time)
+class Items:
+    def __init__(self, x, y, name, tile_size=TILE_SIZE):
+        self.x = x
+        self.y = y
+        self.name = name
+        self.tile_size = tile_size
+    
+        self.start_time = pygame.time.get_ticks()
+        self.hover_height = 5
+        self.hover_speed = 0.005
 
-
+    def draw_offset(self):
+        elapsed_time = (pygame.time.get_ticks() - self.start_time) * self.hover_speed
+        return self.hover_height * math.sin(elapsed_time)
 class Bomb:
     def __init__(self, x, y):
         self.x = x
@@ -200,6 +212,8 @@ class BattleModel:
         self.resources_obj = []
         self.resources_dispos = {}
         self.collected_resources = 0
+        self.items_obj = []
+        self.items_dispos = {}
 
         self.turn_index = 0
         self.active_unit: typing.Optional[Unit] = None
@@ -293,3 +307,11 @@ class BattleModel:
             del self.resources_dispos[(x, y)]
             self.resources_obj = [r for r in self.resources_obj if (r.x, r.y) != (x, y)]
             self.collected_resources += 100
+    def collect_item(self, x, y):
+        if (x,y) in self.items_dispos:
+            keys= [key for key in self.items_obj if key == (x, y)]
+            self.active_unit.items[self.items_obj[keys[0]]] = self.active_unit.items[self.items_obj[keys[0]]] + 1 if keys[0] in self.active_unit.items.keys() else 1
+            del self.items_dispos[(x,y)]
+            self.items_obj = [i for i in self.items_obj if (i.x, i.y) != (x, y)]
+            
+            

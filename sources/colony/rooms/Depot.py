@@ -94,3 +94,9 @@ class Depot(Room):
 
         sidebar.set_content(root)
         sidebar.show()
+
+    def serialize(self):
+        return {"level": self.level}
+
+    def restore(self, data):
+        self.level = data.get("level", 1)

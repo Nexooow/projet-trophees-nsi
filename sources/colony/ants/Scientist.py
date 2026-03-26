@@ -14,25 +14,24 @@ class Scientist(Ant):
         """
         Se rend au laboratoire.
         """
-        print("BOUGE")
         lab_pos = self.colony.get_room_entry("laboratory")
-        print(lab_pos, self.colony.get_room("laboratory"))
         if lab_pos is not None:
-            print("BOUGE POUR DE VRAI TR")
             self.move_to(*lab_pos)
-             
-        
-    def update (self):
+
+    def update(self):
         super().update()
-        print("appelé")
         if self.in_laboratory is not True:
-            print("a")
             in_room = self.colony.in_room(self.pos, "laboratory")
             if not in_room and self.target_pos is None:
-                print("b")
                 self.goto_lab()
             elif in_room:
-                print("c")
                 self.in_laboratory = True
 
+    def serialize(self):
+        data = super().serialize()
+        data["in_laboratory"] = self.in_laboratory
+        return data
 
+    def restore(self, data):
+        super().restore(data)
+        self.in_laboratory = data.get("in_laboratory", False)

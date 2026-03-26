@@ -270,7 +270,7 @@ class Ant(pygame.sprite.Sprite):
             "path": path_list,
         }
 
-    def restore_from_dict(self, data: dict):
+    def restore(self, data: dict):
         """
         Restaure l'état de la fourmi depuis un dictionnaire produit par `serialize`.
         Cette méthode tente de rétablir l'identifiant, la position, l'énergie,
