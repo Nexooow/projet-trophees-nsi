@@ -23,6 +23,11 @@ class BattleState(State):
         super().__init__(manager, "battle", ["pause"])
         self.manager = manager
         self.model = BattleModel(difficulty, colony, auto_resolve, world_pos, perlin)
+        
+        if "demineur" in self.state_manager.get_state("colony").science_upgrades:
+            for u in self.model.units:
+                if u.team == "noir":
+                    u.bomb_expert = True
         self.controller = BattleController(self.model)
         screen = self.manager.game.screen
         self.renderer = BattleRenderer(
