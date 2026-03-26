@@ -1,5 +1,6 @@
 from colony.Room import Room
 from lib.ui import UIColors
+from constants import SCIENCE_UPGRADES
 
 PADDING = 6
 GAP = 6
@@ -39,6 +40,7 @@ class Laboratory(Room):
         panel_w = sidebar.width
         panel_h = sidebar.height
         inner_w = panel_w - PADDING * 2
+        inner_h = panel_h - PADDING * 2
 
         ui = self.colony.ui
         root = (
@@ -77,9 +79,47 @@ class Laboratory(Room):
         )
 
         # AJOUTER TOUTES LES AMELIORATIONS
+        y_scroll = PADDING + TITLE_HEIGHT + GAP + 40*2
+
+        root.add_child(
+            ui.scrollable_panel(
+                "lab_tree_content",
+                (PADDING, y_scroll, inner_w, inner_h-y_scroll)
+            ).add_children(self.scroll_upgrades(inner_w))
+        )
+
 
         sidebar.set_content(root)
         sidebar.show()
+
+    def scroll_upgrades (self, inner_w):
+        elements = []
+        y = 4
+        height = 80
+        for id, upgrade in SCIENCE_UPGRADES.items():
+            elemid = f"lab_tree_upg_{id}"
+            elements.append(
+                self.colony.ui.panel(
+                    elemid,
+                    (4, y, inner_w-8, height)
+                )
+                .set_bg_color(UIColors.BG)
+                .set_border(UIColors.BORDER, 1)
+                .add_child(
+                    self.colony.ui.label(
+                        elemid + "_title",
+                        upgrade.get("label"),
+                        (6, y+2, inner_w-10, 20)
+                    ).set_text_color(UIColors.TEXT).set_font_size(24)
+                )
+                .add_child(
+                    self.colony.ui.label(
+                        elemid + "_desc",
+                    )
+                )
+            )
+            y += height + 4
+        return elements
 
     def serialize(self):
         return {

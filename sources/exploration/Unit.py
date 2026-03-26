@@ -54,12 +54,6 @@ class Unit:
                 temp_img = spritesheet.subsurface(
                     i * self.size[0], y * self.size[1], self.size[0], self.size[1]
                 )
-                """
-                temp_img = pygame.transform.scale(
-                    temp_img,
-                    (self.size[0] * self.image_scale, self.size[1] * self.image_scale),
-                )
-                """
                 temp += [temp_img]
             frames += [temp]
         return frames
