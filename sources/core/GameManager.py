@@ -31,6 +31,8 @@ class GameManager:
         self.state = StateManager(self)
 
     def quitter(self):
+        if self.is_game_started():
+            self.sauvegarder()
         self.running = False
 
     def is_game_started(self) -> bool:

@@ -14,6 +14,7 @@ from exploration.ExpeditionMap import ExpeditionMap
 
 if typing.TYPE_CHECKING:
     from core.GameManager import GameManager
+    from states.ColonyState import ColonyState
 
 
 class SaveManager:
@@ -103,6 +104,7 @@ class SaveManager:
         }
 
         colony_data["inventory"] = colony.inventory
+        colony_data["science_upgrades"] = colony.science_upgrades
 
         # Délégation aux sous-systèmes
         colony_data["grid"] = colony.grid.serialize()
@@ -148,7 +150,7 @@ class SaveManager:
             "expedition": expedition_data,
         }
 
-    def get_colony(self):
+    def get_colony(self) -> "ColonyState":
         return self.game.state.states_managers["colony"]
 
     def restaurer(self, save_id: typing.Optional[str] = None) -> bool:
@@ -199,6 +201,10 @@ class SaveManager:
         colony.food_capacity = colony_data.get("food_capacity", colony.food_capacity)
         colony.pending_builds = colony_data.get("pending_builds", [])
         colony.inventory = colony_data.get("inventory", {})
+
+        # améliorations liées à la science
+        for id, state in colony_data.get("science_upgrades", {}).items():
+            colony.science_upgrades[id] = state
 
         # Grid
         grid_data = colony_data.get("grid")
