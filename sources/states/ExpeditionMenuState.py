@@ -60,7 +60,7 @@ class ExpeditionMenuState(State):
         colony = self.state_manager.get_state("colony")
         max_ants = len(colony.ants)
 
-        if self.selected_ants < max_ants:
+        if self.selected_ants < min(max_ants,56):
             self.selected_ants += 1
             self.sync_ui()
 
