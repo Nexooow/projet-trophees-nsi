@@ -250,21 +250,16 @@ class BattleModel:
             for y in range(self.grid_h):
                 if random() < bomb_rate:
                     self.bomb_tiles.add((x, y))
-        """
-        fourmis_nwar = (
-            colony.get_ants(ant_type="soldier") if not isinstance(colony, list) else []
-        )
-        fourmis_nwar += [Unit(0, 0, img_fourmi, None) for _ in range(2)]  # test puppets
-        """
-        fourmis_nwar = [
+        
+        fourmis_noirs = [
             Unit(0, 0, img_fourmi_noir, "noir") for ant in colony
         ]
         ally_pos = list(
             product(range(self.grid_w), range(int(self.grid_h * 10 / 14), self.grid_h))
         )
-        pos2 = sample(ally_pos, min(len(fourmis_nwar), len(ally_pos)))
+        pos2 = sample(ally_pos, min(len(fourmis_noirs), len(ally_pos)))
         self.friendlies = [
-            Unit(x, y, img_fourmi_noir, "noir") for ant, (x, y) in zip(fourmis_nwar, pos2)
+            Unit(x, y, img_fourmi_noir, "noir") for ant, (x, y) in zip(fourmis_noirs, pos2)
         ]
         nb_enemies = 2 + self.difficulty * 2
         positions = list(product(range(self.grid_w), range(int(self.grid_h * 4 / 14))))
