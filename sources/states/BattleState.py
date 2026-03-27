@@ -21,6 +21,7 @@ class BattleState(State):
         perlin=None,
     ):
         super().__init__(manager, "battle", ["pause"])
+        self.difficulty = difficulty
         self.manager = manager
         self.model = BattleModel(difficulty, colony, auto_resolve, world_pos, perlin)
         
@@ -40,7 +41,7 @@ class BattleState(State):
             expedition_state.ants = expedition_state.ants[:len(self.model.friendlies)]
             if self.model.battle_won:
                 expedition_state = self.state_manager.get_state("expedition")
-                expedition_state.collected_resources += self.model.collected_resources*10 + 1000
+                expedition_state.collected_resources += self.model.collected_resources*(10 + self.difficulty) + 1000 + 100 * self.difficulty
             self.state_manager.set_state("expedition")
             return
         active = self.model.active_unit
