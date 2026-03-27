@@ -87,7 +87,7 @@ class ColonyState(State):
         assert queen_room is not None
 
         spawn_pos = queen_room.get_passable_entry() or queen_room.get_entry()
-        self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(100)]
+        self.ants = [Worker(self, {"power": 1, "xp": 0}, spawn_pos) for _ in range(3)]
         self.grid.render_dirty_cells(
             self.grid_surface, self.light_dirt_rgb, self.light_gal_rgb
         )
