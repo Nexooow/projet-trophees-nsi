@@ -248,12 +248,6 @@ class Worker(Ant):
                 )
                 self.finish_task()
             elif current_task.type == "build_room" and self.task_pos:
-                self.colony.grid.build_room(
-                    self.task_pos[0],
-                    self.task_pos[1],
-                    COLONY_BRUSH_SIZE,
-                    COLONY_BRUSH_SIZE,
-                )
                 self.finish_task()
 
     def finish_task(self):

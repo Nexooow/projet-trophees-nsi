@@ -118,12 +118,16 @@ class ColonyState(State):
                     int(cx), int(cy) - self.grid.start_y
                 )
 
-                # Si la case n'est pas passable (donc le creusage a échoué), on remet la tâche
-                if not self.grid.is_cell_passable(*cell_coords):
+                # Si la case n'est pas accessible (donc le creusage a échoué), on remet la tâche
+                task_type = "dig" if "dig_pos" in data else "build_room"
+                if (
+                    not self.grid.is_cell_passable(*cell_coords)
+                    and task_type != "build_room"
+                ):
                     build_data = {
                         "pos": pos,
                         "priority": data.get("priority", 1),
-                        "type": "dig" if "dig_pos" in data else "build_room",
+                        "type": task_type,
                     }
                     self.pending_builds.insert(0, build_data)
 
@@ -356,7 +360,9 @@ class ColonyState(State):
             "colony_btn_expedition",
             "",
             (btn_x, btn_y, menu_btn_size, menu_btn_size),
-        ).on("click", lambda: self.state_manager.set_state("expedition_menu")).set_z_index(10).add_child(
+        ).on(
+            "click", lambda: self.state_manager.set_state("expedition_menu")
+        ).set_z_index(10).add_child(
             self.ui.image(
                 "colony_btn_expedition_icon",
                 _expedition_image,
@@ -702,4 +708,3 @@ class ColonyState(State):
         self.ants = self.ants[count:]
 
         self.state_manager.expedition_ants = expedition_ants
-    

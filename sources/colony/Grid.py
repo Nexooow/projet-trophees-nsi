@@ -556,6 +556,8 @@ class Grid:
                     row.append(CELL_STATES["occupied"])
                 elif state == "occupied_walkable":
                     row.append(CELL_STATES["occupied_walkable"])
+                elif state == "room":
+                    row.append(CELL_STATES["room"])
                 elif state == "partial" and bitmap is not None:
                     # Compresser le bitmap en liste d'entiers (1 entier = 1 ligne de 8 bits)
                     compressed = [
@@ -586,6 +588,8 @@ class Grid:
                 INT_TO_STATE[code] = ("occupied", 0)
             elif key == "occupied_walkable":
                 INT_TO_STATE[code] = ("occupied_walkable", 0)
+            elif key == "room":
+                INT_TO_STATE[code] = ("room", 0)
 
         for y, row in enumerate(rows):
             if y >= self.height:

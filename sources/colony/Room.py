@@ -44,10 +44,7 @@ class Room(pygame.sprite.Sprite):
 
         for x in range(config["x"], config["x"] + config["width"]):
             for y in range(config["y"], config["y"] + config["height"]):
-                if f"{x - self.x},{y - self.y}" in config["walkable"]:
-                    self.colony.grid.set_cell_state(x, y, "occupied_walkable")
-                else:
-                    self.colony.grid.set_cell_state(x, y, "occupied")
+                self.colony.grid.set_cell_state(x, y, "occupied_walkable")
 
         c = pygame.Color(DIRT_COLOR)
         light_dirt_rgb = (c.r, c.g, c.b)

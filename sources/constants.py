@@ -17,6 +17,7 @@ CELL_STATES = {
     "full_v4": 4,
     "occupied": 10,
     "occupied_walkable": 11,
+    "room": 12,
 }
 
 ASSETS_PATH = os.sep.join([os.path.dirname(__file__), "..", "data", "assets"])
@@ -126,21 +127,21 @@ QUEEN_LARVAS: dict = {
         "cost": 700,
         "time": 40,
     },
-    #"warrior": {
+    # "warrior": {
     #    "label": "Guerrière",
     #    "cost": 1000,
     #    "time": 60,
-    #},
+    # },
     "scientist": {
         "label": "Scientifique",
         "cost": 4000,
         "time": 9,
     },
-    #"explorer": {
+    # "explorer": {
     #    "label": "Exploratrice",
     #    "cost": 2000,
     #    "time": 50,
-    #},
+    # },
 }
 
 # Améliorations disponibles via la reine pour la colonie
@@ -168,7 +169,7 @@ QUEEN_UPGRADES: dict = {
 ITEMS = {
     "allumette": {
         "label": "Match",
-        "description": "Fait exploser la bombe de son choix"
+        "description": "Fait exploser la bombe de son choix",
     }
 }
 
@@ -185,7 +186,7 @@ ROOMS_CONFIG = {
     "depot": {
         "label": "Dépôt",
         "description": "Stockage de nourriture.",
-        "cost": 100,
+        "cost": 0,
         "width": 13,
         "height": 8,
         "entry_offset": (0.5, 1.0),
