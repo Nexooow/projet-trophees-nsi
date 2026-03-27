@@ -5,7 +5,11 @@ class TimeManager:
     def __init__(self, game):
         self.game = game
         self.paused = False
+
+        self.year = 1
+        self.season = 1
         self.day = 1
+
         self.time = 60 * 12
         self.time_since_start = 0
         self.sub_frame_count = 0
@@ -79,6 +83,13 @@ class TimeManager:
         Renvoie si c'est actuellement le jour ou la nuit.
         """
         return 8 < self.get_time()[0] < 20
+    
+    def handle_calendar(self):
+        if self.day == 30:
+            self.season += 1
+            if self.season > 4:
+                self.year += 1
+        
 
     def add_frame(self):
         """

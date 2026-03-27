@@ -224,3 +224,46 @@ SCIENCE_UPGRADES = {
         "cost": 500,  # coût en science
     }
 }
+
+SEASONS = {
+    1: {
+        "nom": "Printemps",
+        "meteo": {
+            "normal": 0.0,
+            "rainy": 0.0,
+            "cloudy": 0.0,
+            "sunny": 0.0,
+            "stormy": 0.0
+        }
+    },
+    1: {
+        "nom": "Ete",
+        "meteo": {
+            "normal": 0.0,
+            "rainy": 0.0,
+            "cloudy": 0.0,
+            "sunny": 0.0,
+            "stormy": 0.0
+        }
+    },
+    2: {
+        "nom": "Automne",
+        "meteo": {
+            "normal": 0.0,
+            "rainy": 0.0,
+            "cloudy": 0.0,
+            "sunny": 0.0,
+            "stormy": 0.0
+        }
+    },
+    3: {
+        "nom": "Hiver",
+        "meteo": {
+            "normal": 0.0,
+            "rainy": 0.0,
+            "cloudy": 0.0,
+            "sunny": 0.0,
+            "stormy": 0.0
+        }
+    }
+}
